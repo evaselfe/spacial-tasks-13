@@ -146,12 +146,12 @@ export const PanchayathView = () => {
                   );
                   
                   return (
-                    <Card key={coordinatorName} className="border-l-4 border-l-primary">
+                    <Card key={coordinatorName} className="border-l-4 border-l-coordinator">
                       <CardHeader className="pb-3">
                         <div className="flex justify-between items-start">
                           <div>
                             <CardTitle className="text-lg flex items-center gap-2">
-                              <Badge variant="default">Coordinator</Badge>
+                              <Badge className="bg-coordinator text-coordinator-foreground">Coordinator</Badge>
                               {coordinatorData?.coordinator_name}
                             </CardTitle>
                             <p className="text-sm text-muted-foreground">
@@ -183,11 +183,11 @@ export const PanchayathView = () => {
                           );
                           
                           return (
-                            <div key={supervisorName} className="ml-4 mb-4 p-4 border rounded-lg bg-muted/30">
+                            <div key={supervisorName} className="ml-4 mb-4 p-4 border-l-4 border-l-supervisor border border-border rounded-lg bg-muted/30">
                               <div className="flex justify-between items-start mb-3">
                                 <div>
                                   <div className="flex items-center gap-2 mb-1">
-                                    <Badge variant="secondary">Supervisor</Badge>
+                                    <Badge className="bg-supervisor text-supervisor-foreground">Supervisor</Badge>
                                     <span className="font-medium">{supervisorData?.supervisor_name}</span>
                                   </div>
                                   <p className="text-sm text-muted-foreground">
@@ -217,11 +217,11 @@ export const PanchayathView = () => {
                                 );
                                 
                                 return (
-                                  <div key={groupLeaderName} className="ml-4 mb-3 p-3 border rounded bg-background">
+                                  <div key={groupLeaderName} className="ml-4 mb-3 p-3 border-l-4 border-l-group-leader border border-border rounded bg-background">
                                     <div className="flex justify-between items-start mb-2">
                                       <div>
                                         <div className="flex items-center gap-2 mb-1">
-                                          <Badge variant="outline">Group Leader</Badge>
+                                          <Badge className="bg-group-leader text-group-leader-foreground">Group Leader</Badge>
                                           <span className="font-medium">{groupLeaderData?.group_leader_name}</span>
                                         </div>
                                         <p className="text-sm text-muted-foreground">
@@ -245,11 +245,11 @@ export const PanchayathView = () => {
                                     
                                     {/* PROs under this group leader */}
                                     {pros.filter(p => p.pro_name).map((pro, index) => (
-                                      <div key={index} className="ml-4 p-2 border-l-2 border-l-muted-foreground/20">
+                                      <div key={index} className="ml-4 p-2 border-l-4 border-l-pro">
                                         <div className="flex justify-between items-center">
                                           <div>
                                             <div className="flex items-center gap-2">
-                                              <Badge variant="secondary" className="text-xs">PRO</Badge>
+                                              <Badge className="bg-pro text-pro-foreground text-xs">PRO</Badge>
                                               <span className="text-sm font-medium">{pro.pro_name}</span>
                                             </div>
                                             <p className="text-xs text-muted-foreground">

@@ -61,6 +61,22 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				coordinator: {
+					DEFAULT: 'hsl(var(--coordinator))',
+					foreground: 'hsl(var(--coordinator-foreground))'
+				},
+				supervisor: {
+					DEFAULT: 'hsl(var(--supervisor))',
+					foreground: 'hsl(var(--supervisor-foreground))'
+				},
+				'group-leader': {
+					DEFAULT: 'hsl(var(--group-leader))',
+					foreground: 'hsl(var(--group-leader-foreground))'
+				},
+				pro: {
+					DEFAULT: 'hsl(var(--pro))',
+					foreground: 'hsl(var(--pro-foreground))'
 				}
 			},
 			borderRadius: {

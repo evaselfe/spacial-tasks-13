@@ -53,6 +53,16 @@ All colors MUST be HSL.
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Role-specific colors */
+    --coordinator: 142 76% 36%;
+    --coordinator-foreground: 210 40% 98%;
+    --supervisor: 221 83% 53%;
+    --supervisor-foreground: 210 40% 98%;
+    --group-leader: 25 95% 53%;
+    --group-leader-foreground: 210 40% 98%;
+    --pro: 291 64% 42%;
+    --pro-foreground: 210 40% 98%;
   }
 
   .dark {
@@ -91,6 +101,16 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Role-specific colors - Dark mode */
+    --coordinator: 142 76% 36%;
+    --coordinator-foreground: 210 40% 98%;
+    --supervisor: 221 83% 53%;
+    --supervisor-foreground: 210 40% 98%;
+    --group-leader: 25 95% 53%;
+    --group-leader-foreground: 210 40% 98%;
+    --pro: 291 64% 42%;
+    --pro-foreground: 210 40% 98%;
   }
 }
 

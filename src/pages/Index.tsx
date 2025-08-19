@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UserProfile } from "@/components/UserProfile";
 import { AutoLogin } from "@/components/AutoLogin";
 import { PanchayathForm } from "@/components/PanchayathForm";
 import { PanchayathView } from "@/components/PanchayathView";
@@ -14,8 +14,9 @@ import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [currentOfficer, setCurrentOfficer] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState("login");
+  const [activeTab, setActiveTab] = useState("manage");
   const [selectedPanchayath, setSelectedPanchayath] = useState<any>(null);
+  const [selectedRole, setSelectedRole] = useState("coordinator");
   const { toast } = useToast();
 
   const handleLogin = (officer: any) => {
@@ -41,30 +42,70 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">Special Task Management</h1>
-            <p className="text-muted-foreground">Officer: {currentOfficer.name}</p>
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h1 className="text-3xl font-bold">Special Task Management</h1>
+              <p className="text-muted-foreground">Officer: {currentOfficer.name}</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <UserProfile 
+                currentOfficer={currentOfficer} 
+                onOfficerUpdate={setCurrentOfficer}
+              />
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setCurrentOfficer(null);
+                  setActiveTab("login");
+                }}
+              >
+                Logout
+              </Button>
+            </div>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setCurrentOfficer(null);
-              setActiveTab("login");
-            }}
-          >
-            Logout
-          </Button>
-        </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-2 w-full max-w-md">
-            <TabsTrigger value="manage">Manage Panchayath</TabsTrigger>
-            <TabsTrigger value="view">View Data</TabsTrigger>
-          </TabsList>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <Card 
+              className={`cursor-pointer transition-all hover:shadow-md ${
+                activeTab === "manage" ? "ring-2 ring-primary shadow-md" : ""
+              }`}
+              onClick={() => setActiveTab("manage")}
+            >
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-coordinator"></div>
+                  Manage Panchayath
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Add panchayath data and manage hierarchy including coordinators, supervisors, group leaders, and PROs.
+                </p>
+              </CardContent>
+            </Card>
 
-          <TabsContent value="manage" className="mt-6">
+            <Card 
+              className={`cursor-pointer transition-all hover:shadow-md ${
+                activeTab === "view" ? "ring-2 ring-primary shadow-md" : ""
+              }`}
+              onClick={() => setActiveTab("view")}
+            >
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-supervisor"></div>
+                  View Data
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  View and manage panchayath hierarchy with color-coded roles and detailed information.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {activeTab === "manage" && (
             <Card>
               <CardHeader>
                 <CardTitle>Add Panchayath Data</CardTitle>
@@ -77,45 +118,55 @@ const Index = () => {
                 
                 {selectedPanchayath && (
                   <div className="mt-8">
-                    <h3 className="text-xl font-semibold mb-4">
+                    <h3 className="text-xl font-semibold mb-6">
                       Manage Hierarchy - {selectedPanchayath.name}
                     </h3>
                     
-                    <Tabs defaultValue="coordinator" className="w-full">
-                      <TabsList className="grid grid-cols-4 w-full">
-                        <TabsTrigger value="coordinator">Coordinator</TabsTrigger>
-                        <TabsTrigger value="supervisor">Supervisor</TabsTrigger>
-                        <TabsTrigger value="group-leader">Group Leader</TabsTrigger>
-                        <TabsTrigger value="pro">PRO</TabsTrigger>
-                      </TabsList>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+                      {[
+                        { key: "coordinator", label: "Coordinator", color: "coordinator" },
+                        { key: "supervisor", label: "Supervisor", color: "supervisor" },
+                        { key: "group-leader", label: "Group Leader", color: "group-leader" },
+                        { key: "pro", label: "PRO", color: "pro" }
+                      ].map(({ key, label, color }) => (
+                        <Card 
+                          key={key}
+                          className={`cursor-pointer transition-all hover:shadow-md ${
+                            selectedRole === key ? "ring-2 ring-primary shadow-md" : ""
+                          }`}
+                          onClick={() => setSelectedRole(key)}
+                        >
+                          <CardHeader className="pb-2">
+                            <CardTitle className={`text-sm flex items-center gap-2`}>
+                              <div className={`h-3 w-3 rounded-full bg-${color}`}></div>
+                              {label}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-xs text-muted-foreground">
+                              Manage {label.toLowerCase()} details
+                            </p>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
 
-                      <TabsContent value="coordinator" className="mt-4">
-                        <CoordinatorForm panchayath={selectedPanchayath} />
-                      </TabsContent>
-
-                      <TabsContent value="supervisor" className="mt-4">
-                        <SupervisorForm panchayath={selectedPanchayath} />
-                      </TabsContent>
-
-                      <TabsContent value="group-leader" className="mt-4">
-                        <GroupLeaderForm panchayath={selectedPanchayath} />
-                      </TabsContent>
-
-                      <TabsContent value="pro" className="mt-4">
-                        <ProForm panchayath={selectedPanchayath} />
-                      </TabsContent>
-                    </Tabs>
+                    <div className="mt-4">
+                      {selectedRole === "coordinator" && <CoordinatorForm panchayath={selectedPanchayath} />}
+                      {selectedRole === "supervisor" && <SupervisorForm panchayath={selectedPanchayath} />}
+                      {selectedRole === "group-leader" && <GroupLeaderForm panchayath={selectedPanchayath} />}
+                      {selectedRole === "pro" && <ProForm panchayath={selectedPanchayath} />}
+                    </div>
                   </div>
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
 
-          <TabsContent value="view" className="mt-6">
+          {activeTab === "view" && (
             <PanchayathView />
-          </TabsContent>
-        </Tabs>
-      </div>
+          )}
+        </div>
     </div>
   );
 };
