@@ -8,7 +8,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE officers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
-    mobile_number VARCHAR(15) UNIQUE NOT NULL,
+    mobile_number VARCHAR(10) UNIQUE NOT NULL CHECK (mobile_number ~ '^\d{10}$'),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -28,7 +28,7 @@ CREATE TABLE coordinators (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     panchayath_id UUID NOT NULL REFERENCES panchayaths(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
-    mobile_number VARCHAR(15) NOT NULL,
+    mobile_number VARCHAR(10) UNIQUE NOT NULL CHECK (mobile_number ~ '^\d{10}$'),
     ward INTEGER NOT NULL,
     rating DECIMAL(3,1) CHECK (rating >= 0 AND rating <= 10),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -42,7 +42,7 @@ CREATE TABLE supervisors (
     panchayath_id UUID NOT NULL REFERENCES panchayaths(id) ON DELETE CASCADE,
     coordinator_id UUID NOT NULL REFERENCES coordinators(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
-    mobile_number VARCHAR(15) NOT NULL,
+    mobile_number VARCHAR(10) UNIQUE NOT NULL CHECK (mobile_number ~ '^\d{10}$'),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -61,7 +61,7 @@ CREATE TABLE group_leaders (
     panchayath_id UUID NOT NULL REFERENCES panchayaths(id) ON DELETE CASCADE,
     supervisor_id UUID NOT NULL REFERENCES supervisors(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
-    mobile_number VARCHAR(15) NOT NULL,
+    mobile_number VARCHAR(10) UNIQUE NOT NULL CHECK (mobile_number ~ '^\d{10}$'),
     ward INTEGER NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -74,8 +74,8 @@ CREATE TABLE pros (
     panchayath_id UUID NOT NULL REFERENCES panchayaths(id) ON DELETE CASCADE,
     group_leader_id UUID NOT NULL REFERENCES group_leaders(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
-    mobile_number VARCHAR(15) NOT NULL,
-    ward INTEGER NOT NULL,
+    mobile_number VARCHAR(10) UNIQUE NOT NULL CHECK (mobile_number ~ '^\d{10}$'),
+    ward INTEGER NOT NULL,  
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

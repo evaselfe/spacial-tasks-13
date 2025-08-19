@@ -1,22 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserProfile } from "@/components/UserProfile";
 import { AutoLogin } from "@/components/AutoLogin";
-import { PanchayathForm } from "@/components/PanchayathForm";
+import { TaskManagement } from "@/components/TaskManagement";
 import { PanchayathView } from "@/components/PanchayathView";
-import { CoordinatorForm } from "@/components/CoordinatorForm";
-import { SupervisorForm } from "@/components/SupervisorForm";
-import { GroupLeaderForm } from "@/components/GroupLeaderForm";
-import { ProForm } from "@/components/ProForm";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [currentOfficer, setCurrentOfficer] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("manage");
-  const [selectedPanchayath, setSelectedPanchayath] = useState<any>(null);
-  const [selectedRole, setSelectedRole] = useState("coordinator");
   const { toast } = useToast();
 
   const handleLogin = (officer: any) => {
@@ -28,10 +20,6 @@ const Index = () => {
     });
   };
 
-  const handlePanchayathSelect = (panchayath: any) => {
-    setSelectedPanchayath(panchayath);
-  };
-
   if (!currentOfficer) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -41,132 +29,91 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-3xl font-bold">Special Task Management</h1>
-              <p className="text-muted-foreground">Officer: {currentOfficer.name}</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <UserProfile 
-                currentOfficer={currentOfficer} 
-                onOfficerUpdate={setCurrentOfficer}
-              />
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setCurrentOfficer(null);
-                  setActiveTab("login");
-                }}
-              >
-                Logout
-              </Button>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-background to-background/95 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              Panchayath Management System
+            </h1>
+            <p className="text-muted-foreground mt-2">Officer: {currentOfficer.name}</p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <Card 
-              className={`cursor-pointer transition-all hover:shadow-md ${
-                activeTab === "manage" ? "ring-2 ring-primary shadow-md" : ""
-              }`}
-              onClick={() => setActiveTab("manage")}
+          <div className="flex items-center gap-4">
+            <UserProfile 
+              currentOfficer={currentOfficer} 
+              onOfficerUpdate={setCurrentOfficer}
+            />
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCurrentOfficer(null);
+                setActiveTab("login");
+              }}
+              className="border-primary/20 hover:border-primary"
             >
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-coordinator"></div>
-                  Manage Panchayath
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Add panchayath data and manage hierarchy including coordinators, supervisors, group leaders, and PROs.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card 
-              className={`cursor-pointer transition-all hover:shadow-md ${
-                activeTab === "view" ? "ring-2 ring-primary shadow-md" : ""
-              }`}
-              onClick={() => setActiveTab("view")}
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-supervisor"></div>
-                  View Data
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  View and manage panchayath hierarchy with color-coded roles and detailed information.
-                </p>
-              </CardContent>
-            </Card>
+              Logout
+            </Button>
           </div>
-
-          {activeTab === "manage" && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Add Panchayath Data</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <PanchayathForm 
-                  officerId={currentOfficer.id}
-                  onPanchayathCreated={handlePanchayathSelect}
-                />
-                
-                {selectedPanchayath && (
-                  <div className="mt-8">
-                    <h3 className="text-xl font-semibold mb-6">
-                      Manage Hierarchy - {selectedPanchayath.name}
-                    </h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-                      {[
-                        { key: "coordinator", label: "Coordinator", color: "coordinator" },
-                        { key: "supervisor", label: "Supervisor", color: "supervisor" },
-                        { key: "group-leader", label: "Group Leader", color: "group-leader" },
-                        { key: "pro", label: "PRO", color: "pro" }
-                      ].map(({ key, label, color }) => (
-                        <Card 
-                          key={key}
-                          className={`cursor-pointer transition-all hover:shadow-md ${
-                            selectedRole === key ? "ring-2 ring-primary shadow-md" : ""
-                          }`}
-                          onClick={() => setSelectedRole(key)}
-                        >
-                          <CardHeader className="pb-2">
-                            <CardTitle className={`text-sm flex items-center gap-2`}>
-                              <div className={`h-3 w-3 rounded-full bg-${color}`}></div>
-                              {label}
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <p className="text-xs text-muted-foreground">
-                              Manage {label.toLowerCase()} details
-                            </p>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-
-                    <div className="mt-4">
-                      {selectedRole === "coordinator" && <CoordinatorForm />}
-                      {selectedRole === "supervisor" && <SupervisorForm />}
-                      {selectedRole === "group-leader" && <GroupLeaderForm />}
-                      {selectedRole === "pro" && <ProForm />}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {activeTab === "view" && (
-            <PanchayathView />
-          )}
         </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div 
+            className={`cursor-pointer transition-all duration-300 hover:scale-105 ${
+              activeTab === "manage" ? "scale-105" : ""
+            }`}
+            onClick={() => setActiveTab("manage")}
+          >
+            <div className={`relative overflow-hidden rounded-lg border-2 transition-all duration-300 ${
+              activeTab === "manage" 
+                ? "border-coordinator shadow-xl bg-coordinator/10" 
+                : "border-border hover:border-coordinator/50 hover:shadow-lg bg-card"
+            }`}>
+              <div className="absolute inset-0 bg-gradient-to-br from-coordinator/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-4 w-4 rounded-full bg-coordinator shadow-sm"></div>
+                  <h3 className="text-xl font-semibold">Manage Panchayath</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Create new panchayaths and manage the complete hierarchy including coordinators, supervisors, group leaders, and PROs.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div 
+            className={`cursor-pointer transition-all duration-300 hover:scale-105 ${
+              activeTab === "view" ? "scale-105" : ""
+            }`}
+            onClick={() => setActiveTab("view")}
+          >
+            <div className={`relative overflow-hidden rounded-lg border-2 transition-all duration-300 ${
+              activeTab === "view" 
+                ? "border-supervisor shadow-xl bg-supervisor/10" 
+                : "border-border hover:border-supervisor/50 hover:shadow-lg bg-card"
+            }`}>
+              <div className="absolute inset-0 bg-gradient-to-br from-supervisor/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-4 w-4 rounded-full bg-supervisor shadow-sm"></div>
+                  <h3 className="text-xl font-semibold">View & Analyze</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  View complete panchayath hierarchy with color-coded roles and detailed analytics.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {activeTab === "manage" && (
+          <TaskManagement officerId={currentOfficer.id} />
+        )}
+
+        {activeTab === "view" && (
+          <PanchayathView />
+        )}
+      </div>
     </div>
   );
 };

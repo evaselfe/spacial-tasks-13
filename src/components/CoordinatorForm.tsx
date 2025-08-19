@@ -57,6 +57,16 @@ export const CoordinatorForm = () => {
       return;
     }
 
+    // Validate mobile number (exactly 10 digits)
+    if (!/^\d{10}$/.test(mobile.trim())) {
+      toast({
+        title: "Error",
+        description: "Mobile number must be exactly 10 digits",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const wardNum = parseInt(ward);
     const ratingNum = parseFloat(rating);
     
@@ -106,9 +116,17 @@ export const CoordinatorForm = () => {
       setPanchayathId("");
     } catch (error: any) {
       console.error("Error adding coordinator:", error);
+      let errorMessage = "Failed to add coordinator";
+      if (error.code === '23505') {
+        if (error.message.includes('mobile_number')) {
+          errorMessage = "This mobile number is already registered";
+        } else if (error.message.includes('panchayath_id, ward')) {
+          errorMessage = "A coordinator is already assigned to this ward";
+        }
+      }
       toast({
         title: "Error",
-        description: error.message || "Failed to add coordinator",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -159,8 +177,12 @@ export const CoordinatorForm = () => {
                 id="coord-mobile"
                 type="tel"
                 value={mobile}
-                onChange={(e) => setMobile(e.target.value)}
-                placeholder="Enter mobile number"
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                  setMobile(value);
+                }}
+                placeholder="Enter 10-digit mobile number"
+                maxLength={10}
                 required
               />
             </div>
