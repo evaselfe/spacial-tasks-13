@@ -14,10 +14,295 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      coordinators: {
+        Row: {
+          created_at: string | null
+          id: string
+          mobile_number: string
+          name: string
+          panchayath_id: string
+          rating: number | null
+          updated_at: string | null
+          ward: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          mobile_number: string
+          name: string
+          panchayath_id: string
+          rating?: number | null
+          updated_at?: string | null
+          ward: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          mobile_number?: string
+          name?: string
+          panchayath_id?: string
+          rating?: number | null
+          updated_at?: string | null
+          ward?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coordinators_panchayath_id_fkey"
+            columns: ["panchayath_id"]
+            isOneToOne: false
+            referencedRelation: "panchayaths"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_leaders: {
+        Row: {
+          created_at: string | null
+          id: string
+          mobile_number: string
+          name: string
+          panchayath_id: string
+          supervisor_id: string
+          updated_at: string | null
+          ward: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          mobile_number: string
+          name: string
+          panchayath_id: string
+          supervisor_id: string
+          updated_at?: string | null
+          ward: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          mobile_number?: string
+          name?: string
+          panchayath_id?: string
+          supervisor_id?: string
+          updated_at?: string | null
+          ward?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_leaders_panchayath_id_fkey"
+            columns: ["panchayath_id"]
+            isOneToOne: false
+            referencedRelation: "panchayaths"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_leaders_supervisor_id_fkey"
+            columns: ["supervisor_id"]
+            isOneToOne: false
+            referencedRelation: "supervisors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      officers: {
+        Row: {
+          created_at: string | null
+          id: string
+          mobile_number: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          mobile_number: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          mobile_number?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      panchayaths: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          name: string
+          number_of_wards: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name: string
+          number_of_wards: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name?: string
+          number_of_wards?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "panchayaths_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "officers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pros: {
+        Row: {
+          created_at: string | null
+          group_leader_id: string
+          id: string
+          mobile_number: string
+          name: string
+          panchayath_id: string
+          updated_at: string | null
+          ward: number
+        }
+        Insert: {
+          created_at?: string | null
+          group_leader_id: string
+          id?: string
+          mobile_number: string
+          name: string
+          panchayath_id: string
+          updated_at?: string | null
+          ward: number
+        }
+        Update: {
+          created_at?: string | null
+          group_leader_id?: string
+          id?: string
+          mobile_number?: string
+          name?: string
+          panchayath_id?: string
+          updated_at?: string | null
+          ward?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pros_group_leader_id_fkey"
+            columns: ["group_leader_id"]
+            isOneToOne: false
+            referencedRelation: "group_leaders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pros_panchayath_id_fkey"
+            columns: ["panchayath_id"]
+            isOneToOne: false
+            referencedRelation: "panchayaths"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supervisor_wards: {
+        Row: {
+          id: string
+          supervisor_id: string
+          ward: number
+        }
+        Insert: {
+          id?: string
+          supervisor_id: string
+          ward: number
+        }
+        Update: {
+          id?: string
+          supervisor_id?: string
+          ward?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supervisor_wards_supervisor_id_fkey"
+            columns: ["supervisor_id"]
+            isOneToOne: false
+            referencedRelation: "supervisors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supervisors: {
+        Row: {
+          coordinator_id: string
+          created_at: string | null
+          id: string
+          mobile_number: string
+          name: string
+          panchayath_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          coordinator_id: string
+          created_at?: string | null
+          id?: string
+          mobile_number: string
+          name: string
+          panchayath_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          coordinator_id?: string
+          created_at?: string | null
+          id?: string
+          mobile_number?: string
+          name?: string
+          panchayath_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supervisors_coordinator_id_fkey"
+            columns: ["coordinator_id"]
+            isOneToOne: false
+            referencedRelation: "coordinators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supervisors_panchayath_id_fkey"
+            columns: ["panchayath_id"]
+            isOneToOne: false
+            referencedRelation: "panchayaths"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      hierarchy_view: {
+        Row: {
+          coordinator_mobile: string | null
+          coordinator_name: string | null
+          coordinator_rating: number | null
+          coordinator_ward: number | null
+          group_leader_mobile: string | null
+          group_leader_name: string | null
+          group_leader_ward: number | null
+          number_of_wards: number | null
+          panchayath_name: string | null
+          pro_mobile: string | null
+          pro_name: string | null
+          pro_ward: number | null
+          supervisor_mobile: string | null
+          supervisor_name: string | null
+          supervisor_wards: number[] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
