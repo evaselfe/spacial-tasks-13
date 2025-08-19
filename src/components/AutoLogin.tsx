@@ -16,18 +16,6 @@ export const AutoLogin = ({ onLogin }: AutoLoginProps) => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  // Ensure we have an authenticated session for RLS
-  const ensureAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      const { error } = await supabase.auth.signInAnonymously();
-      if (error) {
-        console.error('Anonymous auth error:', error);
-        throw error;
-      }
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !mobile.trim()) {
@@ -41,7 +29,6 @@ export const AutoLogin = ({ onLogin }: AutoLoginProps) => {
 
     setLoading(true);
     try {
-      await ensureAuth();
       // Check if officer exists
       let { data: existingOfficer, error: fetchError } = await supabase
         .from("officers")
