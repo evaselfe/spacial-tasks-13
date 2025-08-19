@@ -152,10 +152,10 @@ const Index = () => {
                     </div>
 
                     <div className="mt-4">
-                      {selectedRole === "coordinator" && <CoordinatorForm panchayath={selectedPanchayath} />}
-                      {selectedRole === "supervisor" && <SupervisorForm panchayath={selectedPanchayath} />}
-                      {selectedRole === "group-leader" && <GroupLeaderForm panchayath={selectedPanchayath} />}
-                      {selectedRole === "pro" && <ProForm panchayath={selectedPanchayath} />}
+                      {selectedRole === "coordinator" && <CoordinatorForm />}
+                      {selectedRole === "supervisor" && <SupervisorForm />}
+                      {selectedRole === "group-leader" && <GroupLeaderForm />}
+                      {selectedRole === "pro" && <ProForm />}
                     </div>
                   </div>
                 )}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,24 +7,51 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-interface CoordinatorFormProps {
-  panchayath: any;
-}
-
-export const CoordinatorForm = ({ panchayath }: CoordinatorFormProps) => {
+export const CoordinatorForm = () => {
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
   const [ward, setWard] = useState("");
   const [rating, setRating] = useState("");
+  const [panchayathId, setPanchayathId] = useState("");
+  const [panchayaths, setPanchayaths] = useState<any[]>([]);
+  const [selectedPanchayath, setSelectedPanchayath] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  useEffect(() => {
+    fetchPanchayaths();
+  }, []);
+
+  useEffect(() => {
+    if (panchayathId) {
+      const panchayath = panchayaths.find(p => p.id === panchayathId);
+      setSelectedPanchayath(panchayath);
+      setWard(""); // Reset ward when panchayath changes
+    } else {
+      setSelectedPanchayath(null);
+    }
+  }, [panchayathId, panchayaths]);
+
+  const fetchPanchayaths = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("panchayaths")
+        .select("*")
+        .order("name");
+
+      if (error) throw error;
+      setPanchayaths(data || []);
+    } catch (error) {
+      console.error("Error fetching panchayaths:", error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !mobile.trim() || !ward || !rating.trim()) {
+    if (!name.trim() || !mobile.trim() || !ward || !rating.trim() || !panchayathId) {
       toast({
         title: "Error",
-        description: "Please fill in all fields",
+        description: "Please fill in all fields and select a panchayath",
         variant: "destructive",
       });
       return;
@@ -33,10 +60,10 @@ export const CoordinatorForm = ({ panchayath }: CoordinatorFormProps) => {
     const wardNum = parseInt(ward);
     const ratingNum = parseFloat(rating);
     
-    if (isNaN(wardNum) || wardNum < 1 || wardNum > panchayath.number_of_wards) {
+    if (isNaN(wardNum) || wardNum < 1 || wardNum > selectedPanchayath.number_of_wards) {
       toast({
         title: "Error",
-        description: `Ward must be between 1 and ${panchayath.number_of_wards}`,
+        description: `Ward must be between 1 and ${selectedPanchayath.number_of_wards}`,
         variant: "destructive",
       });
       return;
@@ -56,7 +83,7 @@ export const CoordinatorForm = ({ panchayath }: CoordinatorFormProps) => {
       const { error } = await supabase
         .from("coordinators")
         .insert({
-          panchayath_id: panchayath.id,
+          panchayath_id: panchayathId,
           name: name.trim(),
           mobile_number: mobile.trim(),
           ward: wardNum,
@@ -76,6 +103,7 @@ export const CoordinatorForm = ({ panchayath }: CoordinatorFormProps) => {
       setMobile("");
       setWard("");
       setRating("");
+      setPanchayathId("");
     } catch (error: any) {
       console.error("Error adding coordinator:", error);
       toast({
@@ -88,7 +116,7 @@ export const CoordinatorForm = ({ panchayath }: CoordinatorFormProps) => {
     }
   };
 
-  const wardOptions = Array.from({ length: panchayath.number_of_wards }, (_, i) => i + 1);
+  const wardOptions = selectedPanchayath ? Array.from({ length: selectedPanchayath.number_of_wards }, (_, i) => i + 1) : [];
 
   return (
     <Card>
@@ -97,6 +125,22 @@ export const CoordinatorForm = ({ panchayath }: CoordinatorFormProps) => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Select Panchayath</Label>
+            <Select value={panchayathId} onValueChange={setPanchayathId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select panchayath" />
+              </SelectTrigger>
+              <SelectContent>
+                {panchayaths.map((panchayath) => (
+                  <SelectItem key={panchayath.id} value={panchayath.id}>
+                    {panchayath.name} ({panchayath.number_of_wards} wards)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="coord-name">Name</Label>
@@ -122,9 +166,9 @@ export const CoordinatorForm = ({ panchayath }: CoordinatorFormProps) => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="coord-ward">Ward</Label>
-              <Select value={ward} onValueChange={setWard}>
+              <Select value={ward} onValueChange={setWard} disabled={!selectedPanchayath}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select ward" />
+                  <SelectValue placeholder={selectedPanchayath ? "Select ward" : "Select panchayath first"} />
                 </SelectTrigger>
                 <SelectContent>
                   {wardOptions.map((wardNum) => (

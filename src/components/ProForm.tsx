@@ -7,34 +7,64 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-interface ProFormProps {
-  panchayath: any;
-}
-
-export const ProForm = ({ panchayath }: ProFormProps) => {
+export const ProForm = () => {
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
   const [ward, setWard] = useState("");
   const [groupLeaderId, setGroupLeaderId] = useState("");
   const [groupLeaders, setGroupLeaders] = useState<any[]>([]);
+  const [panchayathId, setPanchayathId] = useState("");
+  const [panchayaths, setPanchayaths] = useState<any[]>([]);
+  const [selectedPanchayath, setSelectedPanchayath] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (ward) {
+    fetchPanchayaths();
+  }, []);
+
+  useEffect(() => {
+    if (panchayathId) {
+      const panchayath = panchayaths.find(p => p.id === panchayathId);
+      setSelectedPanchayath(panchayath);
+      setWard(""); // Reset ward when panchayath changes
+      setGroupLeaderId("");
+    } else {
+      setSelectedPanchayath(null);
+    }
+  }, [panchayathId, panchayaths]);
+
+  useEffect(() => {
+    if (ward && panchayathId) {
       fetchGroupLeadersForWard(parseInt(ward));
     } else {
       setGroupLeaders([]);
       setGroupLeaderId("");
     }
-  }, [ward, panchayath.id]);
+  }, [ward, panchayathId]);
+
+  const fetchPanchayaths = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("panchayaths")
+        .select("*")
+        .order("name");
+
+      if (error) throw error;
+      setPanchayaths(data || []);
+    } catch (error) {
+      console.error("Error fetching panchayaths:", error);
+    }
+  };
 
   const fetchGroupLeadersForWard = async (wardNum: number) => {
+    if (!panchayathId) return;
+    
     try {
       const { data, error } = await supabase
         .from("group_leaders")
         .select("*")
-        .eq("panchayath_id", panchayath.id)
+        .eq("panchayath_id", panchayathId)
         .eq("ward", wardNum);
 
       if (error) throw error;
@@ -46,20 +76,20 @@ export const ProForm = ({ panchayath }: ProFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !mobile.trim() || !ward || !groupLeaderId) {
+    if (!name.trim() || !mobile.trim() || !ward || !groupLeaderId || !panchayathId) {
       toast({
         title: "Error",
-        description: "Please fill in all fields",
+        description: "Please fill in all fields and select a panchayath",
         variant: "destructive",
       });
       return;
     }
 
     const wardNum = parseInt(ward);
-    if (isNaN(wardNum) || wardNum < 1 || wardNum > panchayath.number_of_wards) {
+    if (isNaN(wardNum) || wardNum < 1 || wardNum > selectedPanchayath.number_of_wards) {
       toast({
         title: "Error",
-        description: `Ward must be between 1 and ${panchayath.number_of_wards}`,
+        description: `Ward must be between 1 and ${selectedPanchayath.number_of_wards}`,
         variant: "destructive",
       });
       return;
@@ -70,7 +100,7 @@ export const ProForm = ({ panchayath }: ProFormProps) => {
       const { error } = await supabase
         .from("pros")
         .insert({
-          panchayath_id: panchayath.id,
+          panchayath_id: panchayathId,
           group_leader_id: groupLeaderId,
           name: name.trim(),
           mobile_number: mobile.trim(),
@@ -88,6 +118,7 @@ export const ProForm = ({ panchayath }: ProFormProps) => {
       setMobile("");
       setWard("");
       setGroupLeaderId("");
+      setPanchayathId("");
     } catch (error: any) {
       console.error("Error adding PRO:", error);
       toast({
@@ -100,7 +131,7 @@ export const ProForm = ({ panchayath }: ProFormProps) => {
     }
   };
 
-  const wardOptions = Array.from({ length: panchayath.number_of_wards }, (_, i) => i + 1);
+  const wardOptions = selectedPanchayath ? Array.from({ length: selectedPanchayath.number_of_wards }, (_, i) => i + 1) : [];
 
   return (
     <Card>
@@ -109,6 +140,22 @@ export const ProForm = ({ panchayath }: ProFormProps) => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Select Panchayath</Label>
+            <Select value={panchayathId} onValueChange={setPanchayathId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select panchayath" />
+              </SelectTrigger>
+              <SelectContent>
+                {panchayaths.map((panchayath) => (
+                  <SelectItem key={panchayath.id} value={panchayath.id}>
+                    {panchayath.name} ({panchayath.number_of_wards} wards)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="pro-name">Name</Label>
@@ -136,9 +183,9 @@ export const ProForm = ({ panchayath }: ProFormProps) => {
           
           <div className="space-y-2">
             <Label>Select Ward</Label>
-            <Select value={ward} onValueChange={setWard}>
+            <Select value={ward} onValueChange={setWard} disabled={!selectedPanchayath}>
               <SelectTrigger>
-                <SelectValue placeholder="Select ward" />
+                <SelectValue placeholder={selectedPanchayath ? "Select ward" : "Select panchayath first"} />
               </SelectTrigger>
               <SelectContent>
                 {wardOptions.map((wardNum) => (

@@ -8,29 +8,57 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-interface SupervisorFormProps {
-  panchayath: any;
-}
-
-export const SupervisorForm = ({ panchayath }: SupervisorFormProps) => {
+export const SupervisorForm = () => {
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
   const [coordinatorId, setCoordinatorId] = useState("");
   const [selectedWards, setSelectedWards] = useState<number[]>([]);
   const [coordinators, setCoordinators] = useState<any[]>([]);
+  const [panchayathId, setPanchayathId] = useState("");
+  const [panchayaths, setPanchayaths] = useState<any[]>([]);
+  const [selectedPanchayath, setSelectedPanchayath] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchCoordinators();
-  }, [panchayath.id]);
+    fetchPanchayaths();
+  }, []);
+
+  useEffect(() => {
+    if (panchayathId) {
+      const panchayath = panchayaths.find(p => p.id === panchayathId);
+      setSelectedPanchayath(panchayath);
+      fetchCoordinators();
+      setSelectedWards([]); // Reset wards when panchayath changes
+      setCoordinatorId("");
+    } else {
+      setSelectedPanchayath(null);
+      setCoordinators([]);
+    }
+  }, [panchayathId, panchayaths]);
+
+  const fetchPanchayaths = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("panchayaths")
+        .select("*")
+        .order("name");
+
+      if (error) throw error;
+      setPanchayaths(data || []);
+    } catch (error) {
+      console.error("Error fetching panchayaths:", error);
+    }
+  };
 
   const fetchCoordinators = async () => {
+    if (!panchayathId) return;
+    
     try {
       const { data, error } = await supabase
         .from("coordinators")
         .select("*")
-        .eq("panchayath_id", panchayath.id);
+        .eq("panchayath_id", panchayathId);
 
       if (error) throw error;
       setCoordinators(data || []);
@@ -49,10 +77,10 @@ export const SupervisorForm = ({ panchayath }: SupervisorFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !mobile.trim() || !coordinatorId || selectedWards.length === 0) {
+    if (!name.trim() || !mobile.trim() || !coordinatorId || selectedWards.length === 0 || !panchayathId) {
       toast({
         title: "Error",
-        description: "Please fill in all fields and select at least one ward",
+        description: "Please fill in all fields, select a panchayath, and select at least one ward",
         variant: "destructive",
       });
       return;
@@ -64,7 +92,7 @@ export const SupervisorForm = ({ panchayath }: SupervisorFormProps) => {
       const { data: supervisor, error: supervisorError } = await supabase
         .from("supervisors")
         .insert({
-          panchayath_id: panchayath.id,
+          panchayath_id: panchayathId,
           coordinator_id: coordinatorId,
           name: name.trim(),
           mobile_number: mobile.trim(),
@@ -95,6 +123,7 @@ export const SupervisorForm = ({ panchayath }: SupervisorFormProps) => {
       setMobile("");
       setCoordinatorId("");
       setSelectedWards([]);
+      setPanchayathId("");
     } catch (error: any) {
       console.error("Error adding supervisor:", error);
       toast({
@@ -107,7 +136,7 @@ export const SupervisorForm = ({ panchayath }: SupervisorFormProps) => {
     }
   };
 
-  const wardOptions = Array.from({ length: panchayath.number_of_wards }, (_, i) => i + 1);
+  const wardOptions = selectedPanchayath ? Array.from({ length: selectedPanchayath.number_of_wards }, (_, i) => i + 1) : [];
 
   return (
     <Card>
@@ -116,6 +145,22 @@ export const SupervisorForm = ({ panchayath }: SupervisorFormProps) => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Select Panchayath</Label>
+            <Select value={panchayathId} onValueChange={setPanchayathId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select panchayath" />
+              </SelectTrigger>
+              <SelectContent>
+                {panchayaths.map((panchayath) => (
+                  <SelectItem key={panchayath.id} value={panchayath.id}>
+                    {panchayath.name} ({panchayath.number_of_wards} wards)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="sup-name">Name</Label>
@@ -143,9 +188,9 @@ export const SupervisorForm = ({ panchayath }: SupervisorFormProps) => {
           
           <div className="space-y-2">
             <Label>Select Coordinator</Label>
-            <Select value={coordinatorId} onValueChange={setCoordinatorId}>
+            <Select value={coordinatorId} onValueChange={setCoordinatorId} disabled={!selectedPanchayath}>
               <SelectTrigger>
-                <SelectValue placeholder="Select coordinator" />
+                <SelectValue placeholder={selectedPanchayath ? "Select coordinator" : "Select panchayath first"} />
               </SelectTrigger>
               <SelectContent>
                 {coordinators.map((coord) => (
@@ -160,7 +205,7 @@ export const SupervisorForm = ({ panchayath }: SupervisorFormProps) => {
           <div className="space-y-2">
             <Label>Select Wards (Multiple)</Label>
             <div className="grid grid-cols-4 gap-2 p-4 border rounded-md">
-              {wardOptions.map((wardNum) => (
+              {selectedPanchayath ? wardOptions.map((wardNum) => (
                 <div key={wardNum} className="flex items-center space-x-2">
                   <Checkbox
                     id={`ward-${wardNum}`}
@@ -171,7 +216,9 @@ export const SupervisorForm = ({ panchayath }: SupervisorFormProps) => {
                     Ward {wardNum}
                   </Label>
                 </div>
-              ))}
+              )) : (
+                <p className="text-muted-foreground col-span-4">Select a panchayath first</p>
+              )}
             </div>
           </div>
 
