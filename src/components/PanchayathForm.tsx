@@ -60,7 +60,7 @@ export const PanchayathForm = ({ officerId, onPanchayathCreated, editingPanchaya
           })
           .eq('id', editingPanchayath.id)
           .select()
-          .single();
+          .maybeSingle();
         data = result.data;
         error = result.error;
       } else {
@@ -80,6 +80,11 @@ export const PanchayathForm = ({ officerId, onPanchayathCreated, editingPanchaya
 
       if (error) {
         throw error;
+      }
+
+      // Fallback when RLS prevents returning the updated row
+      if (!data && editingPanchayath) {
+        data = { ...editingPanchayath, name: name.trim(), number_of_wards: wardCount };
       }
 
       toast({
