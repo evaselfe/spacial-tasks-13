@@ -52,17 +52,18 @@ export const PanchayathForm = ({ officerId, onPanchayathCreated, editingPanchaya
       
       if (editingPanchayath) {
         // Update existing panchayath
-        const result = await supabase
+        const { error } = await supabase
           .from("panchayaths")
           .update({
             name: name.trim(),
             number_of_wards: wardCount,
           })
-          .eq('id', editingPanchayath.id)
-          .select()
-          .maybeSingle();
-        data = result.data;
-        error = result.error;
+          .eq('id', editingPanchayath.id);
+          
+        if (error) throw error;
+        
+        // Create the updated data object manually
+        data = { ...editingPanchayath, name: name.trim(), number_of_wards: wardCount };
       } else {
         // Create new panchayath
         const result = await supabase
@@ -80,11 +81,6 @@ export const PanchayathForm = ({ officerId, onPanchayathCreated, editingPanchaya
 
       if (error) {
         throw error;
-      }
-
-      // Fallback when RLS prevents returning the updated row
-      if (!data && editingPanchayath) {
-        data = { ...editingPanchayath, name: name.trim(), number_of_wards: wardCount };
       }
 
       toast({
