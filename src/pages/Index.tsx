@@ -56,9 +56,7 @@ const Index = () => {
                   <div className="h-4 w-4 rounded-full bg-coordinator shadow-sm"></div>
                   <h3 className="text-xl font-semibold">Manage Panchayath</h3>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Create new panchayaths and manage the complete hierarchy including coordinators, supervisors, group leaders, and PROs.
-                </p>
+                <p className="text-sm text-gray-950">പഞ്ചായത്തുകളെയോ ഏജന്റുമാരെയോ ചേർക്കാൻ ഇവിടെ ക്ലിക്കുചെയ്യുക</p>
               </div>
             </div>
           </div>
@@ -71,9 +69,7 @@ const Index = () => {
                   <div className="h-4 w-4 rounded-full bg-supervisor shadow-sm"></div>
                   <h3 className="text-xl font-semibold">View & Analyze</h3>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  View complete panchayath hierarchy with color-coded roles and detailed analytics.
-                </p>
+                <p className="text-sm text-slate-950">പഞ്ചായത്തുകളുടെയും ആകെ ഏജന്റുമാരുടെയും പട്ടിക കാണാൻ ഇവിടെ ക്ലിക്ക് ചെയ്യുക.</p>
               </div>
             </div>
           </div>
