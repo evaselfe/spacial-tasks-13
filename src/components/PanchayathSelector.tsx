@@ -5,12 +5,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Edit } from "lucide-react";
 
 interface PanchayathSelectorProps {
   onPanchayathSelect: (panchayath: any) => void;
+  onPanchayathEdit: (panchayath: any) => void;
 }
 
-export const PanchayathSelector = ({ onPanchayathSelect }: PanchayathSelectorProps) => {
+export const PanchayathSelector = ({ onPanchayathSelect, onPanchayathEdit }: PanchayathSelectorProps) => {
   const [panchayaths, setPanchayaths] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [loading, setLoading] = useState(false);
@@ -107,29 +109,42 @@ export const PanchayathSelector = ({ onPanchayathSelect }: PanchayathSelectorPro
               >
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
-                    <div>
+                    <div className="flex-1">
                       <h5 className="font-medium">{panchayath.name}</h5>
                       <p className="text-sm text-muted-foreground">
                         {panchayath.number_of_wards} wards
                       </p>
                     </div>
-                    <div className="flex gap-2">
-                      <Badge variant="outline" className="text-xs">
-                        <div className="h-2 w-2 rounded-full bg-coordinator mr-1"></div>
-                        {panchayath.coordinators?.[0]?.count || 0} C
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        <div className="h-2 w-2 rounded-full bg-supervisor mr-1"></div>
-                        {panchayath.supervisors?.[0]?.count || 0} S
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        <div className="h-2 w-2 rounded-full bg-group-leader mr-1"></div>
-                        {panchayath.group_leaders?.[0]?.count || 0} GL
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        <div className="h-2 w-2 rounded-full bg-pro mr-1"></div>
-                        {panchayath.pros?.[0]?.count || 0} P
-                      </Badge>
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          <div className="h-2 w-2 rounded-full bg-coordinator mr-1"></div>
+                          {panchayath.coordinators?.[0]?.count || 0} C
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          <div className="h-2 w-2 rounded-full bg-supervisor mr-1"></div>
+                          {panchayath.supervisors?.[0]?.count || 0} S
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          <div className="h-2 w-2 rounded-full bg-group-leader mr-1"></div>
+                          {panchayath.group_leaders?.[0]?.count || 0} GL
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          <div className="h-2 w-2 rounded-full bg-pro mr-1"></div>
+                          {panchayath.pros?.[0]?.count || 0} P
+                        </Badge>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onPanchayathEdit(panchayath);
+                        }}
+                        className="ml-2"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </CardContent>

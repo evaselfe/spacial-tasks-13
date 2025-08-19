@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,13 +9,21 @@ import { useToast } from "@/hooks/use-toast";
 interface PanchayathFormProps {
   officerId: string;
   onPanchayathCreated: (panchayath: any) => void;
+  editingPanchayath?: any;
+  onEditComplete?: () => void;
 }
 
-export const PanchayathForm = ({ officerId, onPanchayathCreated }: PanchayathFormProps) => {
-  const [name, setName] = useState("");
-  const [wards, setWards] = useState("");
+export const PanchayathForm = ({ officerId, onPanchayathCreated, editingPanchayath, onEditComplete }: PanchayathFormProps) => {
+  const [name, setName] = useState(editingPanchayath?.name || "");
+  const [wards, setWards] = useState(editingPanchayath?.number_of_wards?.toString() || "");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  // Update form when editing different panchayath
+  useEffect(() => {
+    setName(editingPanchayath?.name || "");
+    setWards(editingPanchayath?.number_of_wards?.toString() || "");
+  }, [editingPanchayath]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,15 +48,35 @@ export const PanchayathForm = ({ officerId, onPanchayathCreated }: PanchayathFor
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("panchayaths")
-        .insert({
-          name: name.trim(),
-          number_of_wards: wardCount,
-          created_by: officerId,
-        })
-        .select()
-        .single();
+      let data, error;
+      
+      if (editingPanchayath) {
+        // Update existing panchayath
+        const result = await supabase
+          .from("panchayaths")
+          .update({
+            name: name.trim(),
+            number_of_wards: wardCount,
+          })
+          .eq('id', editingPanchayath.id)
+          .select()
+          .single();
+        data = result.data;
+        error = result.error;
+      } else {
+        // Create new panchayath
+        const result = await supabase
+          .from("panchayaths")
+          .insert({
+            name: name.trim(),
+            number_of_wards: wardCount,
+            created_by: officerId,
+          })
+          .select()
+          .single();
+        data = result.data;
+        error = result.error;
+      }
 
       if (error) {
         throw error;
@@ -56,17 +84,22 @@ export const PanchayathForm = ({ officerId, onPanchayathCreated }: PanchayathFor
 
       toast({
         title: "Success",
-        description: "Panchayath created successfully",
+        description: editingPanchayath ? "Panchayath updated successfully" : "Panchayath created successfully",
       });
       
       onPanchayathCreated(data);
-      setName("");
-      setWards("");
+      
+      if (editingPanchayath && onEditComplete) {
+        onEditComplete();
+      } else {
+        setName("");
+        setWards("");
+      }
     } catch (error: any) {
-      console.error("Error creating panchayath:", error);
+      console.error("Error saving panchayath:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create panchayath",
+        description: error.message || `Failed to ${editingPanchayath ? 'update' : 'create'} panchayath`,
         variant: "destructive",
       });
     } finally {
@@ -77,7 +110,7 @@ export const PanchayathForm = ({ officerId, onPanchayathCreated }: PanchayathFor
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Create New Panchayath</CardTitle>
+        <CardTitle>{editingPanchayath ? 'Edit Panchayath' : 'Create New Panchayath'}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -104,9 +137,16 @@ export const PanchayathForm = ({ officerId, onPanchayathCreated }: PanchayathFor
               required
             />
           </div>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Creating..." : "Create Panchayath"}
-          </Button>
+          <div className="flex gap-2">
+            <Button type="submit" disabled={loading}>
+              {loading ? (editingPanchayath ? "Updating..." : "Creating...") : (editingPanchayath ? "Update Panchayath" : "Create Panchayath")}
+            </Button>
+            {editingPanchayath && onEditComplete && (
+              <Button type="button" variant="outline" onClick={onEditComplete}>
+                Cancel
+              </Button>
+            )}
+          </div>
         </form>
       </CardContent>
     </Card>

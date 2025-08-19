@@ -14,7 +14,9 @@ interface TaskManagementProps {
 
 export const TaskManagement = ({ officerId }: TaskManagementProps) => {
   const [selectedPanchayath, setSelectedPanchayath] = useState<any>(null);
+  const [editingPanchayath, setEditingPanchayath] = useState<any>(null);
   const [selectedRole, setSelectedRole] = useState("coordinator");
+  const [activeTab, setActiveTab] = useState("create");
 
   const handlePanchayathSelect = (panchayath: any) => {
     setSelectedPanchayath(panchayath);
@@ -34,7 +36,7 @@ export const TaskManagement = ({ officerId }: TaskManagementProps) => {
           <CardTitle className="text-2xl text-primary">Special Task Management</CardTitle>
         </CardHeader>
         <CardContent className="p-6">
-          <Tabs defaultValue="create" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="create" className="text-sm font-medium">
                 Create New Panchayath
@@ -54,8 +56,13 @@ export const TaskManagement = ({ officerId }: TaskManagementProps) => {
                 </CardHeader>
                 <CardContent>
                   <PanchayathForm 
-                    officerId={officerId}
-                    onPanchayathCreated={handlePanchayathSelect}
+                    officerId={officerId} 
+                    onPanchayathCreated={() => {
+                      // Refresh any lists if needed
+                      setEditingPanchayath(null);
+                    }}
+                    editingPanchayath={editingPanchayath}
+                    onEditComplete={() => setEditingPanchayath(null)}
                   />
                 </CardContent>
               </Card>
@@ -70,7 +77,13 @@ export const TaskManagement = ({ officerId }: TaskManagementProps) => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <PanchayathSelector onPanchayathSelect={handlePanchayathSelect} />
+                  <PanchayathSelector 
+                    onPanchayathSelect={handlePanchayathSelect}
+                    onPanchayathEdit={(panchayath) => {
+                      setEditingPanchayath(panchayath);
+                      setActiveTab("create");
+                    }}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>
