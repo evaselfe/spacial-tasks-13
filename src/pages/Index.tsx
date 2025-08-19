@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserProfile } from "@/components/UserProfile";
 import { AutoLogin } from "@/components/AutoLogin";
 import { TaskManagement } from "@/components/TaskManagement";
 import { PanchayathView } from "@/components/PanchayathView";
+import { PanchayathHierarchy } from "@/components/PanchayathHierarchy";
+import { HistoryTab } from "@/components/HistoryTab";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
@@ -111,7 +114,25 @@ const Index = () => {
         )}
 
         {activeTab === "view" && (
-          <PanchayathView />
+          <Tabs defaultValue="analytics" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-6">
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="hierarchy">Hierarchy</TabsTrigger>
+              <TabsTrigger value="history">History</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="analytics">
+              <PanchayathView />
+            </TabsContent>
+            
+            <TabsContent value="hierarchy">
+              <PanchayathHierarchy />
+            </TabsContent>
+            
+            <TabsContent value="history">
+              <HistoryTab />
+            </TabsContent>
+          </Tabs>
         )}
       </div>
     </div>
