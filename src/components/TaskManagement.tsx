@@ -17,9 +17,23 @@ export const TaskManagement = ({ officerId }: TaskManagementProps) => {
   const [editingPanchayath, setEditingPanchayath] = useState<any>(null);
   const [selectedRole, setSelectedRole] = useState("coordinator");
   const [activeTab, setActiveTab] = useState("create");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handlePanchayathSelect = (panchayath: any) => {
     setSelectedPanchayath(panchayath);
+  };
+
+  const handlePanchayathCreatedOrUpdated = () => {
+    setEditingPanchayath(null);
+    setRefreshKey(prev => prev + 1); // Force refresh of PanchayathSelector
+  };
+
+  const handlePanchayathDeleted = (deletedId: string) => {
+    if (selectedPanchayath?.id === deletedId) {
+      setSelectedPanchayath(null);
+    }
+    setEditingPanchayath(null);
+    setRefreshKey(prev => prev + 1); // Force refresh of PanchayathSelector
   };
 
   const roleCards = [
@@ -57,12 +71,10 @@ export const TaskManagement = ({ officerId }: TaskManagementProps) => {
                 <CardContent>
                   <PanchayathForm 
                     officerId={officerId} 
-                    onPanchayathCreated={() => {
-                      // Refresh any lists if needed
-                      setEditingPanchayath(null);
-                    }}
+                    onPanchayathCreated={handlePanchayathCreatedOrUpdated}
                     editingPanchayath={editingPanchayath}
                     onEditComplete={() => setEditingPanchayath(null)}
+                    onPanchayathDeleted={handlePanchayathDeleted}
                   />
                 </CardContent>
               </Card>
@@ -78,6 +90,7 @@ export const TaskManagement = ({ officerId }: TaskManagementProps) => {
                 </CardHeader>
                 <CardContent>
                   <PanchayathSelector 
+                    key={refreshKey}
                     onPanchayathSelect={handlePanchayathSelect}
                     onPanchayathEdit={(panchayath) => {
                       setEditingPanchayath(panchayath);
