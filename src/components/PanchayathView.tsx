@@ -119,16 +119,16 @@ export const PanchayathView = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>View Panchayath Hierarchy</CardTitle>
+        <CardTitle className="text-lg md:text-xl">View Panchayath Hierarchy</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4 md:space-y-6 p-3 md:p-6">
         <div className="space-y-2">
           <label className="text-sm font-medium">Select Panchayath</label>
           <Select value={selectedPanchayath} onValueChange={setSelectedPanchayath}>
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a panchayath to view" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-50 bg-background">
               {panchayaths.map((panchayath) => (
                 <SelectItem key={panchayath.id} value={panchayath.id}>
                   {panchayath.name} ({panchayath.number_of_wards} wards)
@@ -156,33 +156,37 @@ export const PanchayathView = () => {
                   
                   return (
                     <Card key={coordinatorName} className="border-l-4 border-l-coordinator">
-                      <CardHeader className="pb-3">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <CardTitle className="text-lg flex items-center gap-2">
-                              <Badge className="bg-coordinator text-coordinator-foreground">Coordinator</Badge>
-                              {coordinatorData?.coordinator_name}
+                      <CardHeader className="pb-3 p-3 md:p-6">
+                        <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
+                          <div className="flex-1">
+                            <CardTitle className="text-base md:text-lg flex items-center gap-2 flex-wrap">
+                              <Badge className="bg-coordinator text-coordinator-foreground text-xs">Coordinator</Badge>
+                              <span className="break-words">{coordinatorData?.coordinator_name}</span>
                             </CardTitle>
-                            <p className="text-sm text-muted-foreground">
-                              Ward {coordinatorData?.coordinator_ward} | 
-                              Mobile: {coordinatorData?.coordinator_mobile} | 
-                              Rating: {coordinatorData?.coordinator_rating}/10
-                            </p>
+                            <div className="text-xs md:text-sm text-muted-foreground space-y-1 md:space-y-0">
+                              <div>Ward {coordinatorData?.coordinator_ward}</div>
+                              <div>Mobile: {coordinatorData?.coordinator_mobile}</div>
+                              <div>Rating: {coordinatorData?.coordinator_rating}/10</div>
+                            </div>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 shrink-0">
                             <Button 
                               size="sm" 
                               variant="outline"
                               onClick={() => handleEdit("coordinator", coordinatorData)}
+                              className="h-8 w-8 p-0 md:h-9 md:w-auto md:px-3"
                             >
-                              <Edit className="h-4 w-4" />
+                              <Edit className="h-3 w-3 md:h-4 md:w-4" />
+                              <span className="hidden md:inline ml-2">Edit</span>
                             </Button>
                             <Button 
                               size="sm" 
                               variant="outline"
                               onClick={() => handleDelete("coordinator", coordinatorData?.id)}
+                              className="h-8 w-8 p-0 md:h-9 md:w-auto md:px-3"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3 w-3 md:h-4 md:w-4" />
+                              <span className="hidden md:inline ml-2">Delete</span>
                             </Button>
                           </div>
                         </div>
@@ -196,32 +200,36 @@ export const PanchayathView = () => {
                           );
                           
                           return (
-                            <div key={supervisorName} className="ml-4 mb-4 p-4 border-l-4 border-l-supervisor border border-border rounded-lg bg-muted/30">
-                              <div className="flex justify-between items-start mb-3">
-                                <div>
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <Badge className="bg-supervisor text-supervisor-foreground">Supervisor</Badge>
-                                    <span className="font-medium">{supervisorData?.supervisor_name}</span>
+                            <div key={supervisorName} className="ml-0 md:ml-4 mb-4 p-3 md:p-4 border-l-4 border-l-supervisor border border-border rounded-lg bg-muted/30">
+                              <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3 mb-3">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                    <Badge className="bg-supervisor text-supervisor-foreground text-xs">Supervisor</Badge>
+                                    <span className="font-medium text-sm md:text-base break-words">{supervisorData?.supervisor_name}</span>
                                   </div>
-                                  <p className="text-sm text-muted-foreground">
-                                    Mobile: {supervisorData?.supervisor_mobile} | 
-                                    Wards: {supervisorData?.supervisor_wards?.join(", ")}
-                                  </p>
+                                  <div className="text-xs md:text-sm text-muted-foreground space-y-1 md:space-y-0">
+                                    <div>Mobile: {supervisorData?.supervisor_mobile}</div>
+                                    <div>Wards: {supervisorData?.supervisor_wards?.join(", ")}</div>
+                                  </div>
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 shrink-0">
                                   <Button 
                                     size="sm" 
                                     variant="outline"
                                     onClick={() => handleEdit("supervisor", supervisorData)}
+                                    className="h-7 w-7 p-0 md:h-8 md:w-auto md:px-2"
                                   >
                                     <Edit className="h-3 w-3" />
+                                    <span className="hidden md:inline ml-1">Edit</span>
                                   </Button>
                                   <Button 
                                     size="sm" 
                                     variant="outline"
                                     onClick={() => handleDelete("supervisor", supervisorData?.id)}
+                                    className="h-7 w-7 p-0 md:h-8 md:w-auto md:px-2"
                                   >
                                     <Trash2 className="h-3 w-3" />
+                                    <span className="hidden md:inline ml-1">Delete</span>
                                   </Button>
                                 </div>
                               </div>
@@ -234,70 +242,75 @@ export const PanchayathView = () => {
                                 );
                                 
                                 return (
-                                  <div key={groupLeaderName} className="ml-4 mb-3 p-3 border-l-4 border-l-group-leader border border-border rounded bg-background">
-                                    <div className="flex justify-between items-start mb-2">
-                                      <div>
-                                        <div className="flex items-center gap-2 mb-1">
-                                          <Badge className="bg-group-leader text-group-leader-foreground">Group Leader</Badge>
-                                          <span className="font-medium">{groupLeaderData?.group_leader_name}</span>
+                                  <div key={groupLeaderName} className="ml-0 md:ml-4 mb-3 p-2 md:p-3 border-l-4 border-l-group-leader border border-border rounded bg-background">
+                                    <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2 mb-2">
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                          <Badge className="bg-group-leader text-group-leader-foreground text-xs">Group Leader</Badge>
+                                          <span className="font-medium text-sm break-words">{groupLeaderData?.group_leader_name}</span>
                                         </div>
-                                        <p className="text-sm text-muted-foreground">
-                                          Ward {groupLeaderData?.group_leader_ward} | 
-                                          Mobile: {groupLeaderData?.group_leader_mobile}
-                                        </p>
+                                        <div className="text-xs md:text-sm text-muted-foreground space-y-1 md:space-y-0">
+                                          <div>Ward {groupLeaderData?.group_leader_ward}</div>
+                                          <div>Mobile: {groupLeaderData?.group_leader_mobile}</div>
+                                        </div>
                                       </div>
-                                      <div className="flex gap-2">
+                                      <div className="flex gap-2 shrink-0">
                                         <Button 
                                           size="sm" 
                                           variant="outline"
                                           onClick={() => handleEdit("group_leader", groupLeaderData)}
+                                          className="h-6 w-6 p-0 md:h-7 md:w-auto md:px-2"
                                         >
                                           <Edit className="h-3 w-3" />
+                                          <span className="hidden md:inline ml-1">Edit</span>
                                         </Button>
                                         <Button 
                                           size="sm" 
                                           variant="outline"
                                           onClick={() => handleDelete("group_leader", groupLeaderData?.id)}
+                                          className="h-6 w-6 p-0 md:h-7 md:w-auto md:px-2"
                                         >
                                           <Trash2 className="h-3 w-3" />
+                                          <span className="hidden md:inline ml-1">Delete</span>
                                         </Button>
                                       </div>
                                     </div>
                                     
-                                    {/* PROs under this group leader */}
-                                    {pros.filter(p => p.pro_name).map((pro, index) => (
-                                      <div key={index} className="ml-4 p-2 border-l-4 border-l-pro">
-                                        <div className="flex justify-between items-center">
-                                          <div>
-                                            <div className="flex items-center gap-2">
-                                              <Badge className="bg-pro text-pro-foreground text-xs">PRO</Badge>
-                                              <span className="text-sm font-medium">{pro.pro_name}</span>
-                                            </div>
-                                            <p className="text-xs text-muted-foreground">
-                                              Ward {pro.pro_ward} | Mobile: {pro.pro_mobile}
-                                            </p>
-                                          </div>
-                                          <div className="flex gap-2">
-                                            <Button 
-                                              size="sm" 
-                                              variant="outline" 
-                                              className="h-6 w-6 p-0"
-                                              onClick={() => handleEdit("pro", pro)}
-                                            >
-                                              <Edit className="h-3 w-3" />
-                                            </Button>
-                                            <Button 
-                                              size="sm" 
-                                              variant="outline" 
-                                              className="h-6 w-6 p-0"
-                                              onClick={() => handleDelete("pro", pro.id)}
-                                            >
-                                              <Trash2 className="h-3 w-3" />
-                                            </Button>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    ))}
+                                     {/* PROs under this group leader */}
+                                     {pros.filter(p => p.pro_name).map((pro, index) => (
+                                       <div key={index} className="ml-0 md:ml-4 p-2 border-l-4 border-l-pro">
+                                         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
+                                           <div className="flex-1">
+                                             <div className="flex items-center gap-2 flex-wrap">
+                                               <Badge className="bg-pro text-pro-foreground text-xs">PRO</Badge>
+                                               <span className="text-xs md:text-sm font-medium break-words">{pro.pro_name}</span>
+                                             </div>
+                                             <div className="text-xs text-muted-foreground space-y-1 md:space-y-0">
+                                               <div>Ward {pro.pro_ward}</div>
+                                               <div>Mobile: {pro.pro_mobile}</div>
+                                             </div>
+                                           </div>
+                                           <div className="flex gap-1 shrink-0">
+                                             <Button 
+                                               size="sm" 
+                                               variant="outline" 
+                                               className="h-6 w-6 p-0"
+                                               onClick={() => handleEdit("pro", pro)}
+                                             >
+                                               <Edit className="h-3 w-3" />
+                                             </Button>
+                                             <Button 
+                                               size="sm" 
+                                               variant="outline" 
+                                               className="h-6 w-6 p-0"
+                                               onClick={() => handleDelete("pro", pro.id)}
+                                             >
+                                               <Trash2 className="h-3 w-3" />
+                                             </Button>
+                                           </div>
+                                         </div>
+                                       </div>
+                                     ))}
                                   </div>
                                 );
                               })}

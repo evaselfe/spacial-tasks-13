@@ -86,6 +86,16 @@ export const SupervisorForm = () => {
       return;
     }
 
+    // Validate mobile number (exactly 10 digits)
+    if (!/^\d{10}$/.test(mobile.trim())) {
+      toast({
+        title: "Error",
+        description: "Mobile number must be exactly 10 digits",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       // Insert supervisor
@@ -179,8 +189,12 @@ export const SupervisorForm = () => {
                 id="sup-mobile"
                 type="tel"
                 value={mobile}
-                onChange={(e) => setMobile(e.target.value)}
-                placeholder="Enter mobile number"
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                  setMobile(value);
+                }}
+                placeholder="Enter 10-digit mobile number"
+                maxLength={10}
                 required
               />
             </div>
@@ -204,7 +218,7 @@ export const SupervisorForm = () => {
 
           <div className="space-y-2">
             <Label>Select Wards (Multiple)</Label>
-            <div className="grid grid-cols-4 gap-2 p-4 border rounded-md">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-4 border rounded-md max-h-40 overflow-y-auto">
               {selectedPanchayath ? wardOptions.map((wardNum) => (
                 <div key={wardNum} className="flex items-center space-x-2">
                   <Checkbox
@@ -217,7 +231,7 @@ export const SupervisorForm = () => {
                   </Label>
                 </div>
               )) : (
-                <p className="text-muted-foreground col-span-4">Select a panchayath first</p>
+                <p className="text-muted-foreground col-span-2 md:col-span-4">Select a panchayath first</p>
               )}
             </div>
           </div>

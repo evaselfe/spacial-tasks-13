@@ -144,21 +144,21 @@ export const TaskManagement = ({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
                     {roleCards.map(({
                   key,
                   label,
                   color,
                   description
                 }) => <Card key={key} className={`cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 border-2 ${selectedRole === key ? `border-primary shadow-lg ${color}/20` : "border-border hover:border-primary/40"}`} onClick={() => setSelectedRole(key)}>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-sm flex items-center gap-2">
-                            <div className={`h-4 w-4 rounded-full ${color} shadow-sm`}></div>
+                        <CardHeader className="pb-2 p-3 md:p-6">
+                          <CardTitle className="text-sm md:text-base flex items-center gap-2">
+                            <div className={`h-3 w-3 md:h-4 md:w-4 rounded-full ${color} shadow-sm`}></div>
                             {label}
                           </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                          <p className="text-xs text-muted-foreground">
+                        <CardContent className="p-3 md:p-6 pt-0">
+                          <p className="text-xs md:text-sm text-muted-foreground">
                             {description}
                           </p>
                         </CardContent>
