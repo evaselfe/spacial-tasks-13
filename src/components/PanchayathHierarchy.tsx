@@ -2,9 +2,12 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Users, MapPin, Building, BarChart3 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Search, Users, MapPin, Building, BarChart3, Edit, Trash2 } from "lucide-react";
 import { PanchayathChart } from "@/components/PanchayathChart";
+import { PanchayathForm } from "@/components/PanchayathForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -23,6 +26,8 @@ export const PanchayathHierarchy = () => {
   const [filteredPanchayaths, setFilteredPanchayaths] = useState<PanchayathData[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [editingPanchayath, setEditingPanchayath] = useState<any>(null);
+  const [showEditForm, setShowEditForm] = useState(false);
   const { toast } = useToast();
 
   const fetchPanchayaths = async () => {
@@ -76,6 +81,47 @@ export const PanchayathHierarchy = () => {
     setFilteredPanchayaths(filtered);
   }, [searchTerm, panchayaths]);
 
+  const handleEdit = (panchayath: PanchayathData) => {
+    setEditingPanchayath({
+      id: panchayath.id,
+      name: panchayath.name,
+      number_of_wards: panchayath.number_of_wards
+    });
+    setShowEditForm(true);
+  };
+
+  const handleDelete = async (panchayathId: string, panchayathName: string) => {
+    try {
+      const { error } = await supabase
+        .from("panchayaths")
+        .delete()
+        .eq("id", panchayathId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `${panchayathName} has been deleted successfully`,
+      });
+
+      // Refresh the list
+      fetchPanchayaths();
+    } catch (error: any) {
+      console.error("Error deleting panchayath:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete panchayath",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditComplete = () => {
+    setShowEditForm(false);
+    setEditingPanchayath(null);
+    fetchPanchayaths();
+  };
+
   const getRoleColor = (role: string) => {
     switch (role) {
       case "coordinator": return "bg-coordinator";
@@ -96,6 +142,27 @@ export const PanchayathHierarchy = () => {
           </div>
         </CardContent>
       </Card>
+    );
+  }
+
+  if (showEditForm) {
+    return (
+      <div className="space-y-6">
+        <PanchayathForm
+          officerId="admin"
+          editingPanchayath={editingPanchayath}
+          onEditComplete={handleEditComplete}
+          onPanchayathCreated={() => {}}
+          onPanchayathDeleted={() => {}}
+        />
+        <Button
+          variant="outline"
+          onClick={() => setShowEditForm(false)}
+          className="mb-4"
+        >
+          Back to Hierarchy
+        </Button>
+      </div>
     );
   }
 
@@ -145,10 +212,48 @@ export const PanchayathHierarchy = () => {
                         <span>{panchayath.number_of_wards} wards</span>
                       </div>
                     </div>
-                    <Badge variant="outline" className="bg-primary/10">
-                      <Users className="h-3 w-3 mr-1" />
-                      Total: {panchayath.coordinator_count + panchayath.supervisor_count + panchayath.group_leader_count + panchayath.pro_count}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-primary/10">
+                        <Users className="h-3 w-3 mr-1" />
+                        Total: {panchayath.coordinator_count + panchayath.supervisor_count + panchayath.group_leader_count + panchayath.pro_count}
+                      </Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(panchayath)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Panchayath</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete "{panchayath.name}"? This action cannot be undone and will also delete all associated coordinators, supervisors, group leaders, and PROs.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDelete(panchayath.id, panchayath.name)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
