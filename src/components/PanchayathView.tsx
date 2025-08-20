@@ -62,6 +62,15 @@ export const PanchayathView = () => {
     }
   };
 
+  const handleEdit = (type: string, data: any) => {
+    toast({
+      title: "Edit Feature",
+      description: `Edit ${type} functionality will be implemented soon`,
+    });
+    // TODO: Implement edit functionality for each role type
+    console.log(`Edit ${type}:`, data);
+  };
+
   const handleDelete = async (type: string, id: string) => {
     if (!confirm(`Are you sure you want to delete this ${type}?`)) return;
 
@@ -161,7 +170,11 @@ export const PanchayathView = () => {
                             </p>
                           </div>
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleEdit("coordinator", coordinatorData)}
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button 
@@ -196,7 +209,11 @@ export const PanchayathView = () => {
                                   </p>
                                 </div>
                                 <div className="flex gap-2">
-                                  <Button size="sm" variant="outline">
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => handleEdit("supervisor", supervisorData)}
+                                  >
                                     <Edit className="h-3 w-3" />
                                   </Button>
                                   <Button 
@@ -230,7 +247,11 @@ export const PanchayathView = () => {
                                         </p>
                                       </div>
                                       <div className="flex gap-2">
-                                        <Button size="sm" variant="outline">
+                                        <Button 
+                                          size="sm" 
+                                          variant="outline"
+                                          onClick={() => handleEdit("group_leader", groupLeaderData)}
+                                        >
                                           <Edit className="h-3 w-3" />
                                         </Button>
                                         <Button 
@@ -257,7 +278,12 @@ export const PanchayathView = () => {
                                             </p>
                                           </div>
                                           <div className="flex gap-2">
-                                            <Button size="sm" variant="outline" className="h-6 w-6 p-0">
+                                            <Button 
+                                              size="sm" 
+                                              variant="outline" 
+                                              className="h-6 w-6 p-0"
+                                              onClick={() => handleEdit("pro", pro)}
+                                            >
                                               <Edit className="h-3 w-3" />
                                             </Button>
                                             <Button 
