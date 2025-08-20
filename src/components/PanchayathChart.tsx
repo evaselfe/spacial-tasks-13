@@ -43,8 +43,8 @@ export const PanchayathChart = () => {
           id,
           name,
           coordinators:coordinators(id, name, rating),
-          supervisors:supervisors(id, name, wards),
-          group_leaders:group_leaders(id, name, ward_number),
+          supervisors:supervisors(id, name, supervisor_wards(ward)),
+          group_leaders:group_leaders(id, name, ward),
           pros:pros(id, name, group_leader_id)
         `);
 
@@ -146,9 +146,9 @@ export const PanchayathChart = () => {
               <div className="text-center">
                 <div className="font-semibold">{supervisor.name}</div>
                 <div className="text-xs text-muted-foreground">Supervisor</div>
-                {supervisor.wards && (
+                {supervisor.supervisor_wards && supervisor.supervisor_wards.length > 0 && (
                   <div className="text-xs bg-supervisor text-white px-1 rounded">
-                    Wards: {supervisor.wards.join(', ')}
+                    Wards: {supervisor.supervisor_wards.map((sw: any) => sw.ward).join(', ')}
                   </div>
                 )}
               </div>
@@ -186,7 +186,7 @@ export const PanchayathChart = () => {
                 <div className="font-semibold">{groupLeader.name}</div>
                 <div className="text-xs text-muted-foreground">Group Leader</div>
                 <div className="text-xs bg-group-leader text-white px-1 rounded">
-                  Ward {groupLeader.ward_number}
+                  Ward {groupLeader.ward}
                 </div>
               </div>
             )
@@ -202,7 +202,7 @@ export const PanchayathChart = () => {
 
         // Connect group leaders to supervisors if supervisor covers their ward
         const relatedSupervisor = panchayath.supervisors?.find((sup: any) => 
-          sup.wards?.includes(groupLeader.ward_number.toString())
+          sup.supervisor_wards?.some((sw: any) => sw.ward === groupLeader.ward)
         );
         
         if (relatedSupervisor) {

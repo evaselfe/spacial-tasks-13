@@ -114,10 +114,6 @@ export const PanchayathSelector = ({ onPanchayathSelect, onPanchayathEdit }: Pan
 
       {showPanchayaths && panchayaths.length > 0 && (
         <div className="grid gap-4">
-          <h4 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
-            <MapPin className="h-4 w-4" />
-            Available Panchayaths
-          </h4>
           <div className="grid gap-3">
             {panchayaths.map((panchayath) => (
               <Card 
