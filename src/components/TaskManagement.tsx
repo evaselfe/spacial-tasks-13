@@ -18,11 +18,13 @@ export const TaskManagement = ({
   const [selectedRole, setSelectedRole] = useState("coordinator");
   const [activeTab, setActiveTab] = useState("create");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const handlePanchayathSelect = (panchayath: any) => {
     setSelectedPanchayath(panchayath);
   };
   const handlePanchayathCreatedOrUpdated = () => {
     setEditingPanchayath(null);
+    setShowCreateForm(false);
     setRefreshKey(prev => prev + 1); // Force refresh of PanchayathSelector
   };
   const handlePanchayathDeleted = (deletedId: string) => {
@@ -78,7 +80,35 @@ export const TaskManagement = ({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <PanchayathForm officerId={officerId} onPanchayathCreated={handlePanchayathCreatedOrUpdated} editingPanchayath={editingPanchayath} onEditComplete={() => setEditingPanchayath(null)} onPanchayathDeleted={handlePanchayathDeleted} />
+                  {!showCreateForm ? (
+                    <div className="text-center py-6">
+                      <button
+                        onClick={() => setShowCreateForm(true)}
+                        className="px-6 py-3 bg-coordinator text-white rounded-lg hover:bg-coordinator/80 transition-colors font-medium"
+                      >
+                        + Create New Panchayath
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-semibold">Panchayath Form</h3>
+                        <button
+                          onClick={() => setShowCreateForm(false)}
+                          className="text-muted-foreground hover:text-foreground text-xl"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <PanchayathForm 
+                        officerId={officerId} 
+                        onPanchayathCreated={handlePanchayathCreatedOrUpdated} 
+                        editingPanchayath={editingPanchayath} 
+                        onEditComplete={() => setEditingPanchayath(null)} 
+                        onPanchayathDeleted={handlePanchayathDeleted} 
+                      />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -92,10 +122,15 @@ export const TaskManagement = ({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <PanchayathSelector key={refreshKey} onPanchayathSelect={handlePanchayathSelect} onPanchayathEdit={panchayath => {
-                  setEditingPanchayath(panchayath);
-                  setActiveTab("create");
-                }} />
+                  <PanchayathSelector 
+                    key={refreshKey} 
+                    onPanchayathSelect={handlePanchayathSelect} 
+                    onPanchayathEdit={panchayath => {
+                      setEditingPanchayath(panchayath);
+                      setShowCreateForm(true);
+                      setActiveTab("create");
+                    }} 
+                  />
                 </CardContent>
               </Card>
             </TabsContent>

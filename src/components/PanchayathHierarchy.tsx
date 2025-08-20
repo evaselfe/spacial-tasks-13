@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Users, MapPin, Building } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Search, Users, MapPin, Building, BarChart3 } from "lucide-react";
+import { PanchayathChart } from "@/components/PanchayathChart";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -103,21 +105,35 @@ export const PanchayathHierarchy = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building className="h-5 w-5" />
-            Panchayath Hierarchy
+            Panchayath Hierarchy & Analytics
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="relative mb-6">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search panchayaths..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+          <Tabs defaultValue="list" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="list" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                List View
+              </TabsTrigger>
+              <TabsTrigger value="chart" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Chart View
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="list">
+              <div className="space-y-4">
+                <div className="relative mb-6">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    placeholder="Search panchayaths..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
 
-          <div className="grid gap-4">
+                <div className="grid gap-4">
             {filteredPanchayaths.map((panchayath) => (
               <Card key={panchayath.id} className="border border-border hover:border-primary/40 transition-colors">
                 <CardContent className="p-4">
@@ -173,13 +189,20 @@ export const PanchayathHierarchy = () => {
             ))}
           </div>
 
-          {filteredPanchayaths.length === 0 && (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">
-                {searchTerm ? `No panchayaths found matching "${searchTerm}"` : "No panchayaths found"}
-              </p>
-            </div>
-          )}
+                {filteredPanchayaths.length === 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">
+                      {searchTerm ? `No panchayaths found matching "${searchTerm}"` : "No panchayaths found"}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="chart">
+              <PanchayathChart />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
