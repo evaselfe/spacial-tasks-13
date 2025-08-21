@@ -167,10 +167,10 @@ export const TaskManagement = ({
 
                   <Card className="border border-primary/20">
                     <CardContent className="p-6">
-                      {selectedRole === "coordinator" && <CoordinatorForm />}
-                      {selectedRole === "supervisor" && <SupervisorForm />}
-                      {selectedRole === "group-leader" && <GroupLeaderForm />}
-                      {selectedRole === "pro" && <ProForm />}
+                      {selectedRole === "coordinator" && <CoordinatorForm selectedPanchayath={selectedPanchayath} />}
+                      {selectedRole === "supervisor" && <SupervisorForm selectedPanchayath={selectedPanchayath} />}
+                      {selectedRole === "group-leader" && <GroupLeaderForm selectedPanchayath={selectedPanchayath} />}
+                      {selectedRole === "pro" && <ProForm selectedPanchayath={selectedPanchayath} />}
                     </CardContent>
                   </Card>
                 </CardContent>

@@ -7,7 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-export const GroupLeaderForm = () => {
+interface GroupLeaderFormProps {
+  selectedPanchayath?: any;
+}
+
+export const GroupLeaderForm = ({ selectedPanchayath: preSelectedPanchayath }: GroupLeaderFormProps) => {
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
   const [ward, setWard] = useState("");
@@ -22,6 +26,12 @@ export const GroupLeaderForm = () => {
   useEffect(() => {
     fetchPanchayaths();
   }, []);
+
+  useEffect(() => {
+    if (preSelectedPanchayath) {
+      setPanchayathId(preSelectedPanchayath.id);
+    }
+  }, [preSelectedPanchayath]);
 
   useEffect(() => {
     if (panchayathId) {
@@ -143,21 +153,33 @@ export const GroupLeaderForm = () => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label>Select Panchayath</Label>
-            <Select value={panchayathId} onValueChange={setPanchayathId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select panchayath" />
-              </SelectTrigger>
-              <SelectContent>
-                {panchayaths.map((panchayath) => (
-                  <SelectItem key={panchayath.id} value={panchayath.id}>
-                    {panchayath.name} ({panchayath.number_of_wards} wards)
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {!preSelectedPanchayath && (
+            <div className="space-y-2">
+              <Label>Select Panchayath</Label>
+              <Select value={panchayathId} onValueChange={setPanchayathId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select panchayath" />
+                </SelectTrigger>
+                <SelectContent>
+                  {panchayaths.map((panchayath) => (
+                    <SelectItem key={panchayath.id} value={panchayath.id}>
+                      {panchayath.name} ({panchayath.number_of_wards} wards)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          
+          {preSelectedPanchayath && (
+            <div className="space-y-2">
+              <Label>Selected Panchayath</Label>
+              <div className="p-3 bg-muted rounded-md border">
+                <span className="font-medium">{preSelectedPanchayath.name}</span>
+                <span className="text-muted-foreground ml-2">({preSelectedPanchayath.number_of_wards} wards)</span>
+              </div>
+            </div>
+          )}
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
