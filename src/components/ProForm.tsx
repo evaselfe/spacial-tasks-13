@@ -9,9 +9,11 @@ import { useToast } from "@/hooks/use-toast";
 
 interface ProFormProps {
   selectedPanchayath?: any;
+  editingPro?: any;
+  onEditComplete?: () => void;
 }
 
-export const ProForm = ({ selectedPanchayath: preSelectedPanchayath }: ProFormProps) => {
+export const ProForm = ({ selectedPanchayath: preSelectedPanchayath, editingPro, onEditComplete }: ProFormProps) => {
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
   const [ward, setWard] = useState("");
@@ -21,6 +23,7 @@ export const ProForm = ({ selectedPanchayath: preSelectedPanchayath }: ProFormPr
   const [panchayaths, setPanchayaths] = useState<any[]>([]);
   const [selectedPanchayath, setSelectedPanchayath] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const isEditing = !!editingPro;
   const { toast } = useToast();
 
   useEffect(() => {
@@ -32,6 +35,16 @@ export const ProForm = ({ selectedPanchayath: preSelectedPanchayath }: ProFormPr
       setPanchayathId(preSelectedPanchayath.id);
     }
   }, [preSelectedPanchayath]);
+
+  useEffect(() => {
+    if (editingPro) {
+      setName(editingPro.name);
+      setMobile(editingPro.mobile_number);
+      setWard(editingPro.ward.toString());
+      setGroupLeaderId(editingPro.group_leader_id);
+      setPanchayathId(editingPro.panchayath_id);
+    }
+  }, [editingPro]);
 
   useEffect(() => {
     if (panchayathId) {
@@ -107,33 +120,54 @@ export const ProForm = ({ selectedPanchayath: preSelectedPanchayath }: ProFormPr
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from("pros")
-        .insert({
-          panchayath_id: panchayathId,
-          group_leader_id: groupLeaderId,
-          name: name.trim(),
-          mobile_number: mobile.trim(),
-          ward: wardNum,
+      if (isEditing) {
+        const { error } = await supabase
+          .from("pros")
+          .update({
+            group_leader_id: groupLeaderId,
+            name: name.trim(),
+            mobile_number: mobile.trim(),
+            ward: wardNum,
+          })
+          .eq("id", editingPro.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "PRO updated successfully",
         });
+        
+        onEditComplete?.();
+      } else {
+        const { error } = await supabase
+          .from("pros")
+          .insert({
+            panchayath_id: panchayathId,
+            group_leader_id: groupLeaderId,
+            name: name.trim(),
+            mobile_number: mobile.trim(),
+            ward: wardNum,
+          });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "PRO added successfully",
-      });
-      
-      setName("");
-      setMobile("");
-      setWard("");
-      setGroupLeaderId("");
-      setPanchayathId("");
+        toast({
+          title: "Success",
+          description: "PRO added successfully",
+        });
+        
+        setName("");
+        setMobile("");
+        setWard("");
+        setGroupLeaderId("");
+        setPanchayathId("");
+      }
     } catch (error: any) {
-      console.error("Error adding PRO:", error);
+      console.error(`Error ${isEditing ? 'updating' : 'adding'} PRO:`, error);
       toast({
         title: "Error",
-        description: error.message || "Failed to add PRO",
+        description: error.message || `Failed to ${isEditing ? 'update' : 'add'} PRO`,
         variant: "destructive",
       });
     } finally {
@@ -146,7 +180,7 @@ export const ProForm = ({ selectedPanchayath: preSelectedPanchayath }: ProFormPr
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Add PRO</CardTitle>
+        <CardTitle>{isEditing ? 'Edit PRO' : 'Add PRO'}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -238,8 +272,13 @@ export const ProForm = ({ selectedPanchayath: preSelectedPanchayath }: ProFormPr
           )}
 
           <Button type="submit" disabled={loading}>
-            {loading ? "Adding..." : "Add PRO"}
+            {loading ? (isEditing ? "Updating..." : "Adding...") : (isEditing ? "Update PRO" : "Add PRO")}
           </Button>
+          {isEditing && (
+            <Button type="button" variant="outline" onClick={onEditComplete}>
+              Cancel
+            </Button>
+          )}
         </form>
       </CardContent>
     </Card>

@@ -10,9 +10,11 @@ import { useToast } from "@/hooks/use-toast";
 
 interface SupervisorFormProps {
   selectedPanchayath?: any;
+  editingSupervisor?: any;
+  onEditComplete?: () => void;
 }
 
-export const SupervisorForm = ({ selectedPanchayath: preSelectedPanchayath }: SupervisorFormProps) => {
+export const SupervisorForm = ({ selectedPanchayath: preSelectedPanchayath, editingSupervisor, onEditComplete }: SupervisorFormProps) => {
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
   const [coordinatorId, setCoordinatorId] = useState("");
@@ -22,6 +24,7 @@ export const SupervisorForm = ({ selectedPanchayath: preSelectedPanchayath }: Su
   const [panchayaths, setPanchayaths] = useState<any[]>([]);
   const [selectedPanchayath, setSelectedPanchayath] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const isEditing = !!editingSupervisor;
   const { toast } = useToast();
 
   useEffect(() => {
@@ -33,6 +36,31 @@ export const SupervisorForm = ({ selectedPanchayath: preSelectedPanchayath }: Su
       setPanchayathId(preSelectedPanchayath.id);
     }
   }, [preSelectedPanchayath]);
+
+  useEffect(() => {
+    if (editingSupervisor) {
+      setName(editingSupervisor.name);
+      setMobile(editingSupervisor.mobile_number);
+      setCoordinatorId(editingSupervisor.coordinator_id);
+      setPanchayathId(editingSupervisor.panchayath_id);
+      // Fetch supervisor wards
+      fetchSupervisorWards(editingSupervisor.id);
+    }
+  }, [editingSupervisor]);
+
+  const fetchSupervisorWards = async (supervisorId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("supervisor_wards")
+        .select("ward")
+        .eq("supervisor_id", supervisorId);
+
+      if (error) throw error;
+      setSelectedWards(data?.map(w => w.ward) || []);
+    } catch (error) {
+      console.error("Error fetching supervisor wards:", error);
+    }
+  };
 
   useEffect(() => {
     if (panchayathId) {
@@ -108,47 +136,88 @@ export const SupervisorForm = ({ selectedPanchayath: preSelectedPanchayath }: Su
 
     setLoading(true);
     try {
-      // Insert supervisor
-      const { data: supervisor, error: supervisorError } = await supabase
-        .from("supervisors")
-        .insert({
-          panchayath_id: panchayathId,
-          coordinator_id: coordinatorId,
-          name: name.trim(),
-          mobile_number: mobile.trim(),
-        })
-        .select()
-        .single();
+      if (isEditing) {
+        // Update supervisor
+        const { error: supervisorError } = await supabase
+          .from("supervisors")
+          .update({
+            coordinator_id: coordinatorId,
+            name: name.trim(),
+            mobile_number: mobile.trim(),
+          })
+          .eq("id", editingSupervisor.id);
 
-      if (supervisorError) throw supervisorError;
+        if (supervisorError) throw supervisorError;
 
-      // Insert ward mappings
-      const wardMappings = selectedWards.map(ward => ({
-        supervisor_id: supervisor.id,
-        ward: ward,
-      }));
+        // Delete existing ward mappings
+        const { error: deleteError } = await supabase
+          .from("supervisor_wards")
+          .delete()
+          .eq("supervisor_id", editingSupervisor.id);
 
-      const { error: wardError } = await supabase
-        .from("supervisor_wards")
-        .insert(wardMappings);
+        if (deleteError) throw deleteError;
 
-      if (wardError) throw wardError;
+        // Insert new ward mappings
+        const wardMappings = selectedWards.map(ward => ({
+          supervisor_id: editingSupervisor.id,
+          ward: ward,
+        }));
 
-      toast({
-        title: "Success",
-        description: "Supervisor added successfully",
-      });
-      
-      setName("");
-      setMobile("");
-      setCoordinatorId("");
-      setSelectedWards([]);
-      setPanchayathId("");
+        const { error: wardError } = await supabase
+          .from("supervisor_wards")
+          .insert(wardMappings);
+
+        if (wardError) throw wardError;
+
+        toast({
+          title: "Success",
+          description: "Supervisor updated successfully",
+        });
+        
+        onEditComplete?.();
+      } else {
+        // Insert supervisor
+        const { data: supervisor, error: supervisorError } = await supabase
+          .from("supervisors")
+          .insert({
+            panchayath_id: panchayathId,
+            coordinator_id: coordinatorId,
+            name: name.trim(),
+            mobile_number: mobile.trim(),
+          })
+          .select()
+          .single();
+
+        if (supervisorError) throw supervisorError;
+
+        // Insert ward mappings
+        const wardMappings = selectedWards.map(ward => ({
+          supervisor_id: supervisor.id,
+          ward: ward,
+        }));
+
+        const { error: wardError } = await supabase
+          .from("supervisor_wards")
+          .insert(wardMappings);
+
+        if (wardError) throw wardError;
+
+        toast({
+          title: "Success",
+          description: "Supervisor added successfully",
+        });
+        
+        setName("");
+        setMobile("");
+        setCoordinatorId("");
+        setSelectedWards([]);
+        setPanchayathId("");
+      }
     } catch (error: any) {
-      console.error("Error adding supervisor:", error);
+      console.error(`Error ${isEditing ? 'updating' : 'adding'} supervisor:`, error);
       toast({
         title: "Error",
-        description: error.message || "Failed to add supervisor",
+        description: error.message || `Failed to ${isEditing ? 'update' : 'add'} supervisor`,
         variant: "destructive",
       });
     } finally {
@@ -161,7 +230,7 @@ export const SupervisorForm = ({ selectedPanchayath: preSelectedPanchayath }: Su
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Add Supervisor</CardTitle>
+        <CardTitle>{isEditing ? 'Edit Supervisor' : 'Add Supervisor'}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -259,8 +328,13 @@ export const SupervisorForm = ({ selectedPanchayath: preSelectedPanchayath }: Su
           </div>
 
           <Button type="submit" disabled={loading}>
-            {loading ? "Adding..." : "Add Supervisor"}
+            {loading ? (isEditing ? "Updating..." : "Adding...") : (isEditing ? "Update Supervisor" : "Add Supervisor")}
           </Button>
+          {isEditing && (
+            <Button type="button" variant="outline" onClick={onEditComplete}>
+              Cancel
+            </Button>
+          )}
         </form>
       </CardContent>
     </Card>

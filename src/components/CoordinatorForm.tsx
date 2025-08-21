@@ -9,9 +9,11 @@ import { useToast } from "@/hooks/use-toast";
 
 interface CoordinatorFormProps {
   selectedPanchayath?: any;
+  editingCoordinator?: any;
+  onEditComplete?: () => void;
 }
 
-export const CoordinatorForm = ({ selectedPanchayath: preSelectedPanchayath }: CoordinatorFormProps) => {
+export const CoordinatorForm = ({ selectedPanchayath: preSelectedPanchayath, editingCoordinator, onEditComplete }: CoordinatorFormProps) => {
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
   const [ward, setWard] = useState("");
@@ -20,6 +22,7 @@ export const CoordinatorForm = ({ selectedPanchayath: preSelectedPanchayath }: C
   const [panchayaths, setPanchayaths] = useState<any[]>([]);
   const [selectedPanchayath, setSelectedPanchayath] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const isEditing = !!editingCoordinator;
   const { toast } = useToast();
 
   useEffect(() => {
@@ -31,6 +34,16 @@ export const CoordinatorForm = ({ selectedPanchayath: preSelectedPanchayath }: C
       setPanchayathId(preSelectedPanchayath.id);
     }
   }, [preSelectedPanchayath]);
+
+  useEffect(() => {
+    if (editingCoordinator) {
+      setName(editingCoordinator.name);
+      setMobile(editingCoordinator.mobile_number);
+      setWard(editingCoordinator.ward.toString());
+      setRating(editingCoordinator.rating.toString());
+      setPanchayathId(editingCoordinator.panchayath_id);
+    }
+  }, [editingCoordinator]);
 
   useEffect(() => {
     if (panchayathId) {
@@ -100,33 +113,54 @@ export const CoordinatorForm = ({ selectedPanchayath: preSelectedPanchayath }: C
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from("coordinators")
-        .insert({
-          panchayath_id: panchayathId,
-          name: name.trim(),
-          mobile_number: mobile.trim(),
-          ward: wardNum,
-          rating: ratingNum,
+      if (isEditing) {
+        const { error } = await supabase
+          .from("coordinators")
+          .update({
+            name: name.trim(),
+            mobile_number: mobile.trim(),
+            ward: wardNum,
+            rating: ratingNum,
+          })
+          .eq("id", editingCoordinator.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Coordinator updated successfully",
         });
+        
+        onEditComplete?.();
+      } else {
+        const { error } = await supabase
+          .from("coordinators")
+          .insert({
+            panchayath_id: panchayathId,
+            name: name.trim(),
+            mobile_number: mobile.trim(),
+            ward: wardNum,
+            rating: ratingNum,
+          });
 
-      if (error) {
-        throw error;
+        if (error) {
+          throw error;
+        }
+
+        toast({
+          title: "Success",
+          description: "Coordinator added successfully",
+        });
+        
+        setName("");
+        setMobile("");
+        setWard("");
+        setRating("");
+        setPanchayathId("");
       }
-
-      toast({
-        title: "Success",
-        description: "Coordinator added successfully",
-      });
-      
-      setName("");
-      setMobile("");
-      setWard("");
-      setRating("");
-      setPanchayathId("");
     } catch (error: any) {
-      console.error("Error adding coordinator:", error);
-      let errorMessage = "Failed to add coordinator";
+      console.error(`Error ${isEditing ? 'updating' : 'adding'} coordinator:`, error);
+      let errorMessage = `Failed to ${isEditing ? 'update' : 'add'} coordinator`;
       if (error.code === '23505') {
         if (error.message.includes('mobile_number')) {
           errorMessage = "This mobile number is already registered";
@@ -149,7 +183,7 @@ export const CoordinatorForm = ({ selectedPanchayath: preSelectedPanchayath }: C
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Add Coordinator</CardTitle>
+        <CardTitle>{isEditing ? 'Edit Coordinator' : 'Add Coordinator'}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -239,8 +273,13 @@ export const CoordinatorForm = ({ selectedPanchayath: preSelectedPanchayath }: C
             </div>
           </div>
           <Button type="submit" disabled={loading}>
-            {loading ? "Adding..." : "Add Coordinator"}
+            {loading ? (isEditing ? "Updating..." : "Adding...") : (isEditing ? "Update Coordinator" : "Add Coordinator")}
           </Button>
+          {isEditing && (
+            <Button type="button" variant="outline" onClick={onEditComplete}>
+              Cancel
+            </Button>
+          )}
         </form>
       </CardContent>
     </Card>

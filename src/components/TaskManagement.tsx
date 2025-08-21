@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { PanchayathForm } from "@/components/PanchayathForm";
 import { PanchayathSelector } from "@/components/PanchayathSelector";
 import { CoordinatorForm } from "@/components/CoordinatorForm";
 import { SupervisorForm } from "@/components/SupervisorForm";
 import { GroupLeaderForm } from "@/components/GroupLeaderForm";
 import { ProForm } from "@/components/ProForm";
+import { AgentsList } from "@/components/AgentsList";
 interface TaskManagementProps {
   officerId: string;
 }
@@ -19,6 +21,7 @@ export const TaskManagement = ({
   const [activeTab, setActiveTab] = useState("create");
   const [refreshKey, setRefreshKey] = useState(0);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showExistingAgents, setShowExistingAgents] = useState(false);
   const handlePanchayathSelect = (panchayath: any) => {
     setSelectedPanchayath(panchayath);
   };
@@ -165,14 +168,39 @@ export const TaskManagement = ({
                       </Card>)}
                   </div>
 
-                  <Card className="border border-primary/20">
-                    <CardContent className="p-6">
-                      {selectedRole === "coordinator" && <CoordinatorForm selectedPanchayath={selectedPanchayath} />}
-                      {selectedRole === "supervisor" && <SupervisorForm selectedPanchayath={selectedPanchayath} />}
-                      {selectedRole === "group-leader" && <GroupLeaderForm selectedPanchayath={selectedPanchayath} />}
-                      {selectedRole === "pro" && <ProForm selectedPanchayath={selectedPanchayath} />}
-                    </CardContent>
-                  </Card>
+                  <div className="space-y-4">
+                    <div className="flex gap-2">
+                      <Button
+                        variant={!showExistingAgents ? "default" : "outline"}
+                        onClick={() => setShowExistingAgents(false)}
+                        size="sm"
+                      >
+                        Add New
+                      </Button>
+                      <Button
+                        variant={showExistingAgents ? "default" : "outline"}
+                        onClick={() => setShowExistingAgents(true)}
+                        size="sm"
+                      >
+                        View/Edit Existing
+                      </Button>
+                    </div>
+
+                    <Card className="border border-primary/20">
+                      <CardContent className="p-6">
+                        {showExistingAgents ? (
+                          <AgentsList selectedPanchayath={selectedPanchayath} selectedRole={selectedRole} />
+                        ) : (
+                          <>
+                            {selectedRole === "coordinator" && <CoordinatorForm selectedPanchayath={selectedPanchayath} />}
+                            {selectedRole === "supervisor" && <SupervisorForm selectedPanchayath={selectedPanchayath} />}
+                            {selectedRole === "group-leader" && <GroupLeaderForm selectedPanchayath={selectedPanchayath} />}
+                            {selectedRole === "pro" && <ProForm selectedPanchayath={selectedPanchayath} />}
+                          </>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
                 </CardContent>
               </Card>
             </div>}

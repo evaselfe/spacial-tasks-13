@@ -9,9 +9,11 @@ import { useToast } from "@/hooks/use-toast";
 
 interface GroupLeaderFormProps {
   selectedPanchayath?: any;
+  editingGroupLeader?: any;
+  onEditComplete?: () => void;
 }
 
-export const GroupLeaderForm = ({ selectedPanchayath: preSelectedPanchayath }: GroupLeaderFormProps) => {
+export const GroupLeaderForm = ({ selectedPanchayath: preSelectedPanchayath, editingGroupLeader, onEditComplete }: GroupLeaderFormProps) => {
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
   const [ward, setWard] = useState("");
@@ -21,6 +23,7 @@ export const GroupLeaderForm = ({ selectedPanchayath: preSelectedPanchayath }: G
   const [panchayaths, setPanchayaths] = useState<any[]>([]);
   const [selectedPanchayath, setSelectedPanchayath] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const isEditing = !!editingGroupLeader;
   const { toast } = useToast();
 
   useEffect(() => {
@@ -32,6 +35,16 @@ export const GroupLeaderForm = ({ selectedPanchayath: preSelectedPanchayath }: G
       setPanchayathId(preSelectedPanchayath.id);
     }
   }, [preSelectedPanchayath]);
+
+  useEffect(() => {
+    if (editingGroupLeader) {
+      setName(editingGroupLeader.name);
+      setMobile(editingGroupLeader.mobile_number);
+      setWard(editingGroupLeader.ward.toString());
+      setSupervisorId(editingGroupLeader.supervisor_id);
+      setPanchayathId(editingGroupLeader.panchayath_id);
+    }
+  }, [editingGroupLeader]);
 
   useEffect(() => {
     if (panchayathId) {
@@ -110,33 +123,54 @@ export const GroupLeaderForm = ({ selectedPanchayath: preSelectedPanchayath }: G
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from("group_leaders")
-        .insert({
-          panchayath_id: panchayathId,
-          supervisor_id: supervisorId,
-          name: name.trim(),
-          mobile_number: mobile.trim(),
-          ward: wardNum,
+      if (isEditing) {
+        const { error } = await supabase
+          .from("group_leaders")
+          .update({
+            supervisor_id: supervisorId,
+            name: name.trim(),
+            mobile_number: mobile.trim(),
+            ward: wardNum,
+          })
+          .eq("id", editingGroupLeader.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Group Leader updated successfully",
         });
+        
+        onEditComplete?.();
+      } else {
+        const { error } = await supabase
+          .from("group_leaders")
+          .insert({
+            panchayath_id: panchayathId,
+            supervisor_id: supervisorId,
+            name: name.trim(),
+            mobile_number: mobile.trim(),
+            ward: wardNum,
+          });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Group Leader added successfully",
-      });
-      
-      setName("");
-      setMobile("");
-      setWard("");
-      setSupervisorId("");
-      setPanchayathId("");
+        toast({
+          title: "Success",
+          description: "Group Leader added successfully",
+        });
+        
+        setName("");
+        setMobile("");
+        setWard("");
+        setSupervisorId("");
+        setPanchayathId("");
+      }
     } catch (error: any) {
-      console.error("Error adding group leader:", error);
+      console.error(`Error ${isEditing ? 'updating' : 'adding'} group leader:`, error);
       toast({
         title: "Error",
-        description: error.message || "Failed to add group leader",
+        description: error.message || `Failed to ${isEditing ? 'update' : 'add'} group leader`,
         variant: "destructive",
       });
     } finally {
@@ -149,7 +183,7 @@ export const GroupLeaderForm = ({ selectedPanchayath: preSelectedPanchayath }: G
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Add Group Leader</CardTitle>
+        <CardTitle>{isEditing ? 'Edit Group Leader' : 'Add Group Leader'}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -241,8 +275,13 @@ export const GroupLeaderForm = ({ selectedPanchayath: preSelectedPanchayath }: G
           )}
 
           <Button type="submit" disabled={loading}>
-            {loading ? "Adding..." : "Add Group Leader"}
+            {loading ? (isEditing ? "Updating..." : "Adding...") : (isEditing ? "Update Group Leader" : "Add Group Leader")}
           </Button>
+          {isEditing && (
+            <Button type="button" variant="outline" onClick={onEditComplete}>
+              Cancel
+            </Button>
+          )}
         </form>
       </CardContent>
     </Card>
