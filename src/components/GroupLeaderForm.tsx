@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-interface GroupLeaderFormProps {
+export interface GroupLeaderFormProps {
   selectedPanchayath?: any;
   editingGroupLeader?: any;
   onEditComplete?: () => void;

@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-interface SupervisorFormProps {
+export interface SupervisorFormProps {
   selectedPanchayath?: any;
   editingSupervisor?: any;
   onEditComplete?: () => void;

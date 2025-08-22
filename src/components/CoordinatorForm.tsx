@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-interface CoordinatorFormProps {
+export interface CoordinatorFormProps {
   selectedPanchayath?: any;
   editingCoordinator?: any;
   onEditComplete?: () => void;
