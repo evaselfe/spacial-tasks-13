@@ -202,15 +202,15 @@ export const PanchayathView = () => {
                               <Edit className="h-3 w-3 md:h-4 md:w-4" />
                               <span className="hidden md:inline ml-2">Edit</span>
                             </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => handleDelete("coordinator", coordinatorData?.id, coordinatorData?.coordinator_name)}
-                              className="h-8 w-8 p-0 md:h-9 md:w-auto md:px-3"
-                            >
-                              <Trash2 className="h-3 w-3 md:h-4 md:w-4" />
-                              <span className="hidden md:inline ml-2">Delete</span>
-                            </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleDelete("coordinator", coordinatorData?.coordinator_id, coordinatorData?.coordinator_name)}
+                                className="h-8 w-8 p-0 md:h-9 md:w-auto md:px-3"
+                              >
+                                <Trash2 className="h-3 w-3 md:h-4 md:w-4" />
+                                <span className="hidden md:inline ml-2">Delete</span>
+                              </Button>
                           </div>
                         </div>
                       </CardHeader>
@@ -248,7 +248,7 @@ export const PanchayathView = () => {
                                    <Button 
                                      size="sm" 
                                      variant="outline"
-                                     onClick={() => handleDelete("supervisor", supervisorData?.id, supervisorData?.supervisor_name)}
+                                     onClick={() => handleDelete("supervisor", supervisorData?.supervisor_id, supervisorData?.supervisor_name)}
                                      className="h-7 w-7 p-0 md:h-8 md:w-auto md:px-2"
                                    >
                                     <Trash2 className="h-3 w-3" />
@@ -290,7 +290,7 @@ export const PanchayathView = () => {
                                          <Button 
                                            size="sm" 
                                            variant="outline"
-                                           onClick={() => handleDelete("group_leader", groupLeaderData?.id, groupLeaderData?.group_leader_name)}
+                                           onClick={() => handleDelete("group_leader", groupLeaderData?.group_leader_id, groupLeaderData?.group_leader_name)}
                                            className="h-6 w-6 p-0 md:h-7 md:w-auto md:px-2"
                                          >
                                           <Trash2 className="h-3 w-3" />
@@ -326,7 +326,7 @@ export const PanchayathView = () => {
                                                 size="sm" 
                                                 variant="outline" 
                                                 className="h-6 w-6 p-0"
-                                                onClick={() => handleDelete("pro", pro.id, pro.pro_name)}
+                                                onClick={() => handleDelete("pro", pro.pro_id, pro.pro_name)}
                                               >
                                                <Trash2 className="h-3 w-3" />
                                              </Button>
