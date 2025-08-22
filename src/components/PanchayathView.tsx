@@ -8,6 +8,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Trash2, Edit } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CoordinatorForm } from "@/components/CoordinatorForm";
+import { SupervisorForm } from "@/components/SupervisorForm";
+import { GroupLeaderForm } from "@/components/GroupLeaderForm";
+import { ProForm } from "@/components/ProForm";
 
 export const PanchayathView = () => {
   const [panchayaths, setPanchayaths] = useState<any[]>([]);
@@ -18,6 +23,9 @@ export const PanchayathView = () => {
   const [deleteCode, setDeleteCode] = useState("");
   const [itemToDelete, setItemToDelete] = useState<{type: string, id?: string, name: string} | null>(null);
   const { toast } = useToast();
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editType, setEditType] = useState<"coordinator" | "supervisor" | "group_leader" | "pro" | null>(null);
+  const [editRecord, setEditRecord] = useState<any | null>(null);
 
   useEffect(() => {
     fetchPanchayaths();
@@ -67,13 +75,80 @@ export const PanchayathView = () => {
     }
   };
 
-  const handleEdit = (type: string, data: any) => {
-    toast({
-      title: "Edit Feature",
-      description: `Edit ${type} functionality will be implemented soon`,
-    });
-    // TODO: Implement edit functionality for each role type
-    console.log(`Edit ${type}:`, data);
+  const handleEdit = async (type: string, row: any) => {
+    try {
+      if (!selectedPanchayath) throw new Error("Select a panchayath first");
+      let record: any = null;
+
+      switch (type) {
+        case "coordinator": {
+          const { data, error } = await supabase
+            .from("coordinators")
+            .select("id, name, mobile_number, ward, rating, panchayath_id")
+            .eq("panchayath_id", selectedPanchayath)
+            .eq("name", row.coordinator_name)
+            .eq("mobile_number", row.coordinator_mobile)
+            .eq("ward", row.coordinator_ward)
+            .limit(1);
+          if (error) throw error;
+          record = data?.[0] || null;
+          break;
+        }
+        case "supervisor": {
+          const { data, error } = await supabase
+            .from("supervisors")
+            .select("id, name, mobile_number, coordinator_id, panchayath_id")
+            .eq("panchayath_id", selectedPanchayath)
+            .eq("name", row.supervisor_name)
+            .eq("mobile_number", row.supervisor_mobile)
+            .limit(1);
+          if (error) throw error;
+          record = data?.[0] || null;
+          break;
+        }
+        case "group_leader": {
+          const { data, error } = await supabase
+            .from("group_leaders")
+            .select("id, name, mobile_number, ward, supervisor_id, panchayath_id")
+            .eq("panchayath_id", selectedPanchayath)
+            .eq("name", row.group_leader_name)
+            .eq("mobile_number", row.group_leader_mobile)
+            .eq("ward", row.group_leader_ward)
+            .limit(1);
+          if (error) throw error;
+          record = data?.[0] || null;
+          break;
+        }
+        case "pro": {
+          const { data, error } = await supabase
+            .from("pros")
+            .select("id, name, mobile_number, ward, group_leader_id, panchayath_id")
+            .eq("panchayath_id", selectedPanchayath)
+            .eq("name", row.pro_name)
+            .eq("mobile_number", row.pro_mobile)
+            .eq("ward", row.pro_ward)
+            .limit(1);
+          if (error) throw error;
+          record = data?.[0] || null;
+          break;
+        }
+        default:
+          throw new Error("Invalid type");
+      }
+
+      if (!record) throw new Error(`${type} record not found`);
+
+      setEditType(type as any);
+      setEditRecord(record);
+      setShowEditDialog(true);
+    } catch (error: any) {
+      console.error(`Error preparing edit for ${type}:`, error);
+      toast({
+        title: "Error",
+        description: error.message || `Could not load ${type} for edit`,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDelete = (type: string, id: string, name: string) => {
@@ -114,19 +189,61 @@ export const PanchayathView = () => {
 
       // Resolve target id (hierarchy_view doesn't expose IDs)
       let targetId = itemToDelete.id;
-      if (itemToDelete.type === "pro" && !targetId) {
-        const match = hierarchyData.find((h) => h.pro_name === itemToDelete.name);
-        if (!match) throw new Error("PRO reference not found in hierarchy data");
-        const { data: proRows, error: findError } = await supabase
-          .from("pros")
-          .select("id")
-          .eq("panchayath_id", selectedPanchayath)
-          .eq("name", match.pro_name)
-          .eq("ward", match.pro_ward)
-          .eq("mobile_number", match.pro_mobile);
-        if (findError) throw findError;
-        targetId = proRows?.[0]?.id;
-        if (!targetId) throw new Error("PRO record not found");
+      if (!targetId) {
+        if (itemToDelete.type === "coordinator") {
+          const match = hierarchyData.find((h) => h.coordinator_name === itemToDelete.name);
+          if (!match) throw new Error("Coordinator reference not found in hierarchy data");
+          const { data, error: findError } = await supabase
+            .from("coordinators")
+            .select("id")
+            .eq("panchayath_id", selectedPanchayath)
+            .eq("name", match.coordinator_name)
+            .eq("mobile_number", match.coordinator_mobile)
+            .eq("ward", match.coordinator_ward)
+            .limit(1);
+          if (findError) throw findError;
+          targetId = data?.[0]?.id;
+        } else if (itemToDelete.type === "supervisor") {
+          const match = hierarchyData.find((h) => h.supervisor_name === itemToDelete.name);
+          if (!match) throw new Error("Supervisor reference not found in hierarchy data");
+          const { data, error: findError } = await supabase
+            .from("supervisors")
+            .select("id")
+            .eq("panchayath_id", selectedPanchayath)
+            .eq("name", match.supervisor_name)
+            .eq("mobile_number", match.supervisor_mobile)
+            .limit(1);
+          if (findError) throw findError;
+          targetId = data?.[0]?.id;
+        } else if (itemToDelete.type === "group_leader") {
+          const match = hierarchyData.find((h) => h.group_leader_name === itemToDelete.name);
+          if (!match) throw new Error("Group Leader reference not found in hierarchy data");
+          const { data, error: findError } = await supabase
+            .from("group_leaders")
+            .select("id")
+            .eq("panchayath_id", selectedPanchayath)
+            .eq("name", match.group_leader_name)
+            .eq("mobile_number", match.group_leader_mobile)
+            .eq("ward", match.group_leader_ward)
+            .limit(1);
+          if (findError) throw findError;
+          targetId = data?.[0]?.id;
+        } else if (itemToDelete.type === "pro") {
+          const match = hierarchyData.find((h) => h.pro_name === itemToDelete.name);
+          if (!match) throw new Error("PRO reference not found in hierarchy data");
+          const { data, error: findError } = await supabase
+            .from("pros")
+            .select("id")
+            .eq("panchayath_id", selectedPanchayath)
+            .eq("name", match.pro_name)
+            .eq("ward", match.pro_ward)
+            .eq("mobile_number", match.pro_mobile)
+            .limit(1);
+          if (findError) throw findError;
+          targetId = data?.[0]?.id;
+        }
+
+        if (!targetId) throw new Error("Record not found");
       }
 
       const { error } = await supabase
@@ -391,6 +508,68 @@ export const PanchayathView = () => {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+
+    <Dialog open={showEditDialog} onOpenChange={(open) => {
+      setShowEditDialog(open);
+      if (!open) {
+        setEditRecord(null);
+        setEditType(null);
+      }
+    }}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Edit {editType?.replace("_", " ")}</DialogTitle>
+        </DialogHeader>
+        {editType === "coordinator" && editRecord && (
+          <CoordinatorForm
+            selectedPanchayath={{ id: selectedPanchayath }}
+            editingCoordinator={editRecord}
+            onEditComplete={() => {
+              setShowEditDialog(false);
+              setEditRecord(null);
+              setEditType(null);
+              fetchHierarchyData();
+            }}
+          />
+        )}
+        {editType === "supervisor" && editRecord && (
+          <SupervisorForm
+            selectedPanchayath={{ id: selectedPanchayath }}
+            editingSupervisor={editRecord}
+            onEditComplete={() => {
+              setShowEditDialog(false);
+              setEditRecord(null);
+              setEditType(null);
+              fetchHierarchyData();
+            }}
+          />
+        )}
+        {editType === "group_leader" && editRecord && (
+          <GroupLeaderForm
+            selectedPanchayath={{ id: selectedPanchayath }}
+            editingGroupLeader={editRecord}
+            onEditComplete={() => {
+              setShowEditDialog(false);
+              setEditRecord(null);
+              setEditType(null);
+              fetchHierarchyData();
+            }}
+          />
+        )}
+        {editType === "pro" && editRecord && (
+          <ProForm
+            selectedPanchayath={{ id: selectedPanchayath }}
+            editingPro={editRecord}
+            onEditComplete={() => {
+              setShowEditDialog(false);
+              setEditRecord(null);
+              setEditType(null);
+              fetchHierarchyData();
+            }}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
     </>
   );
 };
