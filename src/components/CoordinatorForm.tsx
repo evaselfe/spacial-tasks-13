@@ -114,7 +114,7 @@ export const CoordinatorForm = ({ selectedPanchayath: preSelectedPanchayath, edi
     setLoading(true);
     try {
       if (isEditing) {
-        const { error } = await supabase
+        const { data: updated, error } = await supabase
           .from("coordinators")
           .update({
             name: name.trim(),
@@ -122,9 +122,13 @@ export const CoordinatorForm = ({ selectedPanchayath: preSelectedPanchayath, edi
             ward: wardNum,
             rating: ratingNum,
           })
-          .eq("id", editingCoordinator.id);
+          .eq("id", editingCoordinator.id)
+          .select("id");
 
         if (error) throw error;
+        if (!updated || updated.length === 0) {
+          throw new Error("No coordinator updated. Please try again.");
+        }
 
         toast({
           title: "Success",

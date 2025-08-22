@@ -121,7 +121,7 @@ export const ProForm = ({ selectedPanchayath: preSelectedPanchayath, editingPro,
     setLoading(true);
     try {
       if (isEditing) {
-        const { error } = await supabase
+        const { data: updated, error } = await supabase
           .from("pros")
           .update({
             group_leader_id: groupLeaderId,
@@ -129,9 +129,13 @@ export const ProForm = ({ selectedPanchayath: preSelectedPanchayath, editingPro,
             mobile_number: mobile.trim(),
             ward: wardNum,
           })
-          .eq("id", editingPro.id);
+          .eq("id", editingPro.id)
+          .select("id");
 
         if (error) throw error;
+        if (!updated || updated.length === 0) {
+          throw new Error("No PRO updated. Please try again.");
+        }
 
         toast({
           title: "Success",

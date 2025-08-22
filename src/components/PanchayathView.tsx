@@ -246,12 +246,16 @@ export const PanchayathView = () => {
         if (!targetId) throw new Error("Record not found");
       }
 
-      const { error } = await supabase
+      const { data: deleted, error } = await supabase
         .from(tableName as any)
         .delete()
-        .eq("id", targetId as string);
+        .eq("id", targetId as string)
+        .select("id");
 
       if (error) throw error;
+      if (!deleted || deleted.length === 0) {
+        throw new Error("Nothing was deleted. Please try again.");
+      }
 
       toast({
         title: "Success",

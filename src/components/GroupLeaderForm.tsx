@@ -124,7 +124,7 @@ export const GroupLeaderForm = ({ selectedPanchayath: preSelectedPanchayath, edi
     setLoading(true);
     try {
       if (isEditing) {
-        const { error } = await supabase
+        const { data: updated, error } = await supabase
           .from("group_leaders")
           .update({
             supervisor_id: supervisorId,
@@ -132,9 +132,13 @@ export const GroupLeaderForm = ({ selectedPanchayath: preSelectedPanchayath, edi
             mobile_number: mobile.trim(),
             ward: wardNum,
           })
-          .eq("id", editingGroupLeader.id);
+          .eq("id", editingGroupLeader.id)
+          .select("id");
 
         if (error) throw error;
+        if (!updated || updated.length === 0) {
+          throw new Error("No group leader updated. Please try again.");
+        }
 
         toast({
           title: "Success",

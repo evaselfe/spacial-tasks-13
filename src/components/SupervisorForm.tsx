@@ -138,16 +138,20 @@ export const SupervisorForm = ({ selectedPanchayath: preSelectedPanchayath, edit
     try {
       if (isEditing) {
         // Update supervisor
-        const { error: supervisorError } = await supabase
+        const { data: updated, error: supervisorError } = await supabase
           .from("supervisors")
           .update({
             coordinator_id: coordinatorId,
             name: name.trim(),
             mobile_number: mobile.trim(),
           })
-          .eq("id", editingSupervisor.id);
+          .eq("id", editingSupervisor.id)
+          .select("id");
 
         if (supervisorError) throw supervisorError;
+        if (!updated || updated.length === 0) {
+          throw new Error("No supervisor updated. Please try again.");
+        }
 
         // Delete existing ward mappings
         const { error: deleteError } = await supabase
