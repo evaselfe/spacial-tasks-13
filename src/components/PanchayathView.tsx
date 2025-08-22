@@ -16,7 +16,7 @@ export const PanchayathView = () => {
   const [loading, setLoading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteCode, setDeleteCode] = useState("");
-  const [itemToDelete, setItemToDelete] = useState<{type: string, id: string, name: string} | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<{type: string, id?: string, name: string} | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -112,10 +112,27 @@ export const PanchayathView = () => {
           throw new Error("Invalid type");
       }
 
+      // Resolve target id (hierarchy_view doesn't expose IDs)
+      let targetId = itemToDelete.id;
+      if (itemToDelete.type === "pro" && !targetId) {
+        const match = hierarchyData.find((h) => h.pro_name === itemToDelete.name);
+        if (!match) throw new Error("PRO reference not found in hierarchy data");
+        const { data: proRows, error: findError } = await supabase
+          .from("pros")
+          .select("id")
+          .eq("panchayath_id", selectedPanchayath)
+          .eq("name", match.pro_name)
+          .eq("ward", match.pro_ward)
+          .eq("mobile_number", match.pro_mobile);
+        if (findError) throw findError;
+        targetId = proRows?.[0]?.id;
+        if (!targetId) throw new Error("PRO record not found");
+      }
+
       const { error } = await supabase
         .from(tableName as any)
         .delete()
-        .eq("id", itemToDelete.id);
+        .eq("id", targetId as string);
 
       if (error) throw error;
 
