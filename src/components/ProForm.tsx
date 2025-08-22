@@ -157,11 +157,16 @@ export const ProForm = ({ selectedPanchayath: preSelectedPanchayath, editingPro,
           description: "PRO added successfully",
         });
         
+        // Reset form fields
         setName("");
         setMobile("");
         setWard("");
         setGroupLeaderId("");
-        setPanchayathId("");
+        
+        // Only reset panchayath selection if not pre-selected
+        if (!preSelectedPanchayath) {
+          setPanchayathId("");
+        }
       }
     } catch (error: any) {
       console.error(`Error ${isEditing ? 'updating' : 'adding'} PRO:`, error);
