@@ -322,12 +322,12 @@ export const PanchayathView = () => {
                                              >
                                                <Edit className="h-3 w-3" />
                                              </Button>
-                                              <Button 
-                                                size="sm" 
-                                                variant="outline" 
-                                                className="h-6 w-6 p-0"
-                                                onClick={() => handleDelete("pro", pro.pro_id, pro.pro_name)}
-                                              >
+                                               <Button 
+                                                 size="sm" 
+                                                 variant="outline" 
+                                                 className="h-6 w-6 p-0"
+                                                 onClick={() => handleDelete("pro", pro.id || pro.pro_id, pro.pro_name)}
+                                               >
                                                <Trash2 className="h-3 w-3" />
                                              </Button>
                                            </div>
