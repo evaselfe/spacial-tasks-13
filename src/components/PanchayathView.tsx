@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Trash2, Edit } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +14,9 @@ export const PanchayathView = () => {
   const [selectedPanchayath, setSelectedPanchayath] = useState("");
   const [hierarchyData, setHierarchyData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteCode, setDeleteCode] = useState("");
+  const [itemToDelete, setItemToDelete] = useState<{type: string, id: string, name: string} | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -71,12 +76,26 @@ export const PanchayathView = () => {
     console.log(`Edit ${type}:`, data);
   };
 
-  const handleDelete = async (type: string, id: string) => {
-    if (!confirm(`Are you sure you want to delete this ${type}?`)) return;
+  const handleDelete = (type: string, id: string, name: string) => {
+    setItemToDelete({ type, id, name });
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (deleteCode !== "9497589094") {
+      toast({
+        title: "Error",
+        description: "Invalid delete code",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!itemToDelete) return;
 
     try {
       let tableName: string;
-      switch (type) {
+      switch (itemToDelete.type) {
         case "coordinator":
           tableName = "coordinators";
           break;
@@ -96,33 +115,37 @@ export const PanchayathView = () => {
       const { error } = await supabase
         .from(tableName as any)
         .delete()
-        .eq("id", id);
+        .eq("id", itemToDelete.id);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: `${type} deleted successfully`,
+        description: `${itemToDelete.type} deleted successfully`,
       });
       
+      setShowDeleteDialog(false);
+      setDeleteCode("");
+      setItemToDelete(null);
       fetchHierarchyData();
     } catch (error: any) {
-      console.error(`Error deleting ${type}:`, error);
+      console.error(`Error deleting ${itemToDelete.type}:`, error);
       toast({
         title: "Error",
-        description: error.message || `Failed to delete ${type}`,
+        description: error.message || `Failed to delete ${itemToDelete.type}`,
         variant: "destructive",
       });
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg md:text-xl">View Panchayath Hierarchy</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4 md:space-y-6 p-3 md:p-6">
-        <div className="space-y-2">
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg md:text-xl">View Panchayath Hierarchy</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4 md:space-y-6 p-3 md:p-6">
+          <div className="space-y-2">
           <label className="text-sm font-medium">Select Panchayath</label>
           <Select value={selectedPanchayath} onValueChange={setSelectedPanchayath}>
             <SelectTrigger className="w-full">
@@ -182,7 +205,7 @@ export const PanchayathView = () => {
                             <Button 
                               size="sm" 
                               variant="outline"
-                              onClick={() => handleDelete("coordinator", coordinatorData?.id)}
+                              onClick={() => handleDelete("coordinator", coordinatorData?.id, coordinatorData?.coordinator_name)}
                               className="h-8 w-8 p-0 md:h-9 md:w-auto md:px-3"
                             >
                               <Trash2 className="h-3 w-3 md:h-4 md:w-4" />
@@ -222,12 +245,12 @@ export const PanchayathView = () => {
                                     <Edit className="h-3 w-3" />
                                     <span className="hidden md:inline ml-1">Edit</span>
                                   </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => handleDelete("supervisor", supervisorData?.id)}
-                                    className="h-7 w-7 p-0 md:h-8 md:w-auto md:px-2"
-                                  >
+                                   <Button 
+                                     size="sm" 
+                                     variant="outline"
+                                     onClick={() => handleDelete("supervisor", supervisorData?.id, supervisorData?.supervisor_name)}
+                                     className="h-7 w-7 p-0 md:h-8 md:w-auto md:px-2"
+                                   >
                                     <Trash2 className="h-3 w-3" />
                                     <span className="hidden md:inline ml-1">Delete</span>
                                   </Button>
@@ -264,12 +287,12 @@ export const PanchayathView = () => {
                                           <Edit className="h-3 w-3" />
                                           <span className="hidden md:inline ml-1">Edit</span>
                                         </Button>
-                                        <Button 
-                                          size="sm" 
-                                          variant="outline"
-                                          onClick={() => handleDelete("group_leader", groupLeaderData?.id)}
-                                          className="h-6 w-6 p-0 md:h-7 md:w-auto md:px-2"
-                                        >
+                                         <Button 
+                                           size="sm" 
+                                           variant="outline"
+                                           onClick={() => handleDelete("group_leader", groupLeaderData?.id, groupLeaderData?.group_leader_name)}
+                                           className="h-6 w-6 p-0 md:h-7 md:w-auto md:px-2"
+                                         >
                                           <Trash2 className="h-3 w-3" />
                                           <span className="hidden md:inline ml-1">Delete</span>
                                         </Button>
@@ -299,12 +322,12 @@ export const PanchayathView = () => {
                                              >
                                                <Edit className="h-3 w-3" />
                                              </Button>
-                                             <Button 
-                                               size="sm" 
-                                               variant="outline" 
-                                               className="h-6 w-6 p-0"
-                                               onClick={() => handleDelete("pro", pro.id)}
-                                             >
+                                              <Button 
+                                                size="sm" 
+                                                variant="outline" 
+                                                className="h-6 w-6 p-0"
+                                                onClick={() => handleDelete("pro", pro.id, pro.pro_name)}
+                                              >
                                                <Trash2 className="h-3 w-3" />
                                              </Button>
                                            </div>
@@ -327,5 +350,30 @@ export const PanchayathView = () => {
         )}
       </CardContent>
     </Card>
+
+    <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete {itemToDelete?.name}? This action cannot be undone.
+            Please enter the delete code to confirm.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="py-4">
+          <Input
+            type="text"
+            placeholder="Enter delete code"
+            value={deleteCode}
+            onChange={(e) => setDeleteCode(e.target.value)}
+          />
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setDeleteCode("")}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 };
