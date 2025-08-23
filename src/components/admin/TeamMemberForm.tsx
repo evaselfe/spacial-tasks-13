@@ -23,13 +23,12 @@ interface TeamMemberFormProps {
 }
 
 const memberRoles = [
-  "Team Lead",
-  "Developer",
-  "Designer",
-  "Analyst",
-  "Manager",
+  "Admin",
+  "Team member",
   "Coordinator",
-  "Member"
+  "Supervisor",
+  "Group leader",
+  "PRO"
 ];
 
 export const TeamMemberForm = ({ teamId, member, onSuccess, onCancel }: TeamMemberFormProps) => {
