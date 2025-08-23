@@ -20,7 +20,7 @@ interface TeamMember {
   id: string;
   team_id: string;
   name: string;
-  email: string;
+  mobile: string;
   role: string;
   joined_at: string;
 }
@@ -88,7 +88,7 @@ export const TeamManagement = () => {
           id: "1",
           team_id: teamId,
           name: "John Doe",
-          email: "john@example.com",
+          mobile: "9876543210",
           role: "Team Lead",
           joined_at: new Date().toISOString()
         },
@@ -96,7 +96,7 @@ export const TeamManagement = () => {
           id: "2",
           team_id: teamId,
           name: "Jane Smith",
-          email: "jane@example.com",
+          mobile: "9876543211",
           role: "Developer",
           joined_at: new Date().toISOString()
         }
@@ -306,7 +306,7 @@ export const TeamManagement = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <h4 className="font-medium">{member.name}</h4>
-                        <p className="text-sm text-muted-foreground">{member.email}</p>
+                        <p className="text-sm text-muted-foreground">{member.mobile}</p>
                         <Badge variant="outline" className="mt-2 text-xs">
                           {member.role}
                         </Badge>

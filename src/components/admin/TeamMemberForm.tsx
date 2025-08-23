@@ -10,7 +10,7 @@ interface TeamMember {
   id: string;
   team_id: string;
   name: string;
-  email: string;
+  mobile: string;
   role: string;
   joined_at: string;
 }
@@ -34,7 +34,7 @@ const memberRoles = [
 
 export const TeamMemberForm = ({ teamId, member, onSuccess, onCancel }: TeamMemberFormProps) => {
   const [name, setName] = useState(member?.name || "");
-  const [email, setEmail] = useState(member?.email || "");
+  const [mobile, setMobile] = useState(member?.mobile || "");
   const [role, setRole] = useState(member?.role || "");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -44,7 +44,7 @@ export const TeamMemberForm = ({ teamId, member, onSuccess, onCancel }: TeamMemb
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim() || !email.trim() || !role) {
+    if (!name.trim() || !mobile.trim() || !role) {
       toast({
         title: "Error",
         description: "All fields are required",
@@ -53,12 +53,12 @@ export const TeamMemberForm = ({ teamId, member, onSuccess, onCancel }: TeamMemb
       return;
     }
 
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    // Basic mobile number validation
+    const mobileRegex = /^[0-9]{10}$/;
+    if (!mobileRegex.test(mobile.replace(/\s/g, ''))) {
       toast({
         title: "Error",
-        description: "Please enter a valid email address",
+        description: "Please enter a valid 10-digit mobile number",
         variant: "destructive",
       });
       return;
@@ -75,7 +75,7 @@ export const TeamMemberForm = ({ teamId, member, onSuccess, onCancel }: TeamMemb
           id: member.id, 
           team_id: teamId, 
           name, 
-          email, 
+          mobile, 
           role 
         });
       } else {
@@ -83,7 +83,7 @@ export const TeamMemberForm = ({ teamId, member, onSuccess, onCancel }: TeamMemb
         console.log("Adding team member:", { 
           team_id: teamId, 
           name, 
-          email, 
+          mobile, 
           role 
         });
       }
@@ -134,13 +134,14 @@ export const TeamMemberForm = ({ teamId, member, onSuccess, onCancel }: TeamMemb
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="email">Email Address *</Label>
+            <Label htmlFor="mobile">Mobile Number *</Label>
             <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter email address"
+              id="mobile"
+              type="tel"
+              value={mobile}
+              onChange={(e) => setMobile(e.target.value)}
+              placeholder="Enter mobile number"
+              maxLength={10}
               required
             />
           </div>
