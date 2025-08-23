@@ -38,6 +38,13 @@ const Index = () => {
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
             <UserProfile currentOfficer={currentOfficer} onOfficerUpdate={setCurrentOfficer} />
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.href = '/admin'}
+              className="w-full sm:w-auto border-primary/20 hover:border-primary"
+            >
+              Admin Panel
+            </Button>
             <Button variant="outline" onClick={() => {
             setCurrentOfficer(null);
             setActiveTab("login");
