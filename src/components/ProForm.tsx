@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { checkMobileDuplicate, getTableDisplayName } from "@/lib/mobileValidation";
+import { AgentConfirmationDialog } from "./AgentConfirmationDialog";
 
 export interface ProFormProps {
   selectedPanchayath?: any;
@@ -24,6 +25,8 @@ export const ProForm = ({ selectedPanchayath: preSelectedPanchayath, editingPro,
   const [panchayaths, setPanchayaths] = useState<any[]>([]);
   const [selectedPanchayath, setSelectedPanchayath] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmedAgentDetails, setConfirmedAgentDetails] = useState<any>(null);
   const isEditing = !!editingPro;
   const { toast } = useToast();
 
@@ -169,12 +172,26 @@ export const ProForm = ({ selectedPanchayath: preSelectedPanchayath, editingPro,
 
         if (error) throw error;
 
-        toast({
-          title: "Success",
-          description: "PRO added successfully",
-        });
+        // Prepare agent details for confirmation
+        const selectedGroupLeader = groupLeaders.find(gl => gl.id === groupLeaderId);
+        const agentDetails = {
+          name: name.trim(),
+          mobile: mobile.trim(),
+          ward: wardNum,
+          panchayath: selectedPanchayath.name,
+          role: "PRO",
+          groupLeader: selectedGroupLeader?.name
+        };
+
+        setConfirmedAgentDetails(agentDetails);
+        setShowConfirmation(true);
         
         // Reset form fields
+        const tempName = name;
+        const tempMobile = mobile;
+        const tempWard = ward;
+        const tempGroupLeaderId = groupLeaderId;
+        
         setName("");
         setMobile("");
         setWard("");
@@ -199,8 +216,23 @@ export const ProForm = ({ selectedPanchayath: preSelectedPanchayath, editingPro,
 
   const wardOptions = selectedPanchayath ? Array.from({ length: selectedPanchayath.number_of_wards }, (_, i) => i + 1) : [];
 
+  const handleConfirmation = () => {
+    setShowConfirmation(false);
+    setConfirmedAgentDetails(null);
+    toast({
+      title: "Success",
+      description: "PRO added successfully",
+    });
+  };
+
   return (
-    <Card>
+    <>
+      <AgentConfirmationDialog
+        isOpen={showConfirmation}
+        onConfirm={handleConfirmation}
+        agentDetails={confirmedAgentDetails || {}}
+      />
+      <Card>
       <CardHeader>
         <CardTitle>{isEditing ? 'Edit PRO' : 'Add PRO'}</CardTitle>
       </CardHeader>
@@ -304,5 +336,6 @@ export const ProForm = ({ selectedPanchayath: preSelectedPanchayath, editingPro,
         </form>
       </CardContent>
     </Card>
+    </>
   );
 };

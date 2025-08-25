@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { AgentConfirmationDialog } from "./AgentConfirmationDialog";
 
 export interface SupervisorFormProps {
   selectedPanchayath?: any;
@@ -24,6 +25,8 @@ export const SupervisorForm = ({ selectedPanchayath: preSelectedPanchayath, edit
   const [panchayaths, setPanchayaths] = useState<any[]>([]);
   const [selectedPanchayath, setSelectedPanchayath] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmedAgentDetails, setConfirmedAgentDetails] = useState<any>(null);
   const isEditing = !!editingSupervisor;
   const { toast } = useToast();
 
@@ -206,10 +209,19 @@ export const SupervisorForm = ({ selectedPanchayath: preSelectedPanchayath, edit
 
         if (wardError) throw wardError;
 
-        toast({
-          title: "Success",
-          description: "Supervisor added successfully",
-        });
+        // Prepare agent details for confirmation
+        const selectedCoordinator = coordinators.find(c => c.id === coordinatorId);
+        const agentDetails = {
+          name: name.trim(),
+          mobile: mobile.trim(),
+          ward: selectedWards.length > 1 ? undefined : selectedWards[0],
+          panchayath: selectedPanchayath.name,
+          role: "Supervisor",
+          groupLeader: selectedCoordinator?.name
+        };
+
+        setConfirmedAgentDetails(agentDetails);
+        setShowConfirmation(true);
         
         setName("");
         setMobile("");
@@ -231,8 +243,23 @@ export const SupervisorForm = ({ selectedPanchayath: preSelectedPanchayath, edit
 
   const wardOptions = selectedPanchayath ? Array.from({ length: selectedPanchayath.number_of_wards }, (_, i) => i + 1) : [];
 
+  const handleConfirmation = () => {
+    setShowConfirmation(false);
+    setConfirmedAgentDetails(null);
+    toast({
+      title: "Success",
+      description: "Supervisor added successfully",
+    });
+  };
+
   return (
-    <Card>
+    <>
+      <AgentConfirmationDialog
+        isOpen={showConfirmation}
+        onConfirm={handleConfirmation}
+        agentDetails={confirmedAgentDetails || {}}
+      />
+      <Card>
       <CardHeader>
         <CardTitle>{isEditing ? 'Edit Supervisor' : 'Add Supervisor'}</CardTitle>
       </CardHeader>
@@ -342,5 +369,6 @@ export const SupervisorForm = ({ selectedPanchayath: preSelectedPanchayath, edit
         </form>
       </CardContent>
     </Card>
+    </>
   );
 };

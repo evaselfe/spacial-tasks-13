@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { checkMobileDuplicate, getTableDisplayName } from "@/lib/mobileValidation";
+import { AgentConfirmationDialog } from "./AgentConfirmationDialog";
 
 export interface CoordinatorFormProps {
   selectedPanchayath?: any;
@@ -23,6 +24,8 @@ export const CoordinatorForm = ({ selectedPanchayath: preSelectedPanchayath, edi
   const [panchayaths, setPanchayaths] = useState<any[]>([]);
   const [selectedPanchayath, setSelectedPanchayath] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmedAgentDetails, setConfirmedAgentDetails] = useState<any>(null);
   const isEditing = !!editingCoordinator;
   const { toast } = useToast();
 
@@ -164,10 +167,17 @@ export const CoordinatorForm = ({ selectedPanchayath: preSelectedPanchayath, edi
           throw error;
         }
 
-        toast({
-          title: "Success",
-          description: "Coordinator added successfully",
-        });
+        // Prepare agent details for confirmation
+        const agentDetails = {
+          name: name.trim(),
+          mobile: mobile.trim(),
+          ward: wardNum,
+          panchayath: selectedPanchayath.name,
+          role: "Coordinator"
+        };
+
+        setConfirmedAgentDetails(agentDetails);
+        setShowConfirmation(true);
         
         setName("");
         setMobile("");
@@ -197,8 +207,23 @@ export const CoordinatorForm = ({ selectedPanchayath: preSelectedPanchayath, edi
 
   const wardOptions = selectedPanchayath ? Array.from({ length: selectedPanchayath.number_of_wards }, (_, i) => i + 1) : [];
 
+  const handleConfirmation = () => {
+    setShowConfirmation(false);
+    setConfirmedAgentDetails(null);
+    toast({
+      title: "Success",
+      description: "Coordinator added successfully",
+    });
+  };
+
   return (
-    <Card>
+    <>
+      <AgentConfirmationDialog
+        isOpen={showConfirmation}
+        onConfirm={handleConfirmation}
+        agentDetails={confirmedAgentDetails || {}}
+      />
+      <Card>
       <CardHeader>
         <CardTitle>{isEditing ? 'Edit Coordinator' : 'Add Coordinator'}</CardTitle>
       </CardHeader>
@@ -300,5 +325,6 @@ export const CoordinatorForm = ({ selectedPanchayath: preSelectedPanchayath, edi
         </form>
       </CardContent>
     </Card>
+    </>
   );
 };
