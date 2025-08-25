@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Edit, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { checkMobileDuplicate, getTableDisplayName } from "@/lib/mobileValidation";
 interface UserProfileProps {
   currentOfficer: any;
   onOfficerUpdate: (officer: any) => void;
@@ -34,6 +35,18 @@ export const UserProfile = ({
     }
     setLoading(true);
     try {
+      // Check for duplicate mobile number
+      const duplicateCheck = await checkMobileDuplicate(mobile, currentOfficer.id, 'officers');
+      if (duplicateCheck.isDuplicate) {
+        toast({
+          title: "Error",
+          description: `This mobile number is already registered in ${getTableDisplayName(duplicateCheck.table!)}`,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       const {
         data,
         error

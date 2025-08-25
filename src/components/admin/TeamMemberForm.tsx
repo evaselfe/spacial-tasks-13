@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { checkMobileDuplicate, getTableDisplayName } from "@/lib/mobileValidation";
 
 interface TeamMember {
   id: string;
@@ -65,6 +66,18 @@ export const TeamMemberForm = ({ teamId, member, onSuccess, onCancel }: TeamMemb
 
     setLoading(true);
     try {
+      // Check for duplicate mobile number
+      const duplicateCheck = await checkMobileDuplicate(mobile, member?.id, 'team_members');
+      if (duplicateCheck.isDuplicate) {
+        toast({
+          title: "Error",
+          description: `This mobile number is already registered in ${getTableDisplayName(duplicateCheck.table!)}`,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       // TODO: Implement actual team member creation/update when team_members table exists
       // For now, we'll simulate the operation
       

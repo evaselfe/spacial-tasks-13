@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { checkMobileDuplicate, getTableDisplayName } from "@/lib/mobileValidation";
 
 export interface GroupLeaderFormProps {
   selectedPanchayath?: any;
@@ -123,6 +124,18 @@ export const GroupLeaderForm = ({ selectedPanchayath: preSelectedPanchayath, edi
 
     setLoading(true);
     try {
+      // Check for duplicate mobile number
+      const duplicateCheck = await checkMobileDuplicate(mobile, editingGroupLeader?.id, 'group_leaders');
+      if (duplicateCheck.isDuplicate) {
+        toast({
+          title: "Error",
+          description: `This mobile number is already registered in ${getTableDisplayName(duplicateCheck.table!)}`,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       if (isEditing) {
         const { data: updated, error } = await supabase
           .from("group_leaders")
