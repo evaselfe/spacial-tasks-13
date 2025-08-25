@@ -4,11 +4,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TeamManagement } from "@/components/admin/TeamManagement";
 import { ViewAnalyze } from "@/components/admin/ViewAnalyze";
-import { ArrowLeft, Users, Shield, Settings, BarChart3 } from "lucide-react";
+import { PanchayathManagement } from "@/components/admin/PanchayathManagement";
+import { ArrowLeft, Users, Shield, Settings, BarChart3, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 const Admin = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("teams");
+  const [activeTab, setActiveTab] = useState("panchayath");
   return <div className="min-h-screen bg-gradient-to-br from-background to-background/95 p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -30,7 +31,7 @@ const Admin = () => {
         </div>
 
         {/* Admin Navigation Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <div className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] ${activeTab === "teams" ? "scale-[1.02]" : ""}`} onClick={() => setActiveTab("teams")}>
             <Card className={`relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "teams" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
               <CardHeader className="pb-3 bg-yellow-50">
@@ -40,6 +41,20 @@ const Admin = () => {
                 </div>
                 <CardDescription>
                   Create and manage teams and team members
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+
+          <div className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] ${activeTab === "panchayath" ? "scale-[1.02]" : ""}`} onClick={() => setActiveTab("panchayath")}>
+            <Card className={`relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "panchayath" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
+              <CardHeader className="pb-3 bg-green-50">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-lg">Panchayath</CardTitle>
+                </div>
+                <CardDescription>
+                  Create and manage panchayaths
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -92,6 +107,10 @@ const Admin = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsContent value="teams">
             <TeamManagement />
+          </TabsContent>
+          
+          <TabsContent value="panchayath">
+            <PanchayathManagement />
           </TabsContent>
           
           <TabsContent value="analytics">
