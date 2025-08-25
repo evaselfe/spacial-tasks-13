@@ -14,11 +14,13 @@ interface AgentDetails {
 interface AgentConfirmationDialogProps {
   isOpen: boolean;
   onConfirm: () => void;
-  agentDetails: AgentDetails;
+  agentDetails: Partial<AgentDetails>;
 }
 
 export const AgentConfirmationDialog = ({ isOpen, onConfirm, agentDetails }: AgentConfirmationDialogProps) => {
   const getRoleColor = (role: string) => {
+    if (!role) return "bg-muted";
+    
     switch (role.toLowerCase()) {
       case "coordinator": return "bg-coordinator text-white";
       case "supervisor": return "bg-supervisor text-white";
@@ -26,6 +28,16 @@ export const AgentConfirmationDialog = ({ isOpen, onConfirm, agentDetails }: Age
       case "pro": return "bg-pro text-white";
       default: return "bg-muted";
     }
+  };
+
+  // Provide default values to prevent undefined errors
+  const safeAgentDetails = {
+    name: agentDetails?.name || "N/A",
+    mobile: agentDetails?.mobile || "N/A",
+    ward: agentDetails?.ward,
+    panchayath: agentDetails?.panchayath || "N/A",
+    role: agentDetails?.role || "Agent",
+    groupLeader: agentDetails?.groupLeader
   };
 
   return (
@@ -46,8 +58,8 @@ export const AgentConfirmationDialog = ({ isOpen, onConfirm, agentDetails }: Age
         <div className="space-y-4 py-4">
           <div className="flex items-center justify-between">
             <span className="font-medium">Agent Details</span>
-            <Badge className={getRoleColor(agentDetails.role)}>
-              {agentDetails.role}
+            <Badge className={getRoleColor(safeAgentDetails.role)}>
+              {safeAgentDetails.role}
             </Badge>
           </div>
           
@@ -56,7 +68,7 @@ export const AgentConfirmationDialog = ({ isOpen, onConfirm, agentDetails }: Age
               <User className="h-4 w-4 text-muted-foreground" />
               <div>
                 <span className="text-sm text-muted-foreground">Name:</span>
-                <p className="font-medium">{agentDetails.name}</p>
+                <p className="font-medium">{safeAgentDetails.name}</p>
               </div>
             </div>
             
@@ -64,7 +76,7 @@ export const AgentConfirmationDialog = ({ isOpen, onConfirm, agentDetails }: Age
               <Phone className="h-4 w-4 text-muted-foreground" />
               <div>
                 <span className="text-sm text-muted-foreground">Mobile:</span>
-                <p className="font-medium">{agentDetails.mobile}</p>
+                <p className="font-medium">{safeAgentDetails.mobile}</p>
               </div>
             </div>
             
@@ -72,26 +84,26 @@ export const AgentConfirmationDialog = ({ isOpen, onConfirm, agentDetails }: Age
               <Building2 className="h-4 w-4 text-muted-foreground" />
               <div>
                 <span className="text-sm text-muted-foreground">Panchayath:</span>
-                <p className="font-medium">{agentDetails.panchayath}</p>
+                <p className="font-medium">{safeAgentDetails.panchayath}</p>
               </div>
             </div>
             
-            {agentDetails.ward && (
+            {safeAgentDetails.ward && (
               <div className="flex items-center gap-3">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <span className="text-sm text-muted-foreground">Ward:</span>
-                  <p className="font-medium">Ward {agentDetails.ward}</p>
+                  <p className="font-medium">Ward {safeAgentDetails.ward}</p>
                 </div>
               </div>
             )}
             
-            {agentDetails.groupLeader && (
+            {safeAgentDetails.groupLeader && (
               <div className="flex items-center gap-3">
                 <User className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <span className="text-sm text-muted-foreground">Group Leader:</span>
-                  <p className="font-medium">{agentDetails.groupLeader}</p>
+                  <p className="font-medium">{safeAgentDetails.groupLeader}</p>
                 </div>
               </div>
             )}
