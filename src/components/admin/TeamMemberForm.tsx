@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { checkMobileDuplicate, getTableDisplayName } from "@/lib/mobileValidation";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TeamMember {
   id: string;
@@ -66,38 +67,47 @@ export const TeamMemberForm = ({ teamId, member, onSuccess, onCancel }: TeamMemb
 
     setLoading(true);
     try {
-      // Check for duplicate mobile number
-      const duplicateCheck = await checkMobileDuplicate(mobile, member?.id, 'team_members');
-      if (duplicateCheck.isDuplicate) {
+      // Check for duplicate email/mobile number in team_members table
+      const { data: existingMembers, error: checkError } = await supabase
+        .from('team_members')
+        .select('id, email')
+        .eq('email', mobile)
+        .neq('id', member?.id || '');
+
+      if (checkError) throw checkError;
+
+      if (existingMembers && existingMembers.length > 0) {
         toast({
           title: "Error",
-          description: `This mobile number is already registered in ${getTableDisplayName(duplicateCheck.table!)}`,
+          description: "This email/mobile is already registered in team members",
           variant: "destructive",
         });
         setLoading(false);
         return;
       }
 
-      // TODO: Implement actual team member creation/update when team_members table exists
-      // For now, we'll simulate the operation
-      
       if (isEditing) {
-        // Simulate team member update
-        console.log("Updating team member:", { 
-          id: member.id, 
-          team_id: teamId, 
-          name, 
-          mobile, 
-          role 
-        });
+        const { error } = await supabase
+          .from('team_members')
+          .update({ 
+            name, 
+            email: mobile, // Using email field to store mobile
+            role 
+          })
+          .eq('id', member.id);
+
+        if (error) throw error;
       } else {
-        // Simulate team member creation
-        console.log("Adding team member:", { 
-          team_id: teamId, 
-          name, 
-          mobile, 
-          role 
-        });
+        const { error } = await supabase
+          .from('team_members')
+          .insert({ 
+            team_id: teamId, 
+            name, 
+            email: mobile, // Using email field to store mobile
+            role 
+          });
+
+        if (error) throw error;
       }
 
       toast({
@@ -146,14 +156,13 @@ export const TeamMemberForm = ({ teamId, member, onSuccess, onCancel }: TeamMemb
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="mobile">Mobile Number *</Label>
+            <Label htmlFor="mobile">Email/Mobile *</Label>
             <Input
               id="mobile"
-              type="tel"
+              type="text"
               value={mobile}
               onChange={(e) => setMobile(e.target.value)}
-              placeholder="Enter mobile number"
-              maxLength={10}
+              placeholder="Enter email or mobile number"
               required
             />
           </div>

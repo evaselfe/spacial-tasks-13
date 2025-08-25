@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Team {
   id: string;
@@ -41,15 +42,19 @@ export const TeamForm = ({ team, onSuccess, onCancel }: TeamFormProps) => {
 
     setLoading(true);
     try {
-      // TODO: Implement actual team creation/update when teams table exists
-      // For now, we'll simulate the operation
-      
       if (isEditing) {
-        // Simulate team update
-        console.log("Updating team:", { id: team.id, name, description });
+        const { error } = await supabase
+          .from('teams')
+          .update({ name, description })
+          .eq('id', team.id);
+
+        if (error) throw error;
       } else {
-        // Simulate team creation
-        console.log("Creating team:", { name, description });
+        const { error } = await supabase
+          .from('teams')
+          .insert({ name, description });
+
+        if (error) throw error;
       }
 
       toast({

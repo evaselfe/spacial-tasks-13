@@ -50,25 +50,29 @@ export const TeamManagement = () => {
 
   const fetchTeams = async () => {
     try {
-      // For now, we'll simulate data since teams table doesn't exist yet
-      // TODO: Replace with actual Supabase query when teams table is created
-      const mockTeams: Team[] = [
-        {
-          id: "1",
-          name: "Development Team",
-          description: "Frontend and backend developers",
-          created_at: new Date().toISOString(),
-          member_count: 5
-        },
-        {
-          id: "2",
-          name: "Marketing Team",
-          description: "Marketing and communications",
-          created_at: new Date().toISOString(),
-          member_count: 3
-        }
-      ];
-      setTeams(mockTeams);
+      const { data: teamsData, error } = await supabase
+        .from('teams')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Get member counts for each team
+      const teamsWithCounts = await Promise.all(
+        (teamsData || []).map(async (team) => {
+          const { count } = await supabase
+            .from('team_members')
+            .select('*', { count: 'exact', head: true })
+            .eq('team_id', team.id);
+          
+          return {
+            ...team,
+            member_count: count || 0
+          };
+        })
+      );
+
+      setTeams(teamsWithCounts);
     } catch (error) {
       console.error("Error fetching teams:", error);
       toast({
@@ -81,27 +85,25 @@ export const TeamManagement = () => {
 
   const fetchTeamMembers = async (teamId: string) => {
     try {
-      // For now, we'll simulate data since team_members table doesn't exist yet
-      // TODO: Replace with actual Supabase query when team_members table is created
-      const mockMembers: TeamMember[] = [
-        {
-          id: "1",
-          team_id: teamId,
-          name: "John Doe",
-          mobile: "9876543210",
-          role: "Team Lead",
-          joined_at: new Date().toISOString()
-        },
-        {
-          id: "2",
-          team_id: teamId,
-          name: "Jane Smith",
-          mobile: "9876543211",
-          role: "Developer",
-          joined_at: new Date().toISOString()
-        }
-      ];
-      setTeamMembers(mockMembers);
+      const { data, error } = await supabase
+        .from('team_members')
+        .select('*')
+        .eq('team_id', teamId)
+        .order('joined_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Map to match the interface (using email as mobile since schema has email)
+      const mappedMembers: TeamMember[] = (data || []).map(member => ({
+        id: member.id,
+        team_id: member.team_id!,
+        name: member.name,
+        mobile: member.email, // Using email field as mobile
+        role: member.role,
+        joined_at: member.joined_at || new Date().toISOString()
+      }));
+
+      setTeamMembers(mappedMembers);
     } catch (error) {
       console.error("Error fetching team members:", error);
       toast({
@@ -117,7 +119,23 @@ export const TeamManagement = () => {
     
     setLoading(true);
     try {
-      // TODO: Implement actual deletion when teams table exists
+      // First delete all team members
+      const { error: membersError } = await supabase
+        .from('team_members')
+        .delete()
+        .eq('team_id', teamId);
+
+      if (membersError) throw membersError;
+
+      // Then delete the team
+      const { error: teamError } = await supabase
+        .from('teams')
+        .delete()
+        .eq('id', teamId);
+
+      if (teamError) throw teamError;
+
+      // Update local state
       setTeams(teams.filter(team => team.id !== teamId));
       if (selectedTeam?.id === teamId) {
         setSelectedTeam(null);
@@ -145,7 +163,14 @@ export const TeamManagement = () => {
     
     setLoading(true);
     try {
-      // TODO: Implement actual deletion when team_members table exists
+      const { error } = await supabase
+        .from('team_members')
+        .delete()
+        .eq('id', memberId);
+
+      if (error) throw error;
+
+      // Update local state
       setTeamMembers(teamMembers.filter(member => member.id !== memberId));
       
       toast({
