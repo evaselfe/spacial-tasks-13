@@ -17,6 +17,7 @@ export type Database = {
       coordinators: {
         Row: {
           created_at: string | null
+          created_by: string | null
           id: string
           mobile_number: string
           name: string
@@ -27,6 +28,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          created_by?: string | null
           id?: string
           mobile_number: string
           name: string
@@ -37,6 +39,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          created_by?: string | null
           id?: string
           mobile_number?: string
           name?: string
@@ -58,6 +61,7 @@ export type Database = {
       group_leaders: {
         Row: {
           created_at: string | null
+          created_by: string | null
           id: string
           mobile_number: string
           name: string
@@ -68,6 +72,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          created_by?: string | null
           id?: string
           mobile_number: string
           name: string
@@ -78,6 +83,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          created_by?: string | null
           id?: string
           mobile_number?: string
           name?: string
@@ -106,6 +112,7 @@ export type Database = {
       officers: {
         Row: {
           created_at: string | null
+          created_by: string | null
           id: string
           mobile_number: string
           name: string
@@ -113,6 +120,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          created_by?: string | null
           id?: string
           mobile_number: string
           name: string
@@ -120,6 +128,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          created_by?: string | null
           id?: string
           mobile_number?: string
           name?: string
@@ -165,6 +174,7 @@ export type Database = {
       pros: {
         Row: {
           created_at: string | null
+          created_by: string | null
           group_leader_id: string
           id: string
           mobile_number: string
@@ -175,6 +185,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          created_by?: string | null
           group_leader_id: string
           id?: string
           mobile_number: string
@@ -185,6 +196,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          created_by?: string | null
           group_leader_id?: string
           id?: string
           mobile_number?: string
@@ -240,6 +252,7 @@ export type Database = {
         Row: {
           coordinator_id: string
           created_at: string | null
+          created_by: string | null
           id: string
           mobile_number: string
           name: string
@@ -249,6 +262,7 @@ export type Database = {
         Insert: {
           coordinator_id: string
           created_at?: string | null
+          created_by?: string | null
           id?: string
           mobile_number: string
           name: string
@@ -258,6 +272,7 @@ export type Database = {
         Update: {
           coordinator_id?: string
           created_at?: string | null
+          created_by?: string | null
           id?: string
           mobile_number?: string
           name?: string
@@ -280,6 +295,62 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      team_members: {
+        Row: {
+          email: string
+          id: string
+          joined_at: string | null
+          name: string
+          role: string
+          team_id: string | null
+        }
+        Insert: {
+          email: string
+          id?: string
+          joined_at?: string | null
+          name: string
+          role: string
+          team_id?: string | null
+        }
+        Update: {
+          email?: string
+          id?: string
+          joined_at?: string | null
+          name?: string
+          role?: string
+          team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
     }
     Views: {
