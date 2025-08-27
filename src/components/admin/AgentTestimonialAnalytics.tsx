@@ -26,8 +26,8 @@ interface Agent {
 export const AgentTestimonialAnalytics = () => {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [panchayaths, setPanchayaths] = useState<any[]>([]);
-  const [selectedPanchayath, setSelectedPanchayath] = useState("");
-  const [selectedRole, setSelectedRole] = useState("");
+  const [selectedPanchayath, setSelectedPanchayath] = useState("all");
+  const [selectedRole, setSelectedRole] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -72,10 +72,10 @@ export const AgentTestimonialAnalytics = () => {
       // Generate 15-20 mock agents with testimonial data
       for (let i = 0; i < Math.floor(Math.random() * 6) + 15; i++) {
         const agentType = agentTypes[Math.floor(Math.random() * agentTypes.length)] as Agent['type'];
-        const panchayathId = selectedPanchayath || (panchayaths.length > 0 ? panchayaths[Math.floor(Math.random() * panchayaths.length)].id : 'mock');
+        const panchayathId = (selectedPanchayath === "all" || !selectedPanchayath) ? (panchayaths.length > 0 ? panchayaths[Math.floor(Math.random() * panchayaths.length)].id : 'mock') : selectedPanchayath;
         const panchayathName = panchayaths.find(p => p.id === panchayathId)?.name || 'Sample Panchayath';
         
-        if (selectedRole && selectedRole !== agentType) continue;
+        if (selectedRole !== "all" && selectedRole !== agentType) continue;
         
         const totalReviews = Math.floor(Math.random() * 20) + 1;
         const averageScore = Math.floor(Math.random() * 40) + 60;
@@ -195,7 +195,7 @@ export const AgentTestimonialAnalytics = () => {
                   <SelectValue placeholder="All Panchayaths" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Panchayaths</SelectItem>
+                  <SelectItem value="all">All Panchayaths</SelectItem>
                   {panchayaths.map((panchayath) => (
                     <SelectItem key={panchayath.id} value={panchayath.id}>
                       {panchayath.name}
@@ -212,7 +212,7 @@ export const AgentTestimonialAnalytics = () => {
                   <SelectValue placeholder="All Roles" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Roles</SelectItem>
+                  <SelectItem value="all">All Roles</SelectItem>
                   <SelectItem value="coordinator">Coordinator</SelectItem>
                   <SelectItem value="supervisor">Supervisor</SelectItem>
                   <SelectItem value="group_leader">Group Leader</SelectItem>
