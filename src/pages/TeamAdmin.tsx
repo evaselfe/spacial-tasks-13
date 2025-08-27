@@ -4,12 +4,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ViewAnalyze } from "@/components/admin/ViewAnalyze";
 import { PanchayathManagement } from "@/components/admin/PanchayathManagement";
-import { AdminTeamManagement } from "@/components/admin/AdminTeamManagement";
+
 import { ArrowLeft, Shield, Settings, BarChart3, MapPin, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 const TeamAdmin = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("admin-teams");
+  const [activeTab, setActiveTab] = useState("panchayath");
   return <div className="min-h-screen bg-gradient-to-br from-background to-background/95 p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -31,21 +31,7 @@ const TeamAdmin = () => {
         </div>
 
         {/* Admin Navigation Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <div className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] ${activeTab === "admin-teams" ? "scale-[1.02]" : ""}`} onClick={() => setActiveTab("admin-teams")}>
-            <Card className={`relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "admin-teams" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
-              <CardHeader className="pb-3 bg-blue-50">
-                <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-lg">Admin Teams</CardTitle>
-                </div>
-                <CardDescription>
-                  Manage administration teams and members
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <div className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] ${activeTab === "panchayath" ? "scale-[1.02]" : ""}`} onClick={() => setActiveTab("panchayath")}>
             <Card className={`relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "panchayath" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
               <CardHeader className="pb-3 bg-green-50">
@@ -73,80 +59,16 @@ const TeamAdmin = () => {
               </CardHeader>
             </Card>
           </div>
-
-          <div className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] ${activeTab === "permissions" ? "scale-[1.02]" : ""}`} onClick={() => setActiveTab("permissions")}>
-            <Card className={`relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "permissions" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
-              <CardHeader className="pb-3 bg-cyan-50">
-                <div className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-lg">Permissions</CardTitle>
-                </div>
-                <CardDescription>
-                  Manage user roles and permissions
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-
-          <div className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] ${activeTab === "settings" ? "scale-[1.02]" : ""}`} onClick={() => setActiveTab("settings")}>
-            <Card className={`relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "settings" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
-              <CardHeader className="pb-3 bg-violet-100">
-                <div className="flex items-center gap-2">
-                  <Settings className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-lg">System Settings</CardTitle>
-                </div>
-                <CardDescription>
-                  Configure system-wide settings
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
         </div>
 
         {/* Content Area */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsContent value="admin-teams">
-            <AdminTeamManagement />
-          </TabsContent>
-          
           <TabsContent value="panchayath">
             <PanchayathManagement />
           </TabsContent>
           
           <TabsContent value="analytics">
             <ViewAnalyze />
-          </TabsContent>
-          
-          <TabsContent value="permissions">
-            <Card>
-              <CardHeader>
-                <CardTitle>User Permissions</CardTitle>
-                <CardDescription>
-                  Manage user roles and access controls
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Permissions management coming soon...
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="settings">
-            <Card>
-              <CardHeader>
-                <CardTitle>System Settings</CardTitle>
-                <CardDescription>
-                  Configure system-wide preferences
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  System settings coming soon...
-                </p>
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
       </div>

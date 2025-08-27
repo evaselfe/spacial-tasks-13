@@ -8,6 +8,7 @@ import { ArrowLeft, Shield, Settings, Database, Users, BarChart3 } from "lucide-
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { AdminTeamManagement } from "@/components/admin/AdminTeamManagement";
 
 const SuperAdmin = () => {
   const navigate = useNavigate();
@@ -249,19 +250,7 @@ const SuperAdmin = () => {
           </TabsContent>
           
           <TabsContent value="user-management">
-            <Card>
-              <CardHeader>
-                <CardTitle>User Management</CardTitle>
-                <CardDescription>
-                  Manage all system users, roles, and permissions
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Advanced user management features coming soon...
-                </p>
-              </CardContent>
-            </Card>
+            <AdminTeamManagement />
           </TabsContent>
           
           <TabsContent value="database">
@@ -289,9 +278,36 @@ const SuperAdmin = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  System configuration panel coming soon...
-                </p>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">User Permissions</CardTitle>
+                        <CardDescription>
+                          Manage user roles and access controls
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-muted-foreground">
+                          Permissions management coming soon...
+                        </p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">System Parameters</CardTitle>
+                        <CardDescription>
+                          Configure application-wide settings
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-muted-foreground">
+                          System parameters configuration coming soon...
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
