@@ -7,7 +7,13 @@ import { SupervisorForm } from "@/components/SupervisorForm";
 import { GroupLeaderForm } from "@/components/GroupLeaderForm";
 import { ProForm } from "@/components/ProForm";
 import { AgentsList } from "@/components/AgentsList";
-export const TaskManagement = () => {
+import { User } from "@/lib/authService";
+
+interface TaskManagementProps {
+  currentUser: User;
+}
+
+export const TaskManagement = ({ currentUser }: TaskManagementProps) => {
   const [selectedPanchayath, setSelectedPanchayath] = useState<any>(null);
   const [selectedRole, setSelectedRole] = useState("coordinator");
   const [refreshKey, setRefreshKey] = useState(0);

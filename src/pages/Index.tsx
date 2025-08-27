@@ -1,7 +1,32 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { TaskManagement } from "@/components/TaskManagement";
+import { MobileLogin } from "@/components/MobileLogin";
+import { UserProfile } from "@/components/UserProfile";
+import { User } from "@/lib/authService";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const { toast } = useToast();
+
+  const handleLogin = (user: User) => {
+    setCurrentUser(user);
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    toast({
+      title: "Logged out",
+      description: "You have been logged out successfully",
+    });
+  };
+
+  // Show login screen if user is not authenticated
+  if (!currentUser) {
+    return <MobileLogin onLogin={handleLogin} />;
+  }
+
   return <div className="min-h-screen bg-gradient-to-br from-background to-background/95 p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
@@ -9,14 +34,30 @@ const Index = () => {
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               Panchayath Management System
             </h1>
+            <p className="text-muted-foreground mt-2 text-sm sm:text-base">
+              Welcome, {currentUser.name}
+            </p>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+            <UserProfile currentUser={currentUser} onUserUpdate={setCurrentUser} />
+            
+            {/* Show Admin Panel button only for team members */}
+            {currentUser.hasAdminAccess && (
+              <Button 
+                variant="outline" 
+                onClick={() => window.location.href = '/admin'}
+                className="w-full sm:w-auto border-primary/20 hover:border-primary"
+              >
+                Admin Panel
+              </Button>
+            )}
+            
             <Button 
               variant="outline" 
-              onClick={() => window.location.href = '/admin'}
-              className="w-full sm:w-auto border-primary/20 hover:border-primary"
+              onClick={handleLogout}
+              className="w-full sm:w-auto border-destructive/20 hover:border-destructive bg-destructive/10 hover:bg-destructive/20 text-destructive"
             >
-              Admin Panel
+              Logout
             </Button>
           </div>
         </div>
@@ -36,7 +77,7 @@ const Index = () => {
           </div>
         </div>
 
-        <TaskManagement />
+        <TaskManagement currentUser={currentUser} />
       </div>
     </div>;
 };
