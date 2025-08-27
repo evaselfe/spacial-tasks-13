@@ -93,7 +93,7 @@ export const AdminMemberForm = ({ teamId, member, onSuccess, onCancel }: AdminMe
       // Check for duplicate mobile number using simplified validation
       const cleanMobile = mobile.replace(/\s/g, '');
       
-      // Check existing coordinators, supervisors, group_leaders, and pros tables
+      // Check existing coordinators, supervisors, group_leaders, pros, and admin_members tables
       const checkTables = ['coordinators', 'supervisors', 'group_leaders', 'pros'];
       let isDuplicate = false;
       let duplicateTable = '';
@@ -114,6 +114,22 @@ export const AdminMemberForm = ({ teamId, member, onSuccess, onCancel }: AdminMe
         }
       }
 
+      // Also check admin_members table
+      if (!isDuplicate) {
+        const { data: adminMemberData, error: adminMemberError } = await supabase
+          .from('admin_members')
+          .select('id')
+          .eq('mobile', cleanMobile);
+
+        if (!adminMemberError && adminMemberData && adminMemberData.length > 0) {
+          // If editing, exclude current member from duplicate check
+          if (!isEditing || adminMemberData.some(m => m.id !== member?.id)) {
+            isDuplicate = true;
+            duplicateTable = 'admin_members';
+          }
+        }
+      }
+
       if (isDuplicate) {
         toast({
           title: "Error",
@@ -124,14 +140,32 @@ export const AdminMemberForm = ({ teamId, member, onSuccess, onCancel }: AdminMe
         return;
       }
 
-      if (isEditing) {
-        // For now, create a mock admin_members table operation
-        console.log("Updating admin member:", { name, mobile, panchayath, role });
-        // This would normally update the admin_members table
+      if (isEditing && member) {
+        // Update existing admin member
+        const { error } = await supabase
+          .from('admin_members')
+          .update({
+            name: name.trim(),
+            mobile: cleanMobile,
+            panchayath,
+            role
+          })
+          .eq('id', member.id);
+
+        if (error) throw error;
       } else {
-        // For now, create a mock admin_members table operation  
-        console.log("Creating admin member:", { team_id: teamId, name, mobile, panchayath, role });
-        // This would normally insert into the admin_members table
+        // Create new admin member
+        const { error } = await supabase
+          .from('admin_members')
+          .insert({
+            team_id: teamId,
+            name: name.trim(),
+            mobile: cleanMobile,
+            panchayath,
+            role
+          });
+
+        if (error) throw error;
       }
 
       toast({
