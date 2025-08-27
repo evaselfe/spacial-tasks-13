@@ -8,7 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Search, Users, MapPin, Building, BarChart3, Edit, Trash2, MessageSquare } from "lucide-react";
 import { PanchayathChart } from "@/components/PanchayathChart";
 import { PanchayathForm } from "@/components/PanchayathForm";
-import { AgentTestimonialCard } from "@/components/AgentTestimonialCard";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -290,40 +290,6 @@ export const PanchayathHierarchy = () => {
                       </div>
                     </div>
 
-                  {/* Agent testimonials - show sample agent cards with testimonial scores */}
-                  <div className="mt-4 pt-4 border-t border-border">
-                    <div className="flex items-center gap-2 mb-3">
-                      <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium text-muted-foreground">Agent Testimonials</span>
-                    </div>
-                    <div className="space-y-2">
-                      {/* Sample agents with testimonial scores */}
-                      <AgentTestimonialCard agent={{
-                        id: `coord_${panchayath.id}`,
-                        name: "Sample Coordinator",
-                        mobile_number: "9876543210",
-                        type: "coordinator",
-                        ward: 1,
-                        panchayath_id: panchayath.id
-                      }} />
-                      <AgentTestimonialCard agent={{
-                        id: `super_${panchayath.id}`,
-                        name: "Sample Supervisor", 
-                        mobile_number: "9876543211",
-                        type: "supervisor",
-                        ward: 2,
-                        panchayath_id: panchayath.id
-                      }} />
-                      <AgentTestimonialCard agent={{
-                        id: `gl_${panchayath.id}`,
-                        name: "Sample Group Leader",
-                        mobile_number: "9876543212", 
-                        type: "group_leader",
-                        ward: 3,
-                        panchayath_id: panchayath.id
-                      }} />
-                    </div>
-                  </div>
                   </div>
                 </CardContent>
               </Card>

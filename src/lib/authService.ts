@@ -7,6 +7,8 @@ export interface User {
   role: 'coordinator' | 'supervisor' | 'group_leader' | 'pro' | 'admin_member';
   table: string;
   hasAdminAccess: boolean;
+  ward?: number;
+  panchayath_id?: string;
 }
 
 export interface AuthResult {
@@ -25,7 +27,7 @@ export const findUserByMobile = async (mobile: string): Promise<AuthResult> => {
   try {
     const { data: coordinatorsData, error: coordinatorsError } = await supabase
       .from('coordinators')
-      .select('id, name, mobile_number')
+      .select('id, name, mobile_number, panchayath_id')
       .eq('mobile_number', cleanMobile)
       .limit(1);
     
@@ -39,7 +41,8 @@ export const findUserByMobile = async (mobile: string): Promise<AuthResult> => {
           mobile_number: user.mobile_number,
           role: 'coordinator',
           table: 'coordinators',
-          hasAdminAccess: false
+          hasAdminAccess: false,
+          panchayath_id: user.panchayath_id
         }
       };
     }
@@ -51,7 +54,7 @@ export const findUserByMobile = async (mobile: string): Promise<AuthResult> => {
   try {
     const { data: supervisorsData, error: supervisorsError } = await supabase
       .from('supervisors')
-      .select('id, name, mobile_number')
+      .select('id, name, mobile_number, panchayath_id')
       .eq('mobile_number', cleanMobile)
       .limit(1);
     
@@ -65,7 +68,8 @@ export const findUserByMobile = async (mobile: string): Promise<AuthResult> => {
           mobile_number: user.mobile_number,
           role: 'supervisor',
           table: 'supervisors',
-          hasAdminAccess: false
+          hasAdminAccess: false,
+          panchayath_id: user.panchayath_id
         }
       };
     }
@@ -77,7 +81,7 @@ export const findUserByMobile = async (mobile: string): Promise<AuthResult> => {
   try {
     const { data: groupLeadersData, error: groupLeadersError } = await supabase
       .from('group_leaders')
-      .select('id, name, mobile_number')
+      .select('id, name, mobile_number, ward, panchayath_id')
       .eq('mobile_number', cleanMobile)
       .limit(1);
     
@@ -91,7 +95,9 @@ export const findUserByMobile = async (mobile: string): Promise<AuthResult> => {
           mobile_number: user.mobile_number,
           role: 'group_leader',
           table: 'group_leaders',
-          hasAdminAccess: false
+          hasAdminAccess: false,
+          ward: user.ward,
+          panchayath_id: user.panchayath_id
         }
       };
     }
@@ -103,7 +109,7 @@ export const findUserByMobile = async (mobile: string): Promise<AuthResult> => {
   try {
     const { data: prosData, error: prosError } = await supabase
       .from('pros')
-      .select('id, name, mobile_number')
+      .select('id, name, mobile_number, panchayath_id')
       .eq('mobile_number', cleanMobile)
       .limit(1);
     
@@ -117,7 +123,8 @@ export const findUserByMobile = async (mobile: string): Promise<AuthResult> => {
           mobile_number: user.mobile_number,
           role: 'pro',
           table: 'pros',
-          hasAdminAccess: false
+          hasAdminAccess: false,
+          panchayath_id: user.panchayath_id
         }
       };
     }

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { TaskManagement } from "@/components/TaskManagement";
 import { MobileLogin } from "@/components/MobileLogin";
 import { UserProfile } from "@/components/UserProfile";
+import { AgentTestimonialProfile } from "@/components/AgentTestimonialProfile";
 import { User } from "@/lib/authService";
 import { useToast } from "@/hooks/use-toast";
 
@@ -77,7 +78,14 @@ const Index = () => {
           </div>
         </div>
 
-        <TaskManagement currentUser={currentUser} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div className="lg:col-span-2">
+            <TaskManagement currentUser={currentUser} />
+          </div>
+          <div>
+            <AgentTestimonialProfile currentUser={currentUser} />
+          </div>
+        </div>
       </div>
     </div>;
 };
