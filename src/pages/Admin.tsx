@@ -4,11 +4,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ViewAnalyze } from "@/components/admin/ViewAnalyze";
 import { PanchayathManagement } from "@/components/admin/PanchayathManagement";
-import { ArrowLeft, Shield, Settings, BarChart3, MapPin } from "lucide-react";
+import { AdminTeamManagement } from "@/components/admin/AdminTeamManagement";
+import { ArrowLeft, Shield, Settings, BarChart3, MapPin, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 const Admin = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("panchayath");
+  const [activeTab, setActiveTab] = useState("admin-teams");
   return <div className="min-h-screen bg-gradient-to-br from-background to-background/95 p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -30,7 +31,21 @@ const Admin = () => {
         </div>
 
         {/* Admin Navigation Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <div className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] ${activeTab === "admin-teams" ? "scale-[1.02]" : ""}`} onClick={() => setActiveTab("admin-teams")}>
+            <Card className={`relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "admin-teams" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
+              <CardHeader className="pb-3 bg-blue-50">
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-lg">Admin Teams</CardTitle>
+                </div>
+                <CardDescription>
+                  Manage administration teams and members
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+
           <div className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] ${activeTab === "panchayath" ? "scale-[1.02]" : ""}`} onClick={() => setActiveTab("panchayath")}>
             <Card className={`relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "panchayath" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
               <CardHeader className="pb-3 bg-green-50">
@@ -90,6 +105,10 @@ const Admin = () => {
 
         {/* Content Area */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsContent value="admin-teams">
+            <AdminTeamManagement />
+          </TabsContent>
+          
           <TabsContent value="panchayath">
             <PanchayathManagement />
           </TabsContent>
