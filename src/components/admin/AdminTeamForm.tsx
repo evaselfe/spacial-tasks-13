@@ -43,13 +43,18 @@ export const AdminTeamForm = ({ team, onSuccess, onCancel }: AdminTeamFormProps)
     setLoading(true);
     try {
       if (isEditing) {
-        // For now, create a mock admin_teams table operation
-        console.log("Updating admin team:", { name, description });
-        // This would normally update the admin_teams table
+        const { error } = await supabase
+          .from('admin_teams')
+          .update({ name: name.trim(), description: description.trim() || null })
+          .eq('id', team!.id);
+
+        if (error) throw error;
       } else {
-        // For now, create a mock admin_teams table operation
-        console.log("Creating admin team:", { name, description });
-        // This would normally insert into the admin_teams table
+        const { error } = await supabase
+          .from('admin_teams')
+          .insert([{ name: name.trim(), description: description.trim() || null }]);
+
+        if (error) throw error;
       }
 
       toast({

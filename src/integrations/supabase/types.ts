@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_members: {
+        Row: {
+          created_at: string | null
+          id: string
+          mobile: string
+          name: string
+          panchayath: string
+          role: string
+          team_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          mobile: string
+          name: string
+          panchayath: string
+          role?: string
+          team_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          mobile?: string
+          name?: string
+          panchayath?: string
+          role?: string
+          team_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "admin_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_teams: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       coordinators: {
         Row: {
           created_at: string | null
@@ -295,62 +360,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      team_members: {
-        Row: {
-          email: string
-          id: string
-          joined_at: string | null
-          name: string
-          role: string
-          team_id: string | null
-        }
-        Insert: {
-          email: string
-          id?: string
-          joined_at?: string | null
-          name: string
-          role: string
-          team_id?: string | null
-        }
-        Update: {
-          email?: string
-          id?: string
-          joined_at?: string | null
-          name?: string
-          role?: string
-          team_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "team_members_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      teams: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          id: string
-          name: string
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          name: string
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          name?: string
-        }
-        Relationships: []
       }
     }
     Views: {

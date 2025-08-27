@@ -51,25 +51,28 @@ export const AdminTeamManagement = () => {
 
   const fetchTeams = async () => {
     try {
-      // For now, use mock data since admin_teams table doesn't exist yet
-      const mockTeams: AdminTeam[] = [
-        {
-          id: "1",
-          name: "Admin Team Alpha",
-          description: "Primary administration team",
-          created_at: new Date().toISOString(),
-          member_count: 3
-        },
-        {
-          id: "2", 
-          name: "Admin Team Beta",
-          description: "Secondary administration team",
-          created_at: new Date().toISOString(),
-          member_count: 2
-        }
-      ];
-      
-      setTeams(mockTeams);
+      const { data: teamsData, error } = await supabase
+        .from('admin_teams')
+        .select('*');
+
+      if (error) throw error;
+
+      // Fetch member counts for each team
+      const teamsWithCounts = await Promise.all(
+        (teamsData || []).map(async (team) => {
+          const { count } = await supabase
+            .from('admin_members')
+            .select('*', { count: 'exact', head: true })
+            .eq('team_id', team.id);
+          
+          return {
+            ...team,
+            member_count: count || 0
+          };
+        })
+      );
+
+      setTeams(teamsWithCounts);
     } catch (error) {
       console.error("Error fetching admin teams:", error);
       toast({
@@ -82,29 +85,15 @@ export const AdminTeamManagement = () => {
 
   const fetchTeamMembers = async (teamId: string) => {
     try {
-      // For now, use mock data since admin_members table doesn't exist yet
-      const mockMembers: AdminMember[] = [
-        {
-          id: "1",
-          team_id: teamId,
-          name: "John Admin",
-          mobile: "9876543210",
-          panchayath: "Sample Panchayath",
-          role: "Team member",
-          created_at: new Date().toISOString()
-        },
-        {
-          id: "2",
-          team_id: teamId,
-          name: "Jane Leader",
-          mobile: "9876543211",
-          panchayath: "Another Panchayath", 
-          role: "Team lead",
-          created_at: new Date().toISOString()
-        }
-      ];
+      const { data: membersData, error } = await supabase
+        .from('admin_members')
+        .select('*')
+        .eq('team_id', teamId)
+        .order('created_at', { ascending: false });
 
-      setTeamMembers(mockMembers);
+      if (error) throw error;
+
+      setTeamMembers(membersData || []);
     } catch (error) {
       console.error("Error fetching admin team members:", error);
       toast({
@@ -120,8 +109,12 @@ export const AdminTeamManagement = () => {
     
     setLoading(true);
     try {
-      // For now, use mock deletion since admin tables don't exist yet
-      console.log("Deleting admin team:", teamId);
+      const { error } = await supabase
+        .from('admin_teams')
+        .delete()
+        .eq('id', teamId);
+
+      if (error) throw error;
       
       // Update local state
       setTeams(teams.filter(team => team.id !== teamId));
@@ -151,8 +144,12 @@ export const AdminTeamManagement = () => {
     
     setLoading(true);
     try {
-      // For now, use mock deletion since admin_members table doesn't exist yet
-      console.log("Deleting admin member:", memberId);
+      const { error } = await supabase
+        .from('admin_members')
+        .delete()
+        .eq('id', memberId);
+
+      if (error) throw error;
 
       // Update local state
       setTeamMembers(teamMembers.filter(member => member.id !== memberId));
