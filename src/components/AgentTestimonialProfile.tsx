@@ -140,6 +140,7 @@ export const AgentTestimonialProfile = ({ currentUser }: AgentTestimonialProfile
               </DialogHeader>
               <TestimonialFormSimple 
                 agent={agentData} 
+                currentUser={currentUser}
                 onClose={() => {
                   setShowForm(false);
                   loadTestimonialStats(); // Refresh stats after new testimonial

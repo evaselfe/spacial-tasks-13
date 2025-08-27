@@ -19,6 +19,10 @@ interface Agent {
 
 interface TestimonialFormSimpleProps {
   agent: Agent;
+  currentUser?: {
+    name: string;
+    mobile_number: string;
+  };
   onClose?: () => void;
 }
 
@@ -40,12 +44,12 @@ const responseOptions = [
   { value: 'no', label: 'No', score: 0, color: 'text-red-600' }
 ];
 
-export const TestimonialFormSimple = ({ agent, onClose }: TestimonialFormSimpleProps) => {
+export const TestimonialFormSimple = ({ agent, currentUser, onClose }: TestimonialFormSimpleProps) => {
   const [questions] = useState(sampleQuestions);
   const [responses, setResponses] = useState<ResponseData>({});
   const [respondentInfo, setRespondentInfo] = useState({
-    name: "",
-    contact: ""
+    name: currentUser?.name || "",
+    contact: currentUser?.mobile_number || ""
   });
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
