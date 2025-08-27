@@ -41,14 +41,14 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
             <UserProfile currentUser={currentUser} onUserUpdate={setCurrentUser} />
             
-            {/* Show Admin Panel button only for team members */}
+            {/* Show Team Admin Panel button only for team members */}
             {currentUser.hasAdminAccess && (
               <Button 
                 variant="outline" 
                 onClick={() => window.location.href = '/admin'}
                 className="w-full sm:w-auto border-primary/20 hover:border-primary"
               >
-                Admin Panel
+                Team Admin Panel
               </Button>
             )}
             

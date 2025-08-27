@@ -7,7 +7,7 @@ import { PanchayathManagement } from "@/components/admin/PanchayathManagement";
 import { AdminTeamManagement } from "@/components/admin/AdminTeamManagement";
 import { ArrowLeft, Shield, Settings, BarChart3, MapPin, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-const Admin = () => {
+const TeamAdmin = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("admin-teams");
   return <div className="min-h-screen bg-gradient-to-br from-background to-background/95 p-3 sm:p-6">
@@ -21,10 +21,10 @@ const Admin = () => {
             </Button>
             <div className="text-center sm:text-left">
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                Admin Panel
-              </h1>
-              <p className="text-muted-foreground mt-2 text-sm sm:text-base">
-                Manage teams and system settings
+                 Team Admin Panel
+               </h1>
+               <p className="text-muted-foreground mt-2 text-sm sm:text-base">
+                 Manage teams and administrative settings
               </p>
             </div>
           </div>
@@ -152,4 +152,4 @@ const Admin = () => {
       </div>
     </div>;
 };
-export default Admin;
+export default TeamAdmin;
