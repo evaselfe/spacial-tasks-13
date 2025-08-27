@@ -4,11 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Shield, Settings, Database, Users, BarChart3 } from "lucide-react";
+import { ArrowLeft, Shield, Settings, Database, Users, BarChart3, MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminTeamManagement } from "@/components/admin/AdminTeamManagement";
+import { TestimonialManagementSimple } from "@/components/admin/TestimonialManagementSimple";
 
 const SuperAdmin = () => {
   const navigate = useNavigate();
@@ -135,7 +136,7 @@ const SuperAdmin = () => {
         </div>
 
         {/* Admin Navigation Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <div 
             className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] ${activeTab === "overview" ? "scale-[1.02]" : ""}`} 
             onClick={() => setActiveTab("overview")}
@@ -182,6 +183,23 @@ const SuperAdmin = () => {
                 </div>
                 <CardDescription>
                   Direct database management
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+
+          <div 
+            className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] ${activeTab === "testimonials" ? "scale-[1.02]" : ""}`} 
+            onClick={() => setActiveTab("testimonials")}
+          >
+            <Card className={`relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "testimonials" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
+              <CardHeader className="pb-3 bg-yellow-50">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-lg">Testimonials</CardTitle>
+                </div>
+                <CardDescription>
+                  Manage agent testimonial questions
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -251,6 +269,10 @@ const SuperAdmin = () => {
           
           <TabsContent value="user-management">
             <AdminTeamManagement />
+          </TabsContent>
+
+          <TabsContent value="testimonials">
+            <TestimonialManagementSimple />
           </TabsContent>
           
           <TabsContent value="database">
