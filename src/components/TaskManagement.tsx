@@ -7,12 +7,7 @@ import { SupervisorForm } from "@/components/SupervisorForm";
 import { GroupLeaderForm } from "@/components/GroupLeaderForm";
 import { ProForm } from "@/components/ProForm";
 import { AgentsList } from "@/components/AgentsList";
-interface TaskManagementProps {
-  officerId: string;
-}
-export const TaskManagement = ({
-  officerId
-}: TaskManagementProps) => {
+export const TaskManagement = () => {
   const [selectedPanchayath, setSelectedPanchayath] = useState<any>(null);
   const [selectedRole, setSelectedRole] = useState("coordinator");
   const [refreshKey, setRefreshKey] = useState(0);

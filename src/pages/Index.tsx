@@ -1,32 +1,7 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserProfile } from "@/components/UserProfile";
-import { AutoLogin } from "@/components/AutoLogin";
 import { TaskManagement } from "@/components/TaskManagement";
-import { PanchayathView } from "@/components/PanchayathView";
-import { PanchayathHierarchy } from "@/components/PanchayathHierarchy";
-import { HistoryTab } from "@/components/HistoryTab";
-import { useToast } from "@/hooks/use-toast";
+
 const Index = () => {
-  const [currentOfficer, setCurrentOfficer] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState("manage");
-  const {
-    toast
-  } = useToast();
-  const handleLogin = (officer: any) => {
-    setCurrentOfficer(officer);
-    setActiveTab("manage");
-    toast({
-      title: "Welcome!",
-      description: `Logged in as ${officer.name}`
-    });
-  };
-  if (!currentOfficer) {
-    return <div className="min-h-screen flex items-center justify-center bg-background">
-        <AutoLogin onLogin={handleLogin} />
-      </div>;
-  }
   return <div className="min-h-screen bg-gradient-to-br from-background to-background/95 p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
@@ -34,10 +9,8 @@ const Index = () => {
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               Panchayath Management System
             </h1>
-            <p className="text-muted-foreground mt-2 text-sm sm:text-base">Officer: {currentOfficer.name}</p>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
-            <UserProfile currentOfficer={currentOfficer} onOfficerUpdate={setCurrentOfficer} />
             <Button 
               variant="outline" 
               onClick={() => window.location.href = '/admin'}
@@ -45,18 +18,12 @@ const Index = () => {
             >
               Admin Panel
             </Button>
-            <Button variant="outline" onClick={() => {
-            setCurrentOfficer(null);
-            setActiveTab("login");
-          }} className="w-full sm:w-auto border-primary/20 hover:border-primary bg-red-600 hover:bg-red-500 text-slate-50">
-              Logout
-            </Button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <div className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] ${activeTab === "manage" ? "scale-[1.02]" : ""}`} onClick={() => setActiveTab("manage")}>
-            <div className={`relative overflow-hidden rounded-lg border-2 transition-all duration-300 ${activeTab === "manage" ? "border-coordinator shadow-xl bg-coordinator/10" : "border-border hover:border-coordinator/50 hover:shadow-lg bg-card"}`}>
+          <div className="cursor-pointer transition-all duration-300 hover:scale-[1.02] scale-[1.02]">
+            <div className="relative overflow-hidden rounded-lg border-2 transition-all duration-300 border-coordinator shadow-xl bg-coordinator/10">
               <div className="absolute inset-0 bg-gradient-to-br from-coordinator/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative p-4 sm:p-6 bg-teal-200">
                 <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
@@ -69,7 +36,7 @@ const Index = () => {
           </div>
         </div>
 
-        {activeTab === "manage" && <TaskManagement officerId={currentOfficer.id} />}
+        <TaskManagement />
       </div>
     </div>;
 };
