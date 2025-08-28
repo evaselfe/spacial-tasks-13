@@ -4,8 +4,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ViewAnalyze } from "@/components/admin/ViewAnalyze";
 import { PanchayathManagement } from "@/components/admin/PanchayathManagement";
+import { AgentTestimonialAnalytics } from "@/components/admin/AgentTestimonialAnalytics";
 
-import { ArrowLeft, Shield, Settings, BarChart3, MapPin, Users } from "lucide-react";
+import { ArrowLeft, Shield, Settings, BarChart3, MapPin, Users, MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 const TeamAdmin = () => {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ const TeamAdmin = () => {
         </div>
 
         {/* Admin Navigation Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <div className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] ${activeTab === "panchayath" ? "scale-[1.02]" : ""}`} onClick={() => setActiveTab("panchayath")}>
             <Card className={`relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "panchayath" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
               <CardHeader className="pb-3 bg-green-50">
@@ -59,6 +60,20 @@ const TeamAdmin = () => {
               </CardHeader>
             </Card>
           </div>
+
+          <div className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] ${activeTab === "testimonials" ? "scale-[1.02]" : ""}`} onClick={() => setActiveTab("testimonials")}>
+            <Card className={`relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "testimonials" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
+              <CardHeader className="pb-3 bg-blue-50">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-lg">Testimonials</CardTitle>
+                </div>
+                <CardDescription>
+                  View agent testimonials and feedback
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
         </div>
 
         {/* Content Area */}
@@ -69,6 +84,10 @@ const TeamAdmin = () => {
           
           <TabsContent value="analytics">
             <ViewAnalyze />
+          </TabsContent>
+
+          <TabsContent value="testimonials">
+            <AgentTestimonialAnalytics />
           </TabsContent>
         </Tabs>
       </div>
