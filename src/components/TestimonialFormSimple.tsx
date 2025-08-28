@@ -7,6 +7,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Star, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Agent {
   id: string;
@@ -107,9 +108,27 @@ export const TestimonialFormSimple = ({ agent, currentUser, onClose }: Testimoni
     setSubmitting(true);
 
     try {
-      // For now, we'll just simulate the submission since we can't access the database
-      // In production, this would save to the testimonial_responses table
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      // Save each response to the database
+      const totalScore = getTotalScore();
+      
+      for (const [questionId, response] of Object.entries(responses)) {
+        const { error } = await supabase
+          .from('testimonial_responses')
+          .insert({
+            agent_id: agent.id,
+            agent_type: agent.type,
+            panchayath_id: agent.panchayath_id,
+            question_id: questionId,
+            response: response,
+            score: getResponseScore(response),
+            respondent_name: respondentInfo.name,
+            respondent_contact: respondentInfo.contact || null
+          });
+
+        if (error) {
+          throw error;
+        }
+      }
 
       toast({
         title: "Thank you!",
