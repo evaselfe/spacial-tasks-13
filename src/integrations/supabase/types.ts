@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       admin_members: {
         Row: {
+          admin_type: string | null
           created_at: string | null
           id: string
           mobile: string
@@ -26,6 +27,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          admin_type?: string | null
           created_at?: string | null
           id?: string
           mobile: string
@@ -36,6 +38,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          admin_type?: string | null
           created_at?: string | null
           id?: string
           mobile?: string
@@ -287,6 +290,33 @@ export type Database = {
           },
         ]
       }
+      super_admins: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          password_hash: string
+          updated_at: string | null
+          username: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          password_hash: string
+          updated_at?: string | null
+          username: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          password_hash?: string
+          updated_at?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
       supervisor_wards: {
         Row: {
           id: string
@@ -357,6 +387,90 @@ export type Database = {
             columns: ["panchayath_id"]
             isOneToOne: false
             referencedRelation: "panchayaths"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      testimonial_questions: {
+        Row: {
+          created_at: string
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          question: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          question: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          question?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      testimonial_responses: {
+        Row: {
+          agent_id: string
+          agent_type: string
+          created_at: string
+          id: string
+          panchayath_id: string
+          question_id: string
+          respondent_contact: string | null
+          respondent_name: string
+          response: string
+          score: number
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          agent_type: string
+          created_at?: string
+          id?: string
+          panchayath_id: string
+          question_id: string
+          respondent_contact?: string | null
+          respondent_name: string
+          response: string
+          score: number
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          agent_type?: string
+          created_at?: string
+          id?: string
+          panchayath_id?: string
+          question_id?: string
+          respondent_contact?: string | null
+          respondent_name?: string
+          response?: string
+          score?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testimonial_responses_panchayath_id_fkey"
+            columns: ["panchayath_id"]
+            isOneToOne: false
+            referencedRelation: "panchayaths"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "testimonial_responses_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "testimonial_questions"
             referencedColumns: ["id"]
           },
         ]
