@@ -92,7 +92,7 @@ export const PanchayathSelector = ({ onPanchayathSelect, onPanchayathEdit }: Pan
             <SelectValue placeholder="Select a panchayath to manage" />
           </SelectTrigger>
           <SelectContent className="bg-popover border border-border shadow-lg">
-            {panchayaths.map((panchayath) => (
+            {panchayaths.filter(p => p.id && p.id.trim()).map((panchayath) => (
               <SelectItem key={panchayath.id} value={panchayath.id}>
                 <div className="flex items-center justify-between w-full">
                   <span className="font-medium">{panchayath.name}</span>

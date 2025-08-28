@@ -351,7 +351,7 @@ export const AgentTestimonialAnalytics = () => {
                 <SelectValue placeholder="Select Panchayath" />
               </SelectTrigger>
               <SelectContent>
-                {panchayaths.map((panchayath) => (
+                {panchayaths.filter(p => p.id && p.id.trim()).map((panchayath) => (
                   <SelectItem key={panchayath.id} value={panchayath.id}>
                     {panchayath.name}
                   </SelectItem>

@@ -232,7 +232,7 @@ export const AdminMemberForm = ({ teamId, member, onSuccess, onCancel }: AdminMe
                 <SelectValue placeholder="Select a panchayath" />
               </SelectTrigger>
               <SelectContent>
-                {panchayaths.map((panchayathName) => (
+                {panchayaths.filter(name => name && name.trim()).map((panchayathName) => (
                   <SelectItem key={panchayathName} value={panchayathName}>
                     {panchayathName}
                   </SelectItem>
