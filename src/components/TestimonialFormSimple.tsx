@@ -13,7 +13,7 @@ interface Agent {
   id: string;
   name: string;
   mobile_number: string;
-  type: 'coordinator' | 'supervisor' | 'group_leader' | 'pro';
+  type: 'coordinator' | 'supervisor' | 'group_leader' | 'pro' | 'admin_member';
   ward?: number;
   panchayath_id: string;
 }

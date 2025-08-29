@@ -189,7 +189,7 @@ export const AgentTestimonialProfile = ({ currentUser }: AgentTestimonialProfile
     id: currentUser.id,
     name: currentUser.name,
     mobile_number: currentUser.mobile_number,
-    type: currentUser.role as 'coordinator' | 'supervisor' | 'group_leader' | 'pro',
+    type: currentUser.role as 'coordinator' | 'supervisor' | 'group_leader' | 'pro' | 'admin_member',
     ward: currentUser.ward,
     panchayath_id: currentUser.panchayath_id || ''
   };
