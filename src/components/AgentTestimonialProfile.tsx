@@ -52,6 +52,11 @@ export const AgentTestimonialProfile = ({ currentUser }: AgentTestimonialProfile
     try {
       setLoading(true);
       
+      console.log('Loading testimonial stats for:', { 
+        agent_id: currentUser.id, 
+        agent_type: currentUser.role 
+      });
+      
       // Fetch real testimonial data from database
       const { data: testimonialData, error } = await supabase
         .from('testimonial_responses')
@@ -59,9 +64,16 @@ export const AgentTestimonialProfile = ({ currentUser }: AgentTestimonialProfile
         .eq('agent_id', currentUser.id)
         .eq('agent_type', currentUser.role);
 
+      console.log('Testimonial stats query result:', { testimonialData, error });
+
       if (error) {
         console.error('Error fetching testimonial stats:', error);
-        // Fall back to mock data if there's an error
+        toast({
+          title: "Error loading stats",
+          description: error.message,
+          variant: "destructive",
+        });
+        // Fall back to empty data if there's an error
         const mockStats = {
           totalResponses: 0,
           averageScore: 0,
@@ -116,6 +128,11 @@ export const AgentTestimonialProfile = ({ currentUser }: AgentTestimonialProfile
     try {
       setHistoryLoading(true);
       
+      console.log('Loading testimonial history for:', { 
+        agent_id: currentUser.id, 
+        agent_type: currentUser.role 
+      });
+      
       const { data: historyData, error } = await supabase
         .from('testimonial_responses')
         .select('*')
@@ -123,11 +140,13 @@ export const AgentTestimonialProfile = ({ currentUser }: AgentTestimonialProfile
         .eq('agent_type', currentUser.role)
         .order('created_at', { ascending: false });
 
+      console.log('Testimonial history query result:', { historyData, error });
+
       if (error) {
         console.error('Error fetching testimonial history:', error);
         toast({
           title: "Error",
-          description: "Failed to load testimonial history",
+          description: `Failed to load testimonial history: ${error.message}`,
           variant: "destructive",
         });
         return;
