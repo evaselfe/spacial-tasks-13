@@ -395,7 +395,7 @@ export type Database = {
         Row: {
           created_at: string
           display_order: number | null
-          id: string
+          id: number
           is_active: boolean | null
           question: string
           updated_at: string
@@ -403,7 +403,7 @@ export type Database = {
         Insert: {
           created_at?: string
           display_order?: number | null
-          id?: string
+          id?: number
           is_active?: boolean | null
           question: string
           updated_at?: string
@@ -411,7 +411,7 @@ export type Database = {
         Update: {
           created_at?: string
           display_order?: number | null
-          id?: string
+          id?: number
           is_active?: boolean | null
           question?: string
           updated_at?: string
@@ -420,43 +420,40 @@ export type Database = {
       }
       testimonial_responses: {
         Row: {
-          agent_id: string
-          agent_type: string
+          agent_id: string | null
+          agent_type: string | null
           created_at: string
-          id: string
-          panchayath_id: string
-          question_id: string
+          id: number
+          panchayath_id: string | null
+          question_id: number | null
           respondent_contact: string | null
-          respondent_name: string
+          respondent_name: string | null
           response: string
-          score: number
-          updated_at: string
+          score: number | null
         }
         Insert: {
-          agent_id: string
-          agent_type: string
+          agent_id?: string | null
+          agent_type?: string | null
           created_at?: string
-          id?: string
-          panchayath_id: string
-          question_id: string
+          id?: number
+          panchayath_id?: string | null
+          question_id?: number | null
           respondent_contact?: string | null
-          respondent_name: string
+          respondent_name?: string | null
           response: string
-          score: number
-          updated_at?: string
+          score?: number | null
         }
         Update: {
-          agent_id?: string
-          agent_type?: string
+          agent_id?: string | null
+          agent_type?: string | null
           created_at?: string
-          id?: string
-          panchayath_id?: string
-          question_id?: string
+          id?: number
+          panchayath_id?: string | null
+          question_id?: number | null
           respondent_contact?: string | null
-          respondent_name?: string
+          respondent_name?: string | null
           response?: string
-          score?: number
-          updated_at?: string
+          score?: number | null
         }
         Relationships: [
           {
