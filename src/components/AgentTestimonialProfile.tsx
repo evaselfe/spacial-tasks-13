@@ -6,7 +6,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { TestimonialFormSimple } from "@/components/TestimonialFormSimple";
 import { MessageSquare, Star, TrendingUp } from "lucide-react";
 import { User } from "@/lib/authService";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface AgentTestimonialProfileProps {
@@ -36,8 +35,7 @@ export const AgentTestimonialProfile = ({ currentUser }: AgentTestimonialProfile
 
   const loadTestimonialStats = async () => {
     try {
-      // For now, using mock data since testimonial tables might not be set up yet
-      // In production, this would query the testimonial_responses table
+      // Mock stats for display
       const mockStats = {
         totalResponses: Math.floor(Math.random() * 15) + 5,
         averageScore: Math.floor(Math.random() * 40) + 60,
@@ -102,10 +100,10 @@ export const AgentTestimonialProfile = ({ currentUser }: AgentTestimonialProfile
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex justify-center">
           <Dialog open={showForm} onOpenChange={setShowForm}>
             <DialogTrigger asChild>
-              <Button className="w-full">
+              <Button className="w-full max-w-md">
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Get New Review
               </Button>
@@ -122,7 +120,7 @@ export const AgentTestimonialProfile = ({ currentUser }: AgentTestimonialProfile
                 currentUser={currentUser}
                 onClose={() => {
                   setShowForm(false);
-                  loadTestimonialStats(); // Refresh stats after new testimonial
+                  loadTestimonialStats();
                 }} 
               />
             </DialogContent>
