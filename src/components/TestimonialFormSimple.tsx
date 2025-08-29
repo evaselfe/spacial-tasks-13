@@ -118,7 +118,7 @@ export const TestimonialFormSimple = ({ agent, currentUser, onClose }: Testimoni
             agent_id: agent.id,
             agent_type: agent.type,
             panchayath_id: agent.panchayath_id,
-            question_id: questionId,
+            question_id: parseInt(questionId),
             response: response,
             score: getResponseScore(response),
             respondent_name: respondentInfo.name,

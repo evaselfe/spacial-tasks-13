@@ -3,7 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Star, History, Edit, Trash, Phone, MapPin } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { MessageSquare, Star, History, Edit, Trash, Phone, MapPin, Calendar, User, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -26,6 +28,19 @@ interface HierarchyStructure {
   pros: HierarchyAgent[];
 }
 
+interface TestimonialHistory {
+  id: number;
+  agent_id: string;
+  agent_type: string;
+  response: string;
+  score: number;
+  respondent_name: string;
+  respondent_contact: string;
+  created_at: string;
+  question_id: number;
+  panchayath_id: string;
+}
+
 export const AgentTestimonialAnalytics = () => {
   const [hierarchyData, setHierarchyData] = useState<HierarchyStructure>({
     supervisors: [],
@@ -35,6 +50,10 @@ export const AgentTestimonialAnalytics = () => {
   const [panchayaths, setPanchayaths] = useState<any[]>([]);
   const [selectedPanchayath, setSelectedPanchayath] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<HierarchyAgent | null>(null);
+  const [testimonialHistory, setTestimonialHistory] = useState<TestimonialHistory[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -245,17 +264,52 @@ export const AgentTestimonialAnalytics = () => {
     }
   };
 
+
+  const fetchTestimonialHistory = async (agent: HierarchyAgent) => {
+    setHistoryLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("testimonial_responses")
+        .select("*")
+        .eq("agent_id", agent.id)
+        .eq("agent_type", agent.type)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      setTestimonialHistory(data || []);
+    } catch (error) {
+      console.error("Error fetching testimonial history:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch testimonial history",
+        variant: "destructive",
+      });
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handleViewTestimonialHistory = async (agent: HierarchyAgent) => {
+    setSelectedAgent(agent);
+    setShowHistoryDialog(true);
+    await fetchTestimonialHistory(agent);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   const getScoreBadgeVariant = (score: number) => {
     if (score >= 8) return "default";
     if (score >= 6) return "secondary";
     return "destructive";
-  };
-
-  const handleViewTestimonialHistory = (agent: HierarchyAgent) => {
-    toast({
-      title: "Testimonial History",
-      description: `Viewing testimonials for ${agent.name} - ${agent.testimonialCount} reviews`,
-    });
   };
 
   const AgentCard = ({ agent, indentLevel = 0 }: { agent: HierarchyAgent; indentLevel?: number }) => (
@@ -436,6 +490,82 @@ export const AgentTestimonialAnalytics = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Testimonial History Dialog */}
+      <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
+        <DialogContent className="max-w-4xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Testimonial History - {selectedAgent?.name}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedAgent && (
+                <div className="flex items-center gap-4 mt-2">
+                  <Badge className={getRoleBadgeColor(selectedAgent.type)}>
+                    {getRoleLabel(selectedAgent.type)}
+                  </Badge>
+                  <span className="flex items-center gap-1">
+                    <Phone className="h-4 w-4" />
+                    {selectedAgent.mobile}
+                  </span>
+                  {selectedAgent.ward && (
+                    <span>Ward: {Array.isArray(selectedAgent.ward) ? selectedAgent.ward.join(', ') : selectedAgent.ward}</span>
+                  )}
+                </div>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <ScrollArea className="max-h-[60vh] pr-4">
+            {historyLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <span className="ml-2">Loading testimonials...</span>
+              </div>
+            ) : testimonialHistory.length > 0 ? (
+              <div className="space-y-4">
+                {testimonialHistory.map((testimonial) => (
+                  <Card key={testimonial.id} className="border-l-4 border-l-primary">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Badge variant={getScoreBadgeVariant(testimonial.score)} className="text-xs">
+                            Score: {testimonial.score}/10
+                          </Badge>
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Calendar className="h-4 w-4" />
+                            {formatDate(testimonial.created_at)}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-sm">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">{testimonial.respondent_name}</span>
+                          <span className="text-muted-foreground">•</span>
+                          <span className="text-muted-foreground">{testimonial.respondent_contact}</span>
+                        </div>
+                        
+                        <div className="flex items-start gap-2">
+                          <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
+                          <p className="text-sm leading-relaxed">{testimonial.response}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No testimonials found for this agent</p>
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

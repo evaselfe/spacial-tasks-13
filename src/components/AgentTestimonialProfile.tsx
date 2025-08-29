@@ -22,13 +22,16 @@ interface TestimonialStats {
 }
 
 interface TestimonialHistory {
-  id: string;
+  id: number;
+  agent_id: string;
+  agent_type: string;
   respondent_name: string;
   respondent_contact: string;
   score: number;
   response: string;
   created_at: string;
-  question_id: string;
+  question_id: number;
+  panchayath_id: string;
 }
 
 export const AgentTestimonialProfile = ({ currentUser }: AgentTestimonialProfileProps) => {
