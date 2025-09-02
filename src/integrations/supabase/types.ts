@@ -133,8 +133,9 @@ export type Database = {
           date: string
           id: string
           is_leave: boolean
+          mobile_number: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           activity?: string | null
@@ -142,8 +143,9 @@ export type Database = {
           date: string
           id?: string
           is_leave?: boolean
+          mobile_number?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           activity?: string | null
@@ -151,8 +153,9 @@ export type Database = {
           date?: string
           id?: string
           is_leave?: boolean
+          mobile_number?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -526,7 +529,15 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      get_agent_by_mobile: {
+        Args: { mobile_num: string }
+        Returns: {
+          agent_id: string
+          agent_name: string
+          agent_type: string
+          panchayath_id: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
