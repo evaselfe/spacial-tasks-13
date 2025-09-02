@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { TaskManagement } from "@/components/TaskManagement";
 import { MobileLogin } from "@/components/MobileLogin";
@@ -16,12 +16,27 @@ const Index = () => {
   const [isPanchayathOpen, setIsPanchayathOpen] = useState(false);
   const { toast } = useToast();
 
+  // Load user from localStorage on component mount
+  useEffect(() => {
+    const storedUser = localStorage.getItem('currentUser');
+    if (storedUser) {
+      try {
+        setCurrentUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Error parsing stored user:', error);
+        localStorage.removeItem('currentUser');
+      }
+    }
+  }, []);
+
   const handleLogin = (user: User) => {
     setCurrentUser(user);
+    localStorage.setItem('currentUser', JSON.stringify(user));
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
+    localStorage.removeItem('currentUser');
     toast({
       title: "Logged out",
       description: "You have been logged out successfully",
