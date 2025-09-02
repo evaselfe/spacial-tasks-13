@@ -71,8 +71,19 @@ export const DailyNote = () => {
     }
 
     try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to save daily notes",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const noteData = {
-        user_id: (await supabase.auth.getUser()).data.user?.id,
+        user_id: user.id,
         date: selectedDateStr,
         activity: activity.trim() || null,
         is_leave: !activity.trim()
