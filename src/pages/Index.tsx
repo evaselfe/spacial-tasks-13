@@ -87,25 +87,26 @@ const Index = () => {
                         )}
                       </div>
                     </div>
-                    <CollapsibleContent>
-                      <div className="mt-2 sm:mt-3">
-                        <p className="text-xs sm:text-sm text-gray-950 leading-relaxed">പഞ്ചായത്തുകളെയോ ഏജന്റുമാരെയോ ചേർക്കാൻ ഇവിടെ ക്ലിക്കുചെയ്യുക</p>
-                      </div>
-                    </CollapsibleContent>
                   </div>
                 </div>
               </div>
             </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="mt-4 sm:mt-6">
+                <div className="mb-4 sm:mb-6">
+                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-4">പഞ്ചായത്തുകളെയോ ഏജന്റുമാരെയോ ചേർക്കാൻ ഇവിടെ ക്ലിക്കുചെയ്യുക</p>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2">
+                    <TaskManagement currentUser={currentUser} />
+                  </div>
+                  <div>
+                    <AgentTestimonialProfile currentUser={currentUser} />
+                  </div>
+                </div>
+              </div>
+            </CollapsibleContent>
           </Collapsible>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <div className="lg:col-span-2">
-            <TaskManagement currentUser={currentUser} />
-          </div>
-          <div>
-            <AgentTestimonialProfile currentUser={currentUser} />
-          </div>
         </div>
       </div>
     </div>;
