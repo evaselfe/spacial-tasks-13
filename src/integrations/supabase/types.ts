@@ -126,6 +126,36 @@ export type Database = {
           },
         ]
       }
+      daily_notes: {
+        Row: {
+          activity: string | null
+          created_at: string
+          date: string
+          id: string
+          is_leave: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity?: string | null
+          created_at?: string
+          date: string
+          id?: string
+          is_leave?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          is_leave?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       group_leaders: {
         Row: {
           created_at: string | null

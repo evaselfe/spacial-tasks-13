@@ -5,6 +5,7 @@ import { TaskManagement } from "@/components/TaskManagement";
 import { MobileLogin } from "@/components/MobileLogin";
 import { UserProfile } from "@/components/UserProfile";
 import { AgentTestimonialProfile } from "@/components/AgentTestimonialProfile";
+import { DailyNote } from "@/components/DailyNote";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { User } from "@/lib/authService";
@@ -65,6 +66,11 @@ const Index = () => {
               Logout
             </Button>
           </div>
+        </div>
+
+        {/* Daily Note Feature */}
+        <div className="mb-6">
+          <DailyNote />
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8">
