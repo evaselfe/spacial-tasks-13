@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageSquare, Star, History, Edit, Trash, Phone, MapPin, Calendar, User, FileText } from "lucide-react";
+import { MessageSquare, Star, History, Edit, Trash, Phone, MapPin, Calendar, User, FileText, ChevronDown, ChevronRight } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -54,6 +55,7 @@ export const AgentTestimonialAnalytics = () => {
   const [testimonialHistory, setTestimonialHistory] = useState<TestimonialHistory[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [expandedAgents, setExpandedAgents] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -312,7 +314,14 @@ export const AgentTestimonialAnalytics = () => {
     return "destructive";
   };
 
-  const AgentCard = ({ agent, indentLevel = 0 }: { agent: HierarchyAgent; indentLevel?: number }) => (
+  const toggleAgentExpansion = (agentId: string) => {
+    setExpandedAgents(prev => ({
+      ...prev,
+      [agentId]: !prev[agentId]
+    }));
+  };
+
+  const AgentCard = ({ agent, indentLevel = 0, hasChildren = false }: { agent: HierarchyAgent; indentLevel?: number; hasChildren?: boolean }) => (
     <div 
       className={`border-l-4 ${
         agent.type === 'coordinator' ? 'border-green-500' :
@@ -327,6 +336,18 @@ export const AgentTestimonialAnalytics = () => {
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
+                {hasChildren && (
+                  <button
+                    onClick={() => toggleAgentExpansion(agent.id)}
+                    className="flex items-center justify-center h-6 w-6 rounded hover:bg-muted transition-colors"
+                  >
+                    {expandedAgents[agent.id] ?? true ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                  </button>
+                )}
                 <Badge className={getRoleBadgeColor(agent.type)}>
                   {getRoleLabel(agent.type)}
                 </Badge>
@@ -423,30 +444,84 @@ export const AgentTestimonialAnalytics = () => {
             <div className="space-y-1">
               {/* Coordinator */}
               {hierarchyData.coordinator && (
-                <AgentCard agent={hierarchyData.coordinator} indentLevel={0} />
+                <Collapsible open={expandedAgents[hierarchyData.coordinator.id] ?? true}>
+                  <AgentCard 
+                    agent={hierarchyData.coordinator} 
+                    indentLevel={0} 
+                    hasChildren={hierarchyData.supervisors.length > 0}
+                  />
+                  <CollapsibleContent>
+                    {/* Supervisors under coordinator */}
+                    {hierarchyData.supervisors.map((supervisor) => (
+                      <Collapsible key={supervisor.id} open={expandedAgents[supervisor.id] ?? true}>
+                        <AgentCard 
+                          agent={supervisor} 
+                          indentLevel={1}
+                          hasChildren={hierarchyData.groupLeaders.some(gl => 
+                            supervisor.ward && Array.isArray(supervisor.ward) && supervisor.ward.includes(gl.ward as number)
+                          )}
+                        />
+                        <CollapsibleContent>
+                          {/* Group Leaders under this supervisor */}
+                          {hierarchyData.groupLeaders
+                            .filter(gl => supervisor.ward && Array.isArray(supervisor.ward) && supervisor.ward.includes(gl.ward as number))
+                            .map((groupLeader) => (
+                              <Collapsible key={groupLeader.id} open={expandedAgents[groupLeader.id] ?? true}>
+                                <AgentCard 
+                                  agent={groupLeader} 
+                                  indentLevel={2}
+                                  hasChildren={hierarchyData.pros.some(pro => pro.ward === groupLeader.ward)}
+                                />
+                                <CollapsibleContent>
+                                  {/* PROs under this group leader */}
+                                  {hierarchyData.pros
+                                    .filter(pro => pro.ward === groupLeader.ward)
+                                    .map((pro) => (
+                                      <AgentCard key={pro.id} agent={pro} indentLevel={3} />
+                                    ))}
+                                </CollapsibleContent>
+                              </Collapsible>
+                            ))}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    ))}
+                  </CollapsibleContent>
+                </Collapsible>
               )}
 
-              {/* Supervisors */}
-              {hierarchyData.supervisors.map((supervisor, index) => (
-                <div key={supervisor.id}>
-                  <AgentCard agent={supervisor} indentLevel={1} />
-                  
-                  {/* Group Leaders under this supervisor */}
-                  {hierarchyData.groupLeaders
-                    .filter(gl => supervisor.ward && Array.isArray(supervisor.ward) && supervisor.ward.includes(gl.ward as number))
-                    .map((groupLeader) => (
-                      <div key={groupLeader.id}>
-                        <AgentCard agent={groupLeader} indentLevel={2} />
-                        
-                        {/* PROs under this group leader */}
-                        {hierarchyData.pros
-                          .filter(pro => pro.ward === groupLeader.ward)
-                          .map((pro) => (
-                            <AgentCard key={pro.id} agent={pro} indentLevel={3} />
-                          ))}
-                      </div>
-                    ))}
-                </div>
+              {/* Supervisors without coordinator */}
+              {!hierarchyData.coordinator && hierarchyData.supervisors.map((supervisor) => (
+                <Collapsible key={supervisor.id} open={expandedAgents[supervisor.id] ?? true}>
+                  <AgentCard 
+                    agent={supervisor} 
+                    indentLevel={0}
+                    hasChildren={hierarchyData.groupLeaders.some(gl => 
+                      supervisor.ward && Array.isArray(supervisor.ward) && supervisor.ward.includes(gl.ward as number)
+                    )}
+                  />
+                  <CollapsibleContent>
+                    {/* Group Leaders under this supervisor */}
+                    {hierarchyData.groupLeaders
+                      .filter(gl => supervisor.ward && Array.isArray(supervisor.ward) && supervisor.ward.includes(gl.ward as number))
+                      .map((groupLeader) => (
+                        <Collapsible key={groupLeader.id} open={expandedAgents[groupLeader.id] ?? true}>
+                          <AgentCard 
+                            agent={groupLeader} 
+                            indentLevel={1}
+                            hasChildren={hierarchyData.pros.some(pro => pro.ward === groupLeader.ward)}
+                          />
+                          <CollapsibleContent>
+                            {/* PROs under this group leader */}
+                            {hierarchyData.pros
+                              .filter(pro => pro.ward === groupLeader.ward)
+                              .map((pro) => (
+                                <AgentCard key={pro.id} agent={pro} indentLevel={2} />
+                              ))}
+                          </CollapsibleContent>
+                        </Collapsible>
+                      ))}
+                  </CollapsibleContent>
+                </Collapsible>
               ))}
 
               {/* Unassigned Group Leaders and PROs */}
@@ -455,21 +530,27 @@ export const AgentTestimonialAnalytics = () => {
                   Array.isArray(s.ward) && s.ward.includes(gl.ward as number)
                 ))
                 .map((groupLeader) => (
-                  <div key={groupLeader.id}>
-                    <AgentCard agent={groupLeader} indentLevel={1} />
-                    {hierarchyData.pros
-                      .filter(pro => pro.ward === groupLeader.ward)
-                      .map((pro) => (
-                        <AgentCard key={pro.id} agent={pro} indentLevel={2} />
-                      ))}
-                  </div>
+                  <Collapsible key={groupLeader.id} open={expandedAgents[groupLeader.id] ?? true}>
+                    <AgentCard 
+                      agent={groupLeader} 
+                      indentLevel={hierarchyData.coordinator ? 1 : 0}
+                      hasChildren={hierarchyData.pros.some(pro => pro.ward === groupLeader.ward)}
+                    />
+                    <CollapsibleContent>
+                      {hierarchyData.pros
+                        .filter(pro => pro.ward === groupLeader.ward)
+                        .map((pro) => (
+                          <AgentCard key={pro.id} agent={pro} indentLevel={hierarchyData.coordinator ? 2 : 1} />
+                        ))}
+                    </CollapsibleContent>
+                  </Collapsible>
                 ))}
 
               {/* Unassigned PROs */}
               {hierarchyData.pros
                 .filter(pro => !hierarchyData.groupLeaders.some(gl => gl.ward === pro.ward))
                 .map((pro) => (
-                  <AgentCard key={pro.id} agent={pro} indentLevel={1} />
+                  <AgentCard key={pro.id} agent={pro} indentLevel={hierarchyData.coordinator ? 1 : 0} />
                 ))}
 
               {!hierarchyData.coordinator && 

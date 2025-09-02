@@ -5,9 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Search, Users, MapPin, Building, BarChart3, Edit, Trash2, MessageSquare } from "lucide-react";
+import { Search, Users, MapPin, Building, BarChart3, Edit, Trash2, MessageSquare, ChevronDown, ChevronRight } from "lucide-react";
 import { PanchayathChart } from "@/components/PanchayathChart";
 import { PanchayathForm } from "@/components/PanchayathForm";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +30,7 @@ export const PanchayathHierarchy = () => {
   const [loading, setLoading] = useState(true);
   const [editingPanchayath, setEditingPanchayath] = useState<any>(null);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
 
   const fetchPanchayaths = async () => {
@@ -133,6 +135,13 @@ export const PanchayathHierarchy = () => {
     }
   };
 
+  const toggleCardExpansion = (cardId: string) => {
+    setExpandedCards(prev => ({
+      ...prev,
+      [cardId]: !prev[cardId]
+    }));
+  };
+
   if (loading) {
     return (
       <Card>
@@ -203,96 +212,115 @@ export const PanchayathHierarchy = () => {
 
                 <div className="grid gap-4">
             {filteredPanchayaths.map((panchayath) => (
-              <Card key={panchayath.id} className="border border-border hover:border-primary/40 transition-colors">
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-primary">{panchayath.name}</h3>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                        <MapPin className="h-4 w-4" />
-                        <span>{panchayath.number_of_wards} wards</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-primary/10">
-                        <Users className="h-3 w-3 mr-1" />
-                        Total: {panchayath.coordinator_count + panchayath.supervisor_count + panchayath.group_leader_count + panchayath.pro_count}
-                      </Badge>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(panchayath)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 w-8 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Panchayath</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete "{panchayath.name}"? This action cannot be undone and will also delete all associated coordinators, supervisors, group leaders, and PROs.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDelete(panchayath.id, panchayath.name)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              <Collapsible key={panchayath.id} open={expandedCards[panchayath.id] ?? true}>
+                <Card className="border border-border hover:border-primary/40 transition-colors">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <CollapsibleTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleCardExpansion(panchayath.id)}
+                              className="h-6 w-6 p-0"
                             >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="flex items-center gap-2 p-2 rounded-lg bg-coordinator/10 border border-coordinator/20">
-                      <div className="h-3 w-3 rounded-full bg-coordinator"></div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Coordinators</p>
-                        <p className="font-semibold">{panchayath.coordinator_count}</p>
+                              {expandedCards[panchayath.id] ?? true ? (
+                                <ChevronDown className="h-4 w-4" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </CollapsibleTrigger>
+                          <h3 className="text-lg font-semibold text-primary">{panchayath.name}</h3>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1 ml-8">
+                          <MapPin className="h-4 w-4" />
+                          <span>{panchayath.number_of_wards} wards</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="bg-primary/10">
+                          <Users className="h-3 w-3 mr-1" />
+                          Total: {panchayath.coordinator_count + panchayath.supervisor_count + panchayath.group_leader_count + panchayath.pro_count}
+                        </Badge>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(panchayath)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 w-8 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Panchayath</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{panchayath.name}"? This action cannot be undone and will also delete all associated coordinators, supervisors, group leaders, and PROs.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(panchayath.id, panchayath.name)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 p-2 rounded-lg bg-supervisor/10 border border-supervisor/20">
-                      <div className="h-3 w-3 rounded-full bg-supervisor"></div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Supervisors</p>
-                        <p className="font-semibold">{panchayath.supervisor_count}</p>
-                      </div>
-                    </div>
+                    <CollapsibleContent>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="flex items-center gap-2 p-2 rounded-lg bg-coordinator/10 border border-coordinator/20">
+                          <div className="h-3 w-3 rounded-full bg-coordinator"></div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Coordinators</p>
+                            <p className="font-semibold">{panchayath.coordinator_count}</p>
+                          </div>
+                        </div>
 
-                    <div className="flex items-center gap-2 p-2 rounded-lg bg-group-leader/10 border border-group-leader/20">
-                      <div className="h-3 w-3 rounded-full bg-group-leader"></div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Group Leaders</p>
-                        <p className="font-semibold">{panchayath.group_leader_count}</p>
-                      </div>
-                    </div>
+                        <div className="flex items-center gap-2 p-2 rounded-lg bg-supervisor/10 border border-supervisor/20">
+                          <div className="h-3 w-3 rounded-full bg-supervisor"></div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Supervisors</p>
+                            <p className="font-semibold">{panchayath.supervisor_count}</p>
+                          </div>
+                        </div>
 
-                    <div className="flex items-center gap-2 p-2 rounded-lg bg-pro/10 border border-pro/20">
-                      <div className="h-3 w-3 rounded-full bg-pro"></div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">PROs</p>
-                        <p className="font-semibold">{panchayath.pro_count}</p>
-                      </div>
-                    </div>
+                        <div className="flex items-center gap-2 p-2 rounded-lg bg-group-leader/10 border border-group-leader/20">
+                          <div className="h-3 w-3 rounded-full bg-group-leader"></div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Group Leaders</p>
+                            <p className="font-semibold">{panchayath.group_leader_count}</p>
+                          </div>
+                        </div>
 
-                  </div>
-                </CardContent>
-              </Card>
+                        <div className="flex items-center gap-2 p-2 rounded-lg bg-pro/10 border border-pro/20">
+                          <div className="h-3 w-3 rounded-full bg-pro"></div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">PROs</p>
+                            <p className="font-semibold">{panchayath.pro_count}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </CollapsibleContent>
+                  </CardContent>
+                </Card>
+              </Collapsible>
             ))}
           </div>
 
