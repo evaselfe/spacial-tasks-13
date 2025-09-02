@@ -16,12 +16,12 @@ interface DailyNoteData {
   is_leave: boolean;
   mobile_number?: string;
 }
-
 interface DailyNoteProps {
   currentUser: User;
 }
-
-export const DailyNote = ({ currentUser }: DailyNoteProps) => {
+export const DailyNote = ({
+  currentUser
+}: DailyNoteProps) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [activity, setActivity] = useState("");
   const [notes, setNotes] = useState<DailyNoteData[]>([]);
@@ -160,7 +160,7 @@ export const DailyNote = ({ currentUser }: DailyNoteProps) => {
                   {currentNote && (currentNote.is_leave || !currentNote.activity) && <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />}
                 </div>
                 
-                <Textarea value={activity} onChange={e => setActivity(e.target.value)} placeholder={isToday ? "What did you accomplish today?" : "View only - cannot edit past dates"} className="min-h-[120px] bg-white/5 border-white/10 backdrop-blur-sm resize-none" disabled={!isToday} />
+                <Textarea value={activity} onChange={e => setActivity(e.target.value)} placeholder={isToday ? "What did you accomplish today?" : "View only - cannot edit past dates"} disabled={!isToday} className="min-h-[120px] border-white/10 backdrop-blur-sm resize-none bg-gray-50" />
                 
                 {isToday && <Button onClick={saveNote} className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition-all duration-300 hover-scale">
                     <Save className="h-4 w-4 mr-2" />
