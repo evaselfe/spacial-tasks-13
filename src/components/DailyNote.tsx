@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, FileText, History } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CalendarIcon, FileText, History, Save } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,12 +18,11 @@ interface DailyNoteData {
 }
 
 export const DailyNote = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [activity, setActivity] = useState("");
   const [notes, setNotes] = useState<DailyNoteData[]>([]);
   const [currentNote, setCurrentNote] = useState<DailyNoteData | null>(null);
+  const [activeTab, setActiveTab] = useState("today");
 
   const today = new Date();
   const todayStr = format(today, 'yyyy-MM-dd');
@@ -93,7 +92,6 @@ export const DailyNote = () => {
       }
 
       await fetchNotes();
-      setIsOpen(false);
       toast({
         title: "Success",
         description: "Daily note saved successfully"
@@ -121,78 +119,110 @@ export const DailyNote = () => {
   };
 
   return (
-    <div className="flex gap-2">
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" className="gap-2">
-            <FileText className="h-4 w-4" />
-            Daily Note
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Daily Note - {format(selectedDate, 'PPP')}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                Daily Activity
-              </label>
+    <Card className="relative overflow-hidden bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 backdrop-blur-sm border border-white/20 shadow-xl animate-fade-in">
+      {/* Glass morphism overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
+      
+      <CardHeader className="relative z-10">
+        <CardTitle className="flex items-center gap-2 text-lg font-semibold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+          <FileText className="h-5 w-5 text-blue-500" />
+          Daily Notes
+        </CardTitle>
+      </CardHeader>
+      
+      <CardContent className="relative z-10 p-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-white/10 backdrop-blur-sm">
+            <TabsTrigger value="today" className="data-[state=active]:bg-white/20">
+              Today
+            </TabsTrigger>
+            <TabsTrigger value="history" className="data-[state=active]:bg-white/20">
+              <History className="h-4 w-4 mr-2" />
+              History
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="today" className="mt-4 space-y-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-foreground/90">
+                  {format(selectedDate, 'EEEE, MMMM do, yyyy')}
+                </h3>
+                {currentNote && !currentNote.is_leave && currentNote.activity && (
+                  <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                )}
+                {currentNote && (currentNote.is_leave || !currentNote.activity) && (
+                  <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                )}
+              </div>
+              
               <Textarea
                 value={activity}
                 onChange={(e) => setActivity(e.target.value)}
-                placeholder={isToday ? "What did you do today?" : "View only - cannot edit past dates"}
-                className="min-h-[100px]"
+                placeholder={isToday ? "What did you accomplish today?" : "View only - cannot edit past dates"}
+                className="min-h-[120px] bg-white/5 border-white/10 backdrop-blur-sm resize-none"
                 disabled={!isToday}
               />
+              
+              {isToday && (
+                <Button 
+                  onClick={saveNote} 
+                  className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition-all duration-300 hover-scale"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Activity
+                </Button>
+              )}
+              
+              {!isToday && (
+                <p className="text-sm text-muted-foreground text-center py-2">
+                  You can only edit today's activity
+                </p>
+              )}
             </div>
-            {isToday && (
-              <Button onClick={saveNote} className="w-full">
-                Save Activity
-              </Button>
-            )}
-            {!isToday && (
-              <p className="text-sm text-muted-foreground text-center">
-                You can only edit today's activity
-              </p>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Popover open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
-        <PopoverTrigger asChild>
-          <Button variant="outline" className="gap-2">
-            <History className="h-4 w-4" />
-            History
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={(date) => {
-              if (date) {
-                setSelectedDate(date);
-                setIsHistoryOpen(false);
-                setIsOpen(true);
-              }
-            }}
-            className="rounded-md border pointer-events-auto"
-            modifiers={{
-              hasActivity: hasActivity,
-              onLeave: isOnLeave
-            }}
-            modifiersClassNames={{
-              hasActivity: "bg-green-100 text-green-800 hover:bg-green-200",
-              onLeave: "bg-red-100 text-red-800 hover:bg-red-200"
-            }}
-          />
-        </PopoverContent>
-      </Popover>
-    </div>
+          </TabsContent>
+          
+          <TabsContent value="history" className="mt-4">
+            <div className="space-y-4">
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground mb-3">
+                  Select a date to view activities
+                </p>
+                <div className="flex justify-center gap-4 text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                    <span>Active</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-red-500" />
+                    <span>Leave</span>
+                  </div>
+                </div>
+              </div>
+              
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => {
+                  if (date) {
+                    setSelectedDate(date);
+                    setActiveTab("today");
+                  }
+                }}
+                className="rounded-md border-0 bg-white/5 backdrop-blur-sm pointer-events-auto mx-auto"
+                modifiers={{
+                  hasActivity: hasActivity,
+                  onLeave: isOnLeave
+                }}
+                modifiersClassNames={{
+                  hasActivity: "bg-green-500/20 text-green-800 hover:bg-green-500/30 border-green-500/50",
+                  onLeave: "bg-red-500/20 text-red-800 hover:bg-red-500/30 border-red-500/50"
+                }}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 };
