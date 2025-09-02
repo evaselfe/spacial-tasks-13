@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarIcon, FileText, History, Save, Phone } from "lucide-react";
+import { FileText, History, Save } from "lucide-react";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { User } from "@/lib/authService";
 interface DailyNoteData {
   id?: string;
   date: string;
@@ -18,30 +16,26 @@ interface DailyNoteData {
   is_leave: boolean;
   mobile_number?: string;
 }
-interface AgentInfo {
-  agent_id: string;
-  agent_name: string;
-  agent_type: string;
-  panchayath_id: string;
+
+interface DailyNoteProps {
+  currentUser: User;
 }
-export const DailyNote = () => {
+
+export const DailyNote = ({ currentUser }: DailyNoteProps) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [activity, setActivity] = useState("");
-  const [mobileNumber, setMobileNumber] = useState("");
-  const [agentInfo, setAgentInfo] = useState<AgentInfo | null>(null);
   const [notes, setNotes] = useState<DailyNoteData[]>([]);
   const [currentNote, setCurrentNote] = useState<DailyNoteData | null>(null);
-  const [activeTab, setActiveTab] = useState("login");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [activeTab, setActiveTab] = useState("today");
   const today = new Date();
   const todayStr = format(today, 'yyyy-MM-dd');
   const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
   const isToday = selectedDateStr === todayStr;
   useEffect(() => {
-    if (isLoggedIn && mobileNumber) {
+    if (currentUser) {
       fetchNotes();
     }
-  }, [isLoggedIn, mobileNumber]);
+  }, [currentUser]);
   useEffect(() => {
     if (selectedDate && notes.length > 0) {
       const note = notes.find(n => n.date === selectedDateStr);
@@ -49,54 +43,13 @@ export const DailyNote = () => {
       setActivity(note?.activity || "");
     }
   }, [selectedDate, notes, selectedDateStr]);
-  const verifyAgent = async () => {
-    if (!mobileNumber.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter your mobile number",
-        variant: "destructive"
-      });
-      return;
-    }
-    try {
-      const {
-        data,
-        error
-      } = await supabase.rpc('get_agent_by_mobile', {
-        mobile_num: mobileNumber
-      });
-      if (error) throw error;
-      if (data && data.length > 0) {
-        setAgentInfo(data[0]);
-        setIsLoggedIn(true);
-        setActiveTab("today");
-        toast({
-          title: "Success",
-          description: `Welcome ${data[0].agent_name} (${data[0].agent_type})`
-        });
-      } else {
-        toast({
-          title: "Agent Not Found",
-          description: "No agent found with this mobile number",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error('Error verifying agent:', error);
-      toast({
-        title: "Error",
-        description: "Failed to verify agent",
-        variant: "destructive"
-      });
-    }
-  };
   const fetchNotes = async () => {
-    if (!mobileNumber) return;
+    if (!currentUser?.mobile_number) return;
     try {
       const {
         data,
         error
-      } = await supabase.from('daily_notes').select('*').eq('mobile_number', mobileNumber).order('date', {
+      } = await supabase.from('daily_notes').select('*').eq('mobile_number', currentUser.mobile_number).order('date', {
         ascending: false
       });
       if (error) throw error;
@@ -119,17 +72,17 @@ export const DailyNote = () => {
       });
       return;
     }
-    if (!mobileNumber || !agentInfo) {
+    if (!currentUser?.mobile_number) {
       toast({
-        title: "Not Logged In",
-        description: "Please log in with your mobile number first",
+        title: "Error",
+        description: "User information not available",
         variant: "destructive"
       });
       return;
     }
     try {
       const noteData = {
-        mobile_number: mobileNumber,
+        mobile_number: currentUser.mobile_number,
         date: selectedDateStr,
         activity: activity.trim() || null,
         is_leave: !activity.trim()
@@ -159,14 +112,6 @@ export const DailyNote = () => {
       });
     }
   };
-  const logout = () => {
-    setIsLoggedIn(false);
-    setAgentInfo(null);
-    setMobileNumber("");
-    setNotes([]);
-    setActivity("");
-    setActiveTab("login");
-  };
   const hasActivity = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const note = notes.find(n => n.date === dateStr);
@@ -187,32 +132,14 @@ export const DailyNote = () => {
             <FileText className="h-5 w-5 text-blue-500" />
             Daily Notes
           </div>
-          {isLoggedIn && agentInfo && <div className="flex items-center gap-2 text-sm">
-              <span className="text-muted-foreground">{agentInfo.agent_name}</span>
-              <Button variant="ghost" size="sm" onClick={logout}>
-                Logout
-              </Button>
-            </div>}
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">{currentUser.name}</span>
+          </div>
         </CardTitle>
       </CardHeader>
       
       <CardContent className="relative z-10 p-6">
-        {!isLoggedIn ? <div className="space-y-4">
-            <div className="text-center mb-6">
-              <Phone className="h-12 w-12 mx-auto mb-4 text-blue-500" />
-              <h3 className="text-lg font-semibold mb-2">Agent Login</h3>
-              <p className="text-muted-foreground">ദിവസേനയുള്ള കുറിപ്പുകൾ ചേർക്കാൻ നിങ്ങളുടെ മൊബൈൽ നമ്പർ നൽകുക.</p>
-            </div>
-            
-            <div className="space-y-3">
-              <Label htmlFor="mobile">Mobile Number</Label>
-              <Input id="mobile" type="tel" value={mobileNumber} onChange={e => setMobileNumber(e.target.value)} placeholder="Enter your mobile number" className="border-white/10 backdrop-blur-sm bg-zinc-50" />
-              <Button onClick={verifyAgent} className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition-all duration-300">
-                <Phone className="h-4 w-4 mr-2" />
-                Verify & Login
-              </Button>
-            </div>
-          </div> : <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-white/10 backdrop-blur-sm">
               <TabsTrigger value="today" className="data-[state=active]:bg-white/20">
                 Today
@@ -278,7 +205,7 @@ export const DailyNote = () => {
             }} />
               </div>
             </TabsContent>
-          </Tabs>}
+          </Tabs>
       </CardContent>
     </Card>;
 };

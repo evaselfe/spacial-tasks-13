@@ -70,7 +70,7 @@ const Index = () => {
 
         {/* Daily Note Feature */}
         <div className="mb-6">
-          <DailyNote />
+          <DailyNote currentUser={currentUser} />
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8">
