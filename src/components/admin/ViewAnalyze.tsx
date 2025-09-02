@@ -19,15 +19,15 @@ export const ViewAnalyze = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="analytics" className="w-full">
+        <Tabs defaultValue="hierarchy" className="w-full">
           <TabsList className="grid w-full grid-cols-4 mb-4 sm:mb-6 h-auto">
-            <TabsTrigger value="analytics" className="text-xs sm:text-sm py-2 sm:py-2.5 flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Analytics
-            </TabsTrigger>
             <TabsTrigger value="hierarchy" className="text-xs sm:text-sm py-2 sm:py-2.5 flex items-center gap-2">
-              <Network className="h-4 w-4" />
+              <BarChart3 className="h-4 w-4" />
               Hierarchy
+            </TabsTrigger>
+            <TabsTrigger value="hierarchy-count" className="text-xs sm:text-sm py-2 sm:py-2.5 flex items-center gap-2">
+              <Network className="h-4 w-4" />
+              Hierarchy Count
             </TabsTrigger>
             <TabsTrigger value="testimonials" className="text-xs sm:text-sm py-2 sm:py-2.5 flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
@@ -39,11 +39,11 @@ export const ViewAnalyze = () => {
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="analytics">
+          <TabsContent value="hierarchy">
             <PanchayathView />
           </TabsContent>
           
-          <TabsContent value="hierarchy">
+          <TabsContent value="hierarchy-count">
             <PanchayathHierarchy />
           </TabsContent>
           
