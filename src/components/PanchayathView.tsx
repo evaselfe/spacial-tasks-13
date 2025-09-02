@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Trash2, Edit } from "lucide-react";
+import { Trash2, Edit, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -13,6 +13,7 @@ import { CoordinatorForm } from "@/components/CoordinatorForm";
 import { SupervisorForm } from "@/components/SupervisorForm";
 import { GroupLeaderForm } from "@/components/GroupLeaderForm";
 import { ProForm } from "@/components/ProForm";
+import { AgentDailyNotes } from "@/components/AgentDailyNotes";
 
 export const PanchayathView = () => {
   const [panchayaths, setPanchayaths] = useState<any[]>([]);
@@ -26,6 +27,8 @@ export const PanchayathView = () => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editType, setEditType] = useState<"coordinator" | "supervisor" | "group_leader" | "pro" | null>(null);
   const [editRecord, setEditRecord] = useState<any | null>(null);
+  const [showNotesDialog, setShowNotesDialog] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<{name: string, type: string, mobile: string} | null>(null);
 
   useEffect(() => {
     fetchPanchayaths();
@@ -276,6 +279,11 @@ export const PanchayathView = () => {
     }
   };
 
+  const handleViewNotes = (name: string, type: string, mobile: string) => {
+    setSelectedAgent({ name, type, mobile });
+    setShowNotesDialog(true);
+  };
+
   return (
     <>
       <Card>
@@ -340,6 +348,15 @@ export const PanchayathView = () => {
                               <Edit className="h-3 w-3 md:h-4 md:w-4" />
                               <span className="hidden md:inline ml-2">Edit</span>
                             </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleViewNotes(coordinatorData?.coordinator_name, "Coordinator", coordinatorData?.coordinator_mobile)}
+                              className="h-8 w-8 p-0 md:h-9 md:w-auto md:px-3"
+                            >
+                              <FileText className="h-3 w-3 md:h-4 md:w-4" />
+                              <span className="hidden md:inline ml-2">Notes</span>
+                            </Button>
                               <Button 
                                 size="sm" 
                                 variant="outline"
@@ -383,6 +400,15 @@ export const PanchayathView = () => {
                                     <Edit className="h-3 w-3" />
                                     <span className="hidden md:inline ml-1">Edit</span>
                                   </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => handleViewNotes(supervisorData?.supervisor_name, "Supervisor", supervisorData?.supervisor_mobile)}
+                                    className="h-7 w-7 p-0 md:h-8 md:w-auto md:px-2"
+                                  >
+                                    <FileText className="h-3 w-3" />
+                                    <span className="hidden md:inline ml-1">Notes</span>
+                                  </Button>
                                    <Button 
                                      size="sm" 
                                      variant="outline"
@@ -425,6 +451,15 @@ export const PanchayathView = () => {
                                           <Edit className="h-3 w-3" />
                                           <span className="hidden md:inline ml-1">Edit</span>
                                         </Button>
+                                        <Button 
+                                          size="sm" 
+                                          variant="outline"
+                                          onClick={() => handleViewNotes(groupLeaderData?.group_leader_name, "Group Leader", groupLeaderData?.group_leader_mobile)}
+                                          className="h-6 w-6 p-0 md:h-7 md:w-auto md:px-2"
+                                        >
+                                          <FileText className="h-3 w-3" />
+                                          <span className="hidden md:inline ml-1">Notes</span>
+                                        </Button>
                                          <Button 
                                            size="sm" 
                                            variant="outline"
@@ -451,24 +486,32 @@ export const PanchayathView = () => {
                                                <div>Mobile: {pro.pro_mobile}</div>
                                              </div>
                                            </div>
-                                           <div className="flex gap-1 shrink-0">
-                                             <Button 
-                                               size="sm" 
-                                               variant="outline" 
-                                               className="h-6 w-6 p-0"
-                                               onClick={() => handleEdit("pro", pro)}
-                                             >
-                                               <Edit className="h-3 w-3" />
-                                             </Button>
-                                               <Button 
-                                                 size="sm" 
-                                                 variant="outline" 
-                                                 className="h-6 w-6 p-0"
-                                                 onClick={() => handleDelete("pro", pro.id || pro.pro_id, pro.pro_name)}
-                                               >
-                                               <Trash2 className="h-3 w-3" />
-                                             </Button>
-                                           </div>
+                                            <div className="flex gap-1 shrink-0">
+                                              <Button 
+                                                size="sm" 
+                                                variant="outline" 
+                                                className="h-6 w-6 p-0"
+                                                onClick={() => handleEdit("pro", pro)}
+                                              >
+                                                <Edit className="h-3 w-3" />
+                                              </Button>
+                                              <Button 
+                                                size="sm" 
+                                                variant="outline" 
+                                                className="h-6 w-6 p-0"
+                                                onClick={() => handleViewNotes(pro.pro_name, "PRO", pro.pro_mobile)}
+                                              >
+                                                <FileText className="h-3 w-3" />
+                                              </Button>
+                                                <Button 
+                                                  size="sm" 
+                                                  variant="outline" 
+                                                  className="h-6 w-6 p-0"
+                                                  onClick={() => handleDelete("pro", pro.id || pro.pro_id, pro.pro_name)}
+                                                >
+                                                <Trash2 className="h-3 w-3" />
+                                              </Button>
+                                            </div>
                                          </div>
                                        </div>
                                      ))}
@@ -574,6 +617,16 @@ export const PanchayathView = () => {
         )}
       </DialogContent>
     </Dialog>
+
+    {selectedAgent && (
+      <AgentDailyNotes
+        agentName={selectedAgent.name}
+        agentType={selectedAgent.type}
+        agentMobile={selectedAgent.mobile}
+        open={showNotesDialog}
+        onOpenChange={setShowNotesDialog}
+      />
+    )}
     </>
   );
 };
