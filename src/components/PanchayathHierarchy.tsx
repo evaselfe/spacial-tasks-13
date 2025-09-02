@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Search, Users, MapPin, Building, BarChart3, Edit, Trash2, MessageSquare, ChevronDown, ChevronRight } from "lucide-react";
+import { Search, Users, MapPin, Building, BarChart3, Edit, Trash2, MessageSquare, ChevronDown, ChevronRight, Eye, EyeOff } from "lucide-react";
 import { PanchayathChart } from "@/components/PanchayathChart";
 import { PanchayathForm } from "@/components/PanchayathForm";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -31,6 +31,12 @@ export const PanchayathHierarchy = () => {
   const [editingPanchayath, setEditingPanchayath] = useState<any>(null);
   const [showEditForm, setShowEditForm] = useState(false);
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
+  const [showAgentNames, setShowAgentNames] = useState<Record<string, boolean>>({
+    coordinator: true,
+    supervisor: true,
+    group_leader: false,
+    pro: false
+  });
   const { toast } = useToast();
 
   const fetchPanchayaths = async () => {
@@ -142,6 +148,13 @@ export const PanchayathHierarchy = () => {
     }));
   };
 
+  const toggleAgentNameVisibility = (role: string) => {
+    setShowAgentNames(prev => ({
+      ...prev,
+      [role]: !prev[role]
+    }));
+  };
+
   if (loading) {
     return (
       <Card>
@@ -199,138 +212,164 @@ export const PanchayathHierarchy = () => {
             </TabsList>
             
             <TabsContent value="list">
-              <div className="space-y-4">
-                <div className="relative mb-6">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    placeholder="Search panchayaths..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
+                <div className="space-y-4">
+                <div className="flex flex-wrap items-center gap-2 mb-4 p-2 bg-muted/50 rounded-lg">
+                  <span className="text-sm font-medium text-muted-foreground">Show Names:</span>
+                  {Object.entries(showAgentNames).map(([role, isVisible]) => (
+                    <Button
+                      key={role}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleAgentNameVisibility(role)}
+                      className="h-8 text-xs"
+                    >
+                      {isVisible ? <Eye className="h-3 w-3 mr-1" /> : <EyeOff className="h-3 w-3 mr-1" />}
+                      {role.charAt(0).toUpperCase() + role.slice(1).replace('_', ' ')}
+                    </Button>
+                  ))}
                 </div>
 
-                <div className="grid gap-4">
-            {filteredPanchayaths.map((panchayath) => (
-              <Collapsible key={panchayath.id} open={expandedCards[panchayath.id] ?? true}>
-                <Card className="border border-border hover:border-primary/40 transition-colors">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <CollapsibleTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toggleCardExpansion(panchayath.id)}
-                              className="h-6 w-6 p-0"
-                            >
-                              {expandedCards[panchayath.id] ?? true ? (
-                                <ChevronDown className="h-4 w-4" />
-                              ) : (
-                                <ChevronRight className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </CollapsibleTrigger>
-                          <h3 className="text-lg font-semibold text-primary">{panchayath.name}</h3>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1 ml-8">
-                          <MapPin className="h-4 w-4" />
-                          <span>{panchayath.number_of_wards} wards</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="bg-primary/10">
-                          <Users className="h-3 w-3 mr-1" />
-                          Total: {panchayath.coordinator_count + panchayath.supervisor_count + panchayath.group_leader_count + panchayath.pro_count}
-                        </Badge>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(panchayath)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-8 w-8 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Panchayath</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete "{panchayath.name}"? This action cannot be undone and will also delete all associated coordinators, supervisors, group leaders, and PROs.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDelete(panchayath.id, panchayath.name)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </div>
-
-                    <CollapsibleContent>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div className="flex items-center gap-2 p-2 rounded-lg bg-coordinator/10 border border-coordinator/20">
-                          <div className="h-3 w-3 rounded-full bg-coordinator"></div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Coordinators</p>
-                            <p className="font-semibold">{panchayath.coordinator_count}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 p-2 rounded-lg bg-supervisor/10 border border-supervisor/20">
-                          <div className="h-3 w-3 rounded-full bg-supervisor"></div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Supervisors</p>
-                            <p className="font-semibold">{panchayath.supervisor_count}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 p-2 rounded-lg bg-group-leader/10 border border-group-leader/20">
-                          <div className="h-3 w-3 rounded-full bg-group-leader"></div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Group Leaders</p>
-                            <p className="font-semibold">{panchayath.group_leader_count}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 p-2 rounded-lg bg-pro/10 border border-pro/20">
-                          <div className="h-3 w-3 rounded-full bg-pro"></div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">PROs</p>
-                            <p className="font-semibold">{panchayath.pro_count}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </CollapsibleContent>
-                  </CardContent>
-                </Card>
-              </Collapsible>
-            ))}
-          </div>
-
-                {filteredPanchayaths.length === 0 && (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground">
-                      {searchTerm ? `No panchayaths found matching "${searchTerm}"` : "No panchayaths found"}
-                    </p>
+                <div className="space-y-4">
+                  <div className="relative mb-6">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      placeholder="Search panchayaths..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
                   </div>
-                )}
+
+                  <div className="grid gap-4">
+                    {filteredPanchayaths.map((panchayath) => (
+                      <Collapsible key={panchayath.id} open={expandedCards[panchayath.id] ?? true}>
+                        <Card className="border border-border hover:border-primary/40 transition-colors">
+                          <CardContent className="p-4">
+                            <div className="flex justify-between items-start mb-4">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <CollapsibleTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => toggleCardExpansion(panchayath.id)}
+                                      className="h-6 w-6 p-0"
+                                    >
+                                      {expandedCards[panchayath.id] ?? true ? (
+                                        <ChevronDown className="h-4 w-4" />
+                                      ) : (
+                                        <ChevronRight className="h-4 w-4" />
+                                      )}
+                                    </Button>
+                                  </CollapsibleTrigger>
+                                  <h3 className="text-lg font-semibold text-primary">{panchayath.name}</h3>
+                                </div>
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1 ml-8">
+                                  <MapPin className="h-4 w-4" />
+                                  <span>{panchayath.number_of_wards} wards</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="bg-primary/10">
+                                  <Users className="h-3 w-3 mr-1" />
+                                  Total: {panchayath.coordinator_count + panchayath.supervisor_count + panchayath.group_leader_count + panchayath.pro_count}
+                                </Badge>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEdit(panchayath)}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-8 w-8 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete Panchayath</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to delete "{panchayath.name}"? This action cannot be undone and will also delete all associated coordinators, supervisors, group leaders, and PROs.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDelete(panchayath.id, panchayath.name)}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      >
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </div>
+
+                            <CollapsibleContent>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div className="flex items-center gap-2 p-2 rounded-lg bg-coordinator/10 border border-coordinator/20">
+                                  <div className="h-3 w-3 rounded-full bg-coordinator"></div>
+                                  <div>
+                                    <p className="text-xs text-muted-foreground">
+                                      Coordinators {showAgentNames.coordinator ? '(Names Shown)' : '(Names Hidden)'}
+                                    </p>
+                                    <p className="font-semibold">{panchayath.coordinator_count}</p>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 p-2 rounded-lg bg-supervisor/10 border border-supervisor/20">
+                                  <div className="h-3 w-3 rounded-full bg-supervisor"></div>
+                                  <div>
+                                    <p className="text-xs text-muted-foreground">
+                                      Supervisors {showAgentNames.supervisor ? '(Names Shown)' : '(Names Hidden)'}
+                                    </p>
+                                    <p className="font-semibold">{panchayath.supervisor_count}</p>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 p-2 rounded-lg bg-group-leader/10 border border-group-leader/20">
+                                  <div className="h-3 w-3 rounded-full bg-group-leader"></div>
+                                  <div>
+                                    <p className="text-xs text-muted-foreground">
+                                      Group Leaders {showAgentNames.group_leader ? '(Names Shown)' : '(Names Hidden)'}
+                                    </p>
+                                    <p className="font-semibold">{panchayath.group_leader_count}</p>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 p-2 rounded-lg bg-pro/10 border border-pro/20">
+                                  <div className="h-3 w-3 rounded-full bg-pro"></div>
+                                  <div>
+                                    <p className="text-xs text-muted-foreground">
+                                      PROs {showAgentNames.pro ? '(Names Shown)' : '(Names Hidden)'}
+                                    </p>
+                                    <p className="font-semibold">{panchayath.pro_count}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </CollapsibleContent>
+                          </CardContent>
+                        </Card>
+                      </Collapsible>
+                    ))}
+                  </div>
+
+                  {filteredPanchayaths.length === 0 && (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">
+                        {searchTerm ? `No panchayaths found matching "${searchTerm}"` : "No panchayaths found"}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </TabsContent>
             
