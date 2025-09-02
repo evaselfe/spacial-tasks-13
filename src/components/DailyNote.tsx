@@ -11,7 +11,6 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-
 interface DailyNoteData {
   id?: string;
   date: string;
@@ -19,14 +18,12 @@ interface DailyNoteData {
   is_leave: boolean;
   mobile_number?: string;
 }
-
 interface AgentInfo {
   agent_id: string;
   agent_name: string;
   agent_type: string;
   panchayath_id: string;
 }
-
 export const DailyNote = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [activity, setActivity] = useState("");
@@ -36,18 +33,15 @@ export const DailyNote = () => {
   const [currentNote, setCurrentNote] = useState<DailyNoteData | null>(null);
   const [activeTab, setActiveTab] = useState("login");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
   const today = new Date();
   const todayStr = format(today, 'yyyy-MM-dd');
   const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
   const isToday = selectedDateStr === todayStr;
-
   useEffect(() => {
     if (isLoggedIn && mobileNumber) {
       fetchNotes();
     }
   }, [isLoggedIn, mobileNumber]);
-
   useEffect(() => {
     if (selectedDate && notes.length > 0) {
       const note = notes.find(n => n.date === selectedDateStr);
@@ -55,7 +49,6 @@ export const DailyNote = () => {
       setActivity(note?.activity || "");
     }
   }, [selectedDate, notes, selectedDateStr]);
-
   const verifyAgent = async () => {
     if (!mobileNumber.trim()) {
       toast({
@@ -65,13 +58,14 @@ export const DailyNote = () => {
       });
       return;
     }
-
     try {
-      const { data, error } = await supabase
-        .rpc('get_agent_by_mobile', { mobile_num: mobileNumber });
-
+      const {
+        data,
+        error
+      } = await supabase.rpc('get_agent_by_mobile', {
+        mobile_num: mobileNumber
+      });
       if (error) throw error;
-      
       if (data && data.length > 0) {
         setAgentInfo(data[0]);
         setIsLoggedIn(true);
@@ -96,17 +90,15 @@ export const DailyNote = () => {
       });
     }
   };
-
   const fetchNotes = async () => {
     if (!mobileNumber) return;
-    
     try {
-      const { data, error } = await supabase
-        .from('daily_notes')
-        .select('*')
-        .eq('mobile_number', mobileNumber)
-        .order('date', { ascending: false });
-
+      const {
+        data,
+        error
+      } = await supabase.from('daily_notes').select('*').eq('mobile_number', mobileNumber).order('date', {
+        ascending: false
+      });
       if (error) throw error;
       setNotes(data || []);
     } catch (error) {
@@ -118,7 +110,6 @@ export const DailyNote = () => {
       });
     }
   };
-
   const saveNote = async () => {
     if (!isToday) {
       toast({
@@ -128,7 +119,6 @@ export const DailyNote = () => {
       });
       return;
     }
-
     if (!mobileNumber || !agentInfo) {
       toast({
         title: "Not Logged In",
@@ -137,7 +127,6 @@ export const DailyNote = () => {
       });
       return;
     }
-
     try {
       const noteData = {
         mobile_number: mobileNumber,
@@ -145,20 +134,17 @@ export const DailyNote = () => {
         activity: activity.trim() || null,
         is_leave: !activity.trim()
       };
-
       if (currentNote) {
-        const { error } = await supabase
-          .from('daily_notes')
-          .update(noteData)
-          .eq('id', currentNote.id);
+        const {
+          error
+        } = await supabase.from('daily_notes').update(noteData).eq('id', currentNote.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
-          .from('daily_notes')
-          .insert([noteData]);
+        const {
+          error
+        } = await supabase.from('daily_notes').insert([noteData]);
         if (error) throw error;
       }
-
       await fetchNotes();
       toast({
         title: "Success",
@@ -173,7 +159,6 @@ export const DailyNote = () => {
       });
     }
   };
-
   const logout = () => {
     setIsLoggedIn(false);
     setAgentInfo(null);
@@ -182,21 +167,17 @@ export const DailyNote = () => {
     setActivity("");
     setActiveTab("login");
   };
-
   const hasActivity = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const note = notes.find(n => n.date === dateStr);
     return !!(note && !note.is_leave && note.activity);
   };
-
   const isOnLeave = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const note = notes.find(n => n.date === dateStr);
     return !!(note && (note.is_leave || !note.activity));
   };
-
-  return (
-    <Card className="relative overflow-hidden bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 backdrop-blur-sm border border-white/20 shadow-xl animate-fade-in">
+  return <Card className="relative overflow-hidden bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 backdrop-blur-sm border border-white/20 shadow-xl animate-fade-in">
       {/* Glass morphism overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
       
@@ -206,47 +187,32 @@ export const DailyNote = () => {
             <FileText className="h-5 w-5 text-blue-500" />
             Daily Notes
           </div>
-          {isLoggedIn && agentInfo && (
-            <div className="flex items-center gap-2 text-sm">
+          {isLoggedIn && agentInfo && <div className="flex items-center gap-2 text-sm">
               <span className="text-muted-foreground">{agentInfo.agent_name}</span>
               <Button variant="ghost" size="sm" onClick={logout}>
                 Logout
               </Button>
-            </div>
-          )}
+            </div>}
         </CardTitle>
       </CardHeader>
       
       <CardContent className="relative z-10 p-6">
-        {!isLoggedIn ? (
-          <div className="space-y-4">
+        {!isLoggedIn ? <div className="space-y-4">
             <div className="text-center mb-6">
               <Phone className="h-12 w-12 mx-auto mb-4 text-blue-500" />
               <h3 className="text-lg font-semibold mb-2">Agent Login</h3>
-              <p className="text-muted-foreground">Enter your mobile number to access daily notes</p>
+              <p className="text-muted-foreground">ദിവസേനയുള്ള കുറിപ്പുകൾ ചേർക്കാൻ നിങ്ങളുടെ മൊബൈൽ നമ്പർ നൽകുക.</p>
             </div>
             
             <div className="space-y-3">
               <Label htmlFor="mobile">Mobile Number</Label>
-              <Input
-                id="mobile"
-                type="tel"
-                value={mobileNumber}
-                onChange={(e) => setMobileNumber(e.target.value)}
-                placeholder="Enter your mobile number"
-                className="bg-white/5 border-white/10 backdrop-blur-sm"
-              />
-              <Button 
-                onClick={verifyAgent}
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition-all duration-300"
-              >
+              <Input id="mobile" type="tel" value={mobileNumber} onChange={e => setMobileNumber(e.target.value)} placeholder="Enter your mobile number" className="border-white/10 backdrop-blur-sm bg-zinc-50" />
+              <Button onClick={verifyAgent} className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition-all duration-300">
                 <Phone className="h-4 w-4 mr-2" />
                 Verify & Login
               </Button>
             </div>
-          </div>
-        ) : (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          </div> : <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-white/10 backdrop-blur-sm">
               <TabsTrigger value="today" className="data-[state=active]:bg-white/20">
                 Today
@@ -263,37 +229,20 @@ export const DailyNote = () => {
                   <h3 className="font-medium text-foreground/90">
                     {format(selectedDate, 'EEEE, MMMM do, yyyy')}
                   </h3>
-                  {currentNote && !currentNote.is_leave && currentNote.activity && (
-                    <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                  )}
-                  {currentNote && (currentNote.is_leave || !currentNote.activity) && (
-                    <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                  )}
+                  {currentNote && !currentNote.is_leave && currentNote.activity && <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />}
+                  {currentNote && (currentNote.is_leave || !currentNote.activity) && <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />}
                 </div>
                 
-                <Textarea
-                  value={activity}
-                  onChange={(e) => setActivity(e.target.value)}
-                  placeholder={isToday ? "What did you accomplish today?" : "View only - cannot edit past dates"}
-                  className="min-h-[120px] bg-white/5 border-white/10 backdrop-blur-sm resize-none"
-                  disabled={!isToday}
-                />
+                <Textarea value={activity} onChange={e => setActivity(e.target.value)} placeholder={isToday ? "What did you accomplish today?" : "View only - cannot edit past dates"} className="min-h-[120px] bg-white/5 border-white/10 backdrop-blur-sm resize-none" disabled={!isToday} />
                 
-                {isToday && (
-                  <Button 
-                    onClick={saveNote} 
-                    className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition-all duration-300 hover-scale"
-                  >
+                {isToday && <Button onClick={saveNote} className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition-all duration-300 hover-scale">
                     <Save className="h-4 w-4 mr-2" />
                     Save Activity
-                  </Button>
-                )}
+                  </Button>}
                 
-                {!isToday && (
-                  <p className="text-sm text-muted-foreground text-center py-2">
+                {!isToday && <p className="text-sm text-muted-foreground text-center py-2">
                     You can only edit today's activity
-                  </p>
-                )}
+                  </p>}
               </div>
             </TabsContent>
             
@@ -315,30 +264,21 @@ export const DailyNote = () => {
                   </div>
                 </div>
                 
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => {
-                    if (date) {
-                      setSelectedDate(date);
-                      setActiveTab("today");
-                    }
-                  }}
-                  className="rounded-md border-0 bg-white/5 backdrop-blur-sm pointer-events-auto mx-auto"
-                  modifiers={{
-                    hasActivity: hasActivity,
-                    onLeave: isOnLeave
-                  }}
-                  modifiersClassNames={{
-                    hasActivity: "bg-green-500/20 text-green-800 hover:bg-green-500/30 border-green-500/50",
-                    onLeave: "bg-red-500/20 text-red-800 hover:bg-red-500/30 border-red-500/50"
-                  }}
-                />
+                <Calendar mode="single" selected={selectedDate} onSelect={date => {
+              if (date) {
+                setSelectedDate(date);
+                setActiveTab("today");
+              }
+            }} className="rounded-md border-0 bg-white/5 backdrop-blur-sm pointer-events-auto mx-auto" modifiers={{
+              hasActivity: hasActivity,
+              onLeave: isOnLeave
+            }} modifiersClassNames={{
+              hasActivity: "bg-green-500/20 text-green-800 hover:bg-green-500/30 border-green-500/50",
+              onLeave: "bg-red-500/20 text-red-800 hover:bg-red-500/30 border-red-500/50"
+            }} />
               </div>
             </TabsContent>
-          </Tabs>
-        )}
+          </Tabs>}
       </CardContent>
-    </Card>
-  );
+    </Card>;
 };
