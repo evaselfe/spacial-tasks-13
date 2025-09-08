@@ -83,6 +83,7 @@ export const DailyNote = ({
     try {
       const noteData = {
         mobile_number: currentUser.mobile_number,
+        user_id: currentUser.id,
         date: selectedDateStr,
         activity: activity.trim() || null,
         is_leave: !activity.trim()
