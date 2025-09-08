@@ -6,14 +6,16 @@ import { MobileLogin } from "@/components/MobileLogin";
 import { UserProfile } from "@/components/UserProfile";
 import { AgentTestimonialProfile } from "@/components/AgentTestimonialProfile";
 import { DailyNote } from "@/components/DailyNote";
+import { CoordinatorReports } from "@/components/CoordinatorReports";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, FileText } from "lucide-react";
 import { User } from "@/lib/authService";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isPanchayathOpen, setIsPanchayathOpen] = useState(false);
+  const [isReportsOpen, setIsReportsOpen] = useState(false);
   const { toast } = useToast();
 
   // Load user from localStorage on component mount
@@ -73,6 +75,18 @@ const Index = () => {
               </Button>
             )}
             
+            {/* Show Reports button only for coordinators */}
+            {currentUser.role === 'coordinator' && (
+              <Button 
+                variant="outline" 
+                onClick={() => setIsReportsOpen(!isReportsOpen)}
+                className="w-full sm:w-auto border-blue-500/20 hover:border-blue-500 bg-blue-50 hover:bg-blue-100 text-blue-700 flex items-center gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                Reports
+              </Button>
+            )}
+            
             <Button 
               variant="outline" 
               onClick={handleLogout}
@@ -87,6 +101,13 @@ const Index = () => {
         <div className="mb-6">
           <DailyNote currentUser={currentUser} />
         </div>
+
+        {/* Coordinator Reports */}
+        {currentUser.role === 'coordinator' && isReportsOpen && (
+          <div className="mb-6">
+            <CoordinatorReports currentUser={currentUser} />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Collapsible open={isPanchayathOpen} onOpenChange={setIsPanchayathOpen}>
