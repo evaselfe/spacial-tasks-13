@@ -3,8 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PanchayathView } from "@/components/PanchayathView";
-import { PanchayathHierarchy } from "@/components/PanchayathHierarchy";
+import { CoordinatorHierarchyView } from "@/components/CoordinatorHierarchyView";
+import { CoordinatorHierarchyChart } from "@/components/CoordinatorHierarchyChart";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@/lib/authService";
 import { BarChart3, Network, TrendingDown } from "lucide-react";
@@ -370,15 +370,11 @@ export const CoordinatorReports = ({ currentUser }: CoordinatorReportsProps) => 
             </TabsContent>
             
             <TabsContent value="hierarchy">
-              <div className="text-center py-8 text-muted-foreground">
-                Hierarchy view for your panchayath ({panchayathName}) - Feature coming soon
-              </div>
+              <CoordinatorHierarchyView panchayathId={currentUser.panchayath_id} />
             </TabsContent>
             
             <TabsContent value="hierarchy-count">
-              <div className="text-center py-8 text-muted-foreground">
-                Hierarchy count view for your panchayath ({panchayathName}) - Feature coming soon
-              </div>
+              <CoordinatorHierarchyChart panchayathId={currentUser.panchayath_id} />
             </TabsContent>
           </Tabs>
         </CardContent>
