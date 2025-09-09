@@ -87,7 +87,15 @@ export const PanchayathHierarchy = () => {
     const filtered = panchayaths.filter(p =>
       p.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    setFilteredPanchayaths(filtered);
+    
+    // Sort by total agents (high to low)
+    const sorted = filtered.sort((a, b) => {
+      const totalA = a.coordinator_count + a.supervisor_count + a.group_leader_count + a.pro_count;
+      const totalB = b.coordinator_count + b.supervisor_count + b.group_leader_count + b.pro_count;
+      return totalB - totalA;
+    });
+    
+    setFilteredPanchayaths(sorted);
   }, [searchTerm, panchayaths]);
 
   const handleEdit = (panchayath: PanchayathData) => {
