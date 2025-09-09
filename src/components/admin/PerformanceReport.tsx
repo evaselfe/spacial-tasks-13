@@ -3,8 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
-import { Activity, AlertTriangle, Users, TrendingDown } from "lucide-react";
+import { Activity, AlertTriangle, Users, TrendingDown, ChevronDown, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Panchayath {
@@ -330,7 +331,7 @@ export const PerformanceReport = () => {
           </div>
         )}
 
-        {/* Agent Performance Table */}
+        {/* Agent Performance by Role */}
         {selectedPanchayath && (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Agent Performance Details</h3>
@@ -339,51 +340,81 @@ export const PerformanceReport = () => {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                 <p className="mt-2 text-sm text-muted-foreground">Loading performance data...</p>
               </div>
+            ) : agentPerformance.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No agents found for this panchayath
+              </div>
             ) : (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Agent Name</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Mobile</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Consecutive Leave Days</TableHead>
-                      <TableHead>Last Activity</TableHead>
-                      <TableHead>Total Notes</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {agentPerformance.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                          No agents found for this panchayath
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      agentPerformance.map((agent) => (
-                        <TableRow key={agent.agent_id}>
-                          <TableCell className="font-medium">{agent.agent_name}</TableCell>
-                          <TableCell className="capitalize">{agent.agent_type}</TableCell>
-                          <TableCell>{agent.mobile_number}</TableCell>
-                          <TableCell>{getStatusBadge(agent)}</TableCell>
-                          <TableCell>
-                            <span className={agent.consecutive_leave_days >= 3 ? "text-destructive font-semibold" : ""}>
-                              {agent.consecutive_leave_days}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            {agent.last_activity_date 
-                              ? new Date(agent.last_activity_date).toLocaleDateString()
-                              : "No activity"
-                            }
-                          </TableCell>
-                          <TableCell>{agent.total_notes}</TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+              <div className="space-y-4">
+                {/* Group agents by role */}
+                {['coordinator', 'supervisor', 'group_leader', 'pro'].map((roleType) => {
+                  const roleAgents = agentPerformance.filter(agent => agent.agent_type === roleType);
+                  if (roleAgents.length === 0) return null;
+                  
+                  const roleDisplayName = roleType === 'group_leader' ? 'Group Leader' : 
+                                         roleType === 'pro' ? 'PRO' : 
+                                         roleType.charAt(0).toUpperCase() + roleType.slice(1);
+                  
+                  return (
+                    <Collapsible key={roleType}>
+                      <Card>
+                        <CollapsibleTrigger asChild>
+                          <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <CardTitle className="text-lg">{roleDisplayName}s</CardTitle>
+                                <Badge variant="secondary">{roleAgents.length} agents</Badge>
+                                <Badge variant={roleAgents.some(a => a.is_inactive) ? "destructive" : "default"}>
+                                  {roleAgents.filter(a => a.is_inactive).length} inactive
+                                </Badge>
+                              </div>
+                              <ChevronDown className="h-4 w-4 transition-transform duration-200 data-[state=open]:rotate-180" />
+                            </div>
+                          </CardHeader>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <CardContent className="pt-0">
+                            <div className="rounded-md border">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Agent Name</TableHead>
+                                    <TableHead>Mobile</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Consecutive Leave Days</TableHead>
+                                    <TableHead>Last Activity</TableHead>
+                                    <TableHead>Total Notes</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {roleAgents.map((agent) => (
+                                    <TableRow key={agent.agent_id}>
+                                      <TableCell className="font-medium">{agent.agent_name}</TableCell>
+                                      <TableCell>{agent.mobile_number}</TableCell>
+                                      <TableCell>{getStatusBadge(agent)}</TableCell>
+                                      <TableCell>
+                                        <span className={agent.consecutive_leave_days >= 3 ? "text-destructive font-semibold" : ""}>
+                                          {agent.consecutive_leave_days}
+                                        </span>
+                                      </TableCell>
+                                      <TableCell>
+                                        {agent.last_activity_date 
+                                          ? new Date(agent.last_activity_date).toLocaleDateString()
+                                          : "No activity"
+                                        }
+                                      </TableCell>
+                                      <TableCell>{agent.total_notes}</TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </CardContent>
+                        </CollapsibleContent>
+                      </Card>
+                    </Collapsible>
+                  );
+                })}
               </div>
             )}
           </div>

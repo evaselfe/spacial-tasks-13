@@ -3,11 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { CoordinatorHierarchyView } from "@/components/CoordinatorHierarchyView";
 import { CoordinatorHierarchyChart } from "@/components/CoordinatorHierarchyChart";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@/lib/authService";
-import { BarChart3, Network, TrendingDown } from "lucide-react";
+import { BarChart3, Network, TrendingDown, ChevronDown } from "lucide-react";
 
 interface CoordinatorReportsProps {
   currentUser: User;
@@ -312,61 +313,94 @@ export const CoordinatorReports = ({ currentUser }: CoordinatorReportsProps) => 
                 </Card>
               </div>
 
-              {/* Performance Table */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Agent Performance Details</CardTitle>
-                  <CardDescription>
-                    Detailed performance analysis for all agents in your panchayath
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {loading ? (
-                    <div className="text-center py-8">Loading performance data...</div>
-                  ) : agentPerformance.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No agent data found for this panchayath
-                    </div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Mobile</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Leave Days</TableHead>
-                          <TableHead>Last Activity</TableHead>
-                          <TableHead>Total Notes</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {agentPerformance.map((agent, index) => (
-                          <TableRow key={index}>
-                            <TableCell className="font-medium">{agent.agent_name}</TableCell>
-                            <TableCell className="capitalize">{agent.agent_type.replace('_', ' ')}</TableCell>
-                            <TableCell>{agent.mobile_number}</TableCell>
-                            <TableCell>{getStatusBadge(agent)}</TableCell>
-                            <TableCell>
-                              <span className={agent.consecutive_leave_days >= 3 ? "text-destructive font-medium" : ""}>
-                                {agent.consecutive_leave_days}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              {agent.last_activity_date ? (
-                                new Date(agent.last_activity_date).toLocaleDateString()
-                              ) : (
-                                <span className="text-muted-foreground">No activity</span>
-                              )}
-                            </TableCell>
-                            <TableCell>{agent.total_notes}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
+              {/* Performance by Role */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-semibold">Agent Performance Details</h3>
+                  <Badge variant="outline">{agentPerformance.length} total agents</Badge>
+                </div>
+                
+                {loading ? (
+                  <div className="text-center py-8">Loading performance data...</div>
+                ) : agentPerformance.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No agent data found for this panchayath
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Group agents by role */}
+                    {['coordinator', 'supervisor', 'group_leader', 'pro'].map((roleType) => {
+                      const roleAgents = agentPerformance.filter(agent => agent.agent_type === roleType);
+                      if (roleAgents.length === 0) return null;
+                      
+                      const roleDisplayName = roleType === 'group_leader' ? 'Group Leader' : 
+                                             roleType === 'pro' ? 'PRO' : 
+                                             roleType.charAt(0).toUpperCase() + roleType.slice(1);
+                      
+                      return (
+                        <Collapsible key={roleType}>
+                          <Card>
+                            <CollapsibleTrigger asChild>
+                              <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <CardTitle className="text-lg">{roleDisplayName}s</CardTitle>
+                                    <Badge variant="secondary">{roleAgents.length} agents</Badge>
+                                    <Badge variant={roleAgents.some(a => a.is_inactive) ? "destructive" : "default"}>
+                                      {roleAgents.filter(a => a.is_inactive).length} inactive
+                                    </Badge>
+                                  </div>
+                                  <ChevronDown className="h-4 w-4 transition-transform duration-200 data-[state=open]:rotate-180" />
+                                </div>
+                              </CardHeader>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              <CardContent className="pt-0">
+                                <div className="rounded-md border">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead>Name</TableHead>
+                                        <TableHead>Mobile</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead>Leave Days</TableHead>
+                                        <TableHead>Last Activity</TableHead>
+                                        <TableHead>Total Notes</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {roleAgents.map((agent, index) => (
+                                        <TableRow key={index}>
+                                          <TableCell className="font-medium">{agent.agent_name}</TableCell>
+                                          <TableCell>{agent.mobile_number}</TableCell>
+                                          <TableCell>{getStatusBadge(agent)}</TableCell>
+                                          <TableCell>
+                                            <span className={agent.consecutive_leave_days >= 3 ? "text-destructive font-medium" : ""}>
+                                              {agent.consecutive_leave_days}
+                                            </span>
+                                          </TableCell>
+                                          <TableCell>
+                                            {agent.last_activity_date ? (
+                                              new Date(agent.last_activity_date).toLocaleDateString()
+                                            ) : (
+                                              <span className="text-muted-foreground">No activity</span>
+                                            )}
+                                          </TableCell>
+                                          <TableCell>{agent.total_notes}</TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                              </CardContent>
+                            </CollapsibleContent>
+                          </Card>
+                        </Collapsible>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </TabsContent>
             
             <TabsContent value="hierarchy">
