@@ -33,6 +33,7 @@ interface PerformanceStats {
 export const PerformanceReport = () => {
   const [panchayaths, setPanchayaths] = useState<Panchayath[]>([]);
   const [selectedPanchayath, setSelectedPanchayath] = useState<string>("");
+  const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7)); // Current month YYYY-MM
   const [agentPerformance, setAgentPerformance] = useState<AgentPerformance[]>([]);
   const [performanceStats, setPerformanceStats] = useState<PerformanceStats>({
     total_agents: 0,
@@ -47,12 +48,12 @@ export const PerformanceReport = () => {
     fetchPanchayaths();
   }, []);
 
-  // Fetch performance data when panchayath is selected
+  // Fetch performance data when panchayath or month is selected
   useEffect(() => {
-    if (selectedPanchayath) {
+    if (selectedPanchayath && selectedMonth) {
       fetchPerformanceData();
     }
-  }, [selectedPanchayath]);
+  }, [selectedPanchayath, selectedMonth]);
 
   const fetchPanchayaths = async () => {
     try {
@@ -74,7 +75,7 @@ export const PerformanceReport = () => {
   };
 
   const fetchPerformanceData = async () => {
-    if (!selectedPanchayath) return;
+    if (!selectedPanchayath || !selectedMonth) return;
     
     setLoading(true);
     try {
@@ -191,15 +192,16 @@ export const PerformanceReport = () => {
 
   const analyzeAgentPerformance = async (mobileNumber: string, agentName: string, agentType: string) => {
     try {
-      // Get last 30 days of daily notes for this agent
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
+      // Get daily notes for the selected month
+      const startOfMonth = new Date(selectedMonth + '-01');
+      const endOfMonth = new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 0);
+      
       const { data: notes, error } = await supabase
         .from('daily_notes')
-        .select('date, is_leave')
+        .select('date, is_leave, activity')
         .eq('mobile_number', mobileNumber)
-        .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
+        .gte('date', startOfMonth.toISOString().split('T')[0])
+        .lte('date', endOfMonth.toISOString().split('T')[0])
         .order('date', { ascending: false });
 
       if (error) throw error;
@@ -213,7 +215,7 @@ export const PerformanceReport = () => {
       
       // Count consecutive leave days from most recent
       for (const note of sortedNotes) {
-        if (note.is_leave) {
+        if (note.is_leave || !note.activity) {
           currentStreak++;
           maxConsecutiveLeaveDays = Math.max(maxConsecutiveLeaveDays, currentStreak);
         } else {
@@ -225,7 +227,7 @@ export const PerformanceReport = () => {
 
       consecutiveLeaveDays = currentStreak;
       const isInactive = consecutiveLeaveDays >= 3;
-      const lastActivityDate = sortedNotes.find(note => !note.is_leave)?.date || null;
+      const lastActivityDate = sortedNotes.find(note => !note.is_leave && note.activity)?.date || null;
 
       return {
         consecutive_leave_days: consecutiveLeaveDays,
@@ -258,6 +260,24 @@ export const PerformanceReport = () => {
     </Badge>;
   };
 
+  const generateMonthOptions = () => {
+    const options = [];
+    const currentDate = new Date();
+    
+    // Add current and past 11 months (total 12 months)
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      const monthValue = date.toISOString().slice(0, 7);
+      const monthLabel = date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long' 
+      });
+      options.push({ value: monthValue, label: monthLabel });
+    }
+    
+    return options;
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -270,25 +290,43 @@ export const PerformanceReport = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Panchayath Selection */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Select Panchayath</label>
-          <Select value={selectedPanchayath} onValueChange={setSelectedPanchayath}>
-            <SelectTrigger className="w-full sm:w-80">
-              <SelectValue placeholder="Choose a panchayath to view performance" />
-            </SelectTrigger>
-            <SelectContent>
-              {panchayaths.map((panchayath) => (
-                <SelectItem key={panchayath.id} value={panchayath.id}>
-                  {panchayath.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {/* Panchayath and Month Selection */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Select Panchayath</label>
+            <Select value={selectedPanchayath} onValueChange={setSelectedPanchayath}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose a panchayath" />
+              </SelectTrigger>
+              <SelectContent>
+                {panchayaths.map((panchayath) => (
+                  <SelectItem key={panchayath.id} value={panchayath.id}>
+                    {panchayath.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Select Month</label>
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose a month" />
+              </SelectTrigger>
+              <SelectContent>
+                {generateMonthOptions().map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Performance Statistics */}
-        {selectedPanchayath && (
+        {selectedPanchayath && selectedMonth && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardHeader className="pb-2">
@@ -332,7 +370,7 @@ export const PerformanceReport = () => {
         )}
 
         {/* Agent Performance by Role */}
-        {selectedPanchayath && (
+        {selectedPanchayath && selectedMonth && (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Agent Performance Details</h3>
             {loading ? (
