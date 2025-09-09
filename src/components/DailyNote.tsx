@@ -121,7 +121,15 @@ export const DailyNote = ({
   const isOnLeave = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const note = notes.find(n => n.date === dateStr);
-    return !!(note && (note.is_leave || !note.activity));
+    // Only show as leave for past dates with no activity
+    const isPastDate = date < new Date(new Date().setHours(0, 0, 0, 0));
+    return isPastDate && (!note || note.is_leave || !note.activity);
+  };
+
+  const isFutureDate = (date: Date) => {
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // End of today
+    return date > today;
   };
   return <Card className="relative overflow-hidden bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 backdrop-blur-sm border border-white/20 shadow-xl animate-fade-in">
       {/* Glass morphism overlay */}
@@ -192,18 +200,26 @@ export const DailyNote = ({
                   </div>
                 </div>
                 
-                <Calendar mode="single" selected={selectedDate} onSelect={date => {
-              if (date) {
-                setSelectedDate(date);
-                setActiveTab("today");
-              }
-            }} className="rounded-md border-0 bg-white/5 backdrop-blur-sm pointer-events-auto mx-auto" modifiers={{
-              hasActivity: hasActivity,
-              onLeave: isOnLeave
-            }} modifiersClassNames={{
-              hasActivity: "bg-green-500/20 text-green-800 hover:bg-green-500/30 border-green-500/50",
-              onLeave: "bg-red-500/20 text-red-800 hover:bg-red-500/30 border-red-500/50"
-            }} />
+                <Calendar 
+                  mode="single" 
+                  selected={selectedDate} 
+                  onSelect={date => {
+                    if (date && !isFutureDate(date)) {
+                      setSelectedDate(date);
+                      setActiveTab("today");
+                    }
+                  }} 
+                  className="rounded-md border-0 bg-white/5 backdrop-blur-sm pointer-events-auto mx-auto" 
+                  disabled={isFutureDate}
+                  modifiers={{
+                    hasActivity: hasActivity,
+                    onLeave: isOnLeave
+                  }} 
+                  modifiersClassNames={{
+                    hasActivity: "bg-green-500/20 text-green-800 hover:bg-green-500/30 border-green-500/50",
+                    onLeave: "bg-red-500/20 text-red-800 hover:bg-red-500/30 border-red-500/50"
+                  }} 
+                />
               </div>
             </TabsContent>
           </Tabs>
