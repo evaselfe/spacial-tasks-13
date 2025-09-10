@@ -6,7 +6,8 @@ import { ViewAnalyze } from "@/components/admin/ViewAnalyze";
 import { PanchayathManagement } from "@/components/admin/PanchayathManagement";
 import { AgentTestimonialAnalytics } from "@/components/admin/AgentTestimonialAnalytics";
 import { PerformanceReport } from "@/components/admin/PerformanceReport";
-import { ArrowLeft, Shield, Settings, BarChart3, MapPin, Users, MessageSquare, TrendingDown } from "lucide-react";
+import { TodoList } from "@/components/admin/TodoList";
+import { ArrowLeft, Shield, Settings, BarChart3, MapPin, Users, MessageSquare, TrendingDown, ListTodo } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 const TeamAdmin = () => {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ const TeamAdmin = () => {
         </div>
 
         {/* Admin Navigation Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <div className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] ${activeTab === "panchayath" ? "scale-[1.02]" : ""}`} onClick={() => setActiveTab("panchayath")}>
             <Card className={`relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "panchayath" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
               <CardHeader className="pb-3 bg-green-50">
@@ -88,6 +89,20 @@ const TeamAdmin = () => {
               </CardHeader>
             </Card>
           </div>
+
+          <div className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] ${activeTab === "todo" ? "scale-[1.02]" : ""}`} onClick={() => setActiveTab("todo")}>
+            <Card className={`relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "todo" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
+              <CardHeader className="pb-3 bg-orange-50">
+                <div className="flex items-center gap-2">
+                  <ListTodo className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-lg">Todo List (ചെയ്യേണ്ട കാര്യങ്ങൾ)</CardTitle>
+                </div>
+                <CardDescription>
+                  Manage tasks and to-do items
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
         </div>
 
         {/* Content Area */}
@@ -106,6 +121,10 @@ const TeamAdmin = () => {
 
           <TabsContent value="performance">
             <PerformanceReport />
+          </TabsContent>
+
+          <TabsContent value="todo">
+            <TodoList />
           </TabsContent>
         </Tabs>
       </div>
