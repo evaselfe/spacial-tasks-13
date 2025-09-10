@@ -81,7 +81,7 @@ const TeamAdmin = () => {
               <CardHeader className="pb-3 bg-purple-50">
                 <div className="flex items-center gap-2">
                   <TrendingDown className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-lg">Performance (ഏജൻ്റുമാരുടെ പ്രകടന റിപ്പോർട്ടുകൾ)</CardTitle>
+                  <CardTitle className="text-left text-lg px-0 my-0 mx-0">Performance (ഏജൻ്റുമാരുടെ പ്രകടന റിപ്പോർട്ടുകൾ)</CardTitle>
                 </div>
                 <CardDescription>
                   View panchayath performance reports
