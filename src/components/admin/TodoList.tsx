@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,20 +8,23 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
-import { CheckCircle, XCircle, Plus, Edit, Save, X, Calendar as CalendarIcon, Clock } from "lucide-react";
+import { CheckCircle, XCircle, Plus, Edit, Save, X, Calendar as CalendarIcon, Clock, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Task {
   id: string;
   text: string;
   status: 'finished' | 'unfinished';
-  remarks: string;
-  createdAt: Date;
-  finishedAt?: Date;
+  remarks: string | null;
+  created_at: string;
+  finished_at?: string | null;
 }
 
 export const TodoList = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
   const [taskType, setTaskType] = useState<'single' | 'multi'>('single');
   const [singleTaskText, setSingleTaskText] = useState('');
   const [multiTaskText, setMultiTaskText] = useState('');
@@ -32,37 +35,112 @@ export const TodoList = () => {
   const [activeTab, setActiveTab] = useState('unfinished');
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [deletingTask, setDeletingTask] = useState<string | null>(null);
+  const [deletePasskey, setDeletePasskey] = useState('');
+  const { toast } = useToast();
 
-  const addSingleTask = () => {
-    if (!singleTaskText.trim()) return;
+  // Load tasks from database
+  useEffect(() => {
+    loadTasks();
+  }, []);
 
-    const newTask: Task = {
-      id: Date.now().toString(),
-      text: singleTaskText,
-      status: 'unfinished',
-      remarks: '',
-      createdAt: new Date()
-    };
+  const loadTasks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('todos')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    setTasks([...tasks, newTask]);
-    setSingleTaskText('');
+      if (error) throw error;
+      
+      // Type the data properly from database
+      const typedTasks: Task[] = (data || []).map(task => ({
+        id: task.id,
+        text: task.text,
+        status: task.status as 'finished' | 'unfinished',
+        remarks: task.remarks,
+        created_at: task.created_at,
+        finished_at: task.finished_at
+      }));
+      
+      setTasks(typedTasks);
+    } catch (error) {
+      console.error('Error loading tasks:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load tasks",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const addMultiTasks = () => {
+  const addSingleTask = async () => {
+    if (!singleTaskText.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from('todos')
+        .insert([{
+          text: singleTaskText,
+          status: 'unfinished',
+          remarks: null,
+          created_by: (await supabase.auth.getUser()).data.user?.id
+        }]);
+
+      if (error) throw error;
+      
+      setSingleTaskText('');
+      await loadTasks();
+      toast({
+        title: "Success",
+        description: "Task added successfully",
+      });
+    } catch (error) {
+      console.error('Error adding task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add task",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const addMultiTasks = async () => {
     if (!multiTaskText.trim()) return;
 
     const taskTexts = multiTaskText.split(',').map(text => text.trim()).filter(text => text.length > 0);
     
-    const newTasks: Task[] = taskTexts.map(text => ({
-      id: `${Date.now()}-${Math.random()}`,
-      text,
-      status: 'unfinished' as const,
-      remarks: '',
-      createdAt: new Date()
-    }));
+    try {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      const newTasks = taskTexts.map(text => ({
+        text,
+        status: 'unfinished' as const,
+        remarks: null,
+        created_by: userId
+      }));
 
-    setTasks([...tasks, ...newTasks]);
-    setMultiTaskText('');
+      const { error } = await supabase
+        .from('todos')
+        .insert(newTasks);
+
+      if (error) throw error;
+      
+      setMultiTaskText('');
+      await loadTasks();
+      toast({
+        title: "Success",
+        description: `${taskTexts.length} tasks added successfully`,
+      });
+    } catch (error) {
+      console.error('Error adding tasks:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add tasks",
+        variant: "destructive",
+      });
+    }
   };
 
   const toggleTaskStatus = (taskId: string) => {
@@ -72,46 +150,80 @@ export const TodoList = () => {
     if (task.status === 'unfinished') {
       // Show popup for remarks when finishing
       setFinishingTask(taskId);
-      setFinishRemarks(task.remarks);
+      setFinishRemarks(task.remarks || '');
     } else {
       // Mark as unfinished
-      setTasks(tasks.map(t => 
-        t.id === taskId 
-          ? { ...t, status: 'unfinished', finishedAt: undefined }
-          : t
-      ));
+      updateTaskStatus(taskId, 'unfinished', task.remarks || '');
+    }
+  };
+
+  const updateTaskStatus = async (taskId: string, status: 'finished' | 'unfinished', remarks: string) => {
+    try {
+      const updateData: any = { 
+        status, 
+        remarks: remarks || null,
+        finished_at: status === 'finished' ? new Date().toISOString() : null
+      };
+
+      const { error } = await supabase
+        .from('todos')
+        .update(updateData)
+        .eq('id', taskId);
+
+      if (error) throw error;
+      
+      await loadTasks();
+      toast({
+        title: "Success",
+        description: `Task marked as ${status}`,
+      });
+    } catch (error) {
+      console.error('Error updating task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update task",
+        variant: "destructive",
+      });
     }
   };
 
   const confirmFinishTask = () => {
     if (!finishingTask) return;
     
-    setTasks(tasks.map(task => 
-      task.id === finishingTask 
-        ? { 
-            ...task, 
-            status: 'finished' as const, 
-            remarks: finishRemarks,
-            finishedAt: new Date()
-          }
-        : task
-    ));
-    
+    updateTaskStatus(finishingTask, 'finished', finishRemarks);
     setFinishingTask(null);
     setFinishRemarks('');
   };
 
-  const updateTaskRemarks = (taskId: string, remarks: string) => {
-    setTasks(tasks.map(task => 
-      task.id === taskId ? { ...task, remarks } : task
-    ));
-    setEditingTask(null);
-    setEditRemarks('');
+  const updateTaskRemarks = async (taskId: string, remarks: string) => {
+    try {
+      const { error } = await supabase
+        .from('todos')
+        .update({ remarks: remarks || null })
+        .eq('id', taskId);
+
+      if (error) throw error;
+      
+      await loadTasks();
+      setEditingTask(null);
+      setEditRemarks('');
+      toast({
+        title: "Success",
+        description: "Remarks updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating remarks:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update remarks",
+        variant: "destructive",
+      });
+    }
   };
 
   const startEditingRemarks = (task: Task) => {
     setEditingTask(task.id);
-    setEditRemarks(task.remarks);
+    setEditRemarks(task.remarks || '');
   };
 
   const cancelEditing = () => {
@@ -124,15 +236,73 @@ export const TodoList = () => {
     setFinishRemarks('');
   };
 
+  const startDeleting = (taskId: string) => {
+    setDeletingTask(taskId);
+    setDeletePasskey('');
+  };
+
+  const cancelDeleting = () => {
+    setDeletingTask(null);
+    setDeletePasskey('');
+  };
+
+  const confirmDeleteTask = async () => {
+    if (deletePasskey !== 's7025715877') {
+      toast({
+        title: "Error",
+        description: "Invalid passkey",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!deletingTask) return;
+
+    try {
+      const { error } = await supabase
+        .from('todos')
+        .delete()
+        .eq('id', deletingTask);
+
+      if (error) throw error;
+      
+      await loadTasks();
+      setDeletingTask(null);
+      setDeletePasskey('');
+      toast({
+        title: "Success",
+        description: "Task deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete task",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getTasksForDate = (date: Date) => {
     return tasks.filter(task => {
-      const taskDate = new Date(task.createdAt);
+      const taskDate = new Date(task.created_at);
       return taskDate.toDateString() === date.toDateString();
     });
   };
 
   const unfinishedTasks = tasks.filter(task => task.status === 'unfinished');
   const finishedTasks = tasks.filter(task => task.status === 'finished');
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading tasks...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -254,9 +424,9 @@ export const TodoList = () => {
                                 </Badge>
                                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                                   <Clock className="h-3 w-3" />
-                                  Created: {format(task.createdAt, "HH:mm")}
-                                  {task.finishedAt && (
-                                    <> | Finished: {format(task.finishedAt, "HH:mm")}</>
+                                  Created: {format(new Date(task.created_at), "HH:mm")}
+                                  {task.finished_at && (
+                                    <> | Finished: {format(new Date(task.finished_at), "HH:mm")}</>
                                   )}
                                 </span>
                               </div>
@@ -303,7 +473,7 @@ export const TodoList = () => {
                             
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
                               <Clock className="h-3 w-3" />
-                              Created: {format(task.createdAt, "PPP HH:mm")}
+                              Created: {format(new Date(task.created_at), "PPP HH:mm")}
                             </div>
                             
                             {/* Remarks Section */}
@@ -347,7 +517,7 @@ export const TodoList = () => {
                             </div>
                           </div>
 
-                          {/* Status Toggle */}
+                          {/* Action Buttons */}
                           <div className="flex items-center gap-2">
                             <Button
                               size="sm"
@@ -357,6 +527,15 @@ export const TodoList = () => {
                             >
                               <XCircle className="h-4 w-4" />
                               Mark Finished
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => startDeleting(task.id)}
+                              className="flex items-center gap-1"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Delete
                             </Button>
                           </div>
                         </div>
@@ -385,12 +564,12 @@ export const TodoList = () => {
                             <div className="flex items-center gap-4 text-xs text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <Clock className="h-3 w-3" />
-                                Created: {format(task.createdAt, "PPP HH:mm")}
+                                Created: {format(new Date(task.created_at), "PPP HH:mm")}
                               </div>
-                              {task.finishedAt && (
+                              {task.finished_at && (
                                 <div className="flex items-center gap-1">
                                   <CheckCircle className="h-3 w-3" />
-                                  Finished: {format(task.finishedAt, "PPP HH:mm")}
+                                  Finished: {format(new Date(task.finished_at), "PPP HH:mm")}
                                 </div>
                               )}
                             </div>
@@ -402,7 +581,7 @@ export const TodoList = () => {
                             )}
                           </div>
 
-                          {/* Status Toggle */}
+                          {/* Action Buttons */}
                           <div className="flex items-center gap-2">
                             <Button
                               size="sm"
@@ -412,6 +591,15 @@ export const TodoList = () => {
                             >
                               <CheckCircle className="h-4 w-4" />
                               Mark Unfinished
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => startDeleting(task.id)}
+                              className="flex items-center gap-1"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Delete
                             </Button>
                           </div>
                         </div>
@@ -448,6 +636,34 @@ export const TodoList = () => {
             </Button>
             <Button onClick={confirmFinishTask}>
               Mark as Finished
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Task Dialog */}
+      <Dialog open={!!deletingTask} onOpenChange={(open) => !open && cancelDeleting()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Task</DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. Please enter the passkey to confirm deletion.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              type="password"
+              placeholder="Enter passkey..."
+              value={deletePasskey}
+              onChange={(e) => setDeletePasskey(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={cancelDeleting}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDeleteTask}>
+              Delete Task
             </Button>
           </DialogFooter>
         </DialogContent>

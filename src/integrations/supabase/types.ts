@@ -505,6 +505,39 @@ export type Database = {
           },
         ]
       }
+      todos: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          finished_at: string | null
+          id: string
+          remarks: string | null
+          status: string
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          finished_at?: string | null
+          id?: string
+          remarks?: string | null
+          status?: string
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          finished_at?: string | null
+          id?: string
+          remarks?: string | null
+          status?: string
+          text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       hierarchy_view: {
