@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { TaskManagement } from "@/components/TaskManagement";
@@ -11,12 +10,13 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown, ChevronRight, FileText } from "lucide-react";
 import { User } from "@/lib/authService";
 import { useToast } from "@/hooks/use-toast";
-
 const Index = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isPanchayathOpen, setIsPanchayathOpen] = useState(false);
   const [isReportsOpen, setIsReportsOpen] = useState(false);
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
 
   // Load user from localStorage on component mount
   useEffect(() => {
@@ -30,18 +30,16 @@ const Index = () => {
       }
     }
   }, []);
-
   const handleLogin = (user: User) => {
     setCurrentUser(user);
     localStorage.setItem('currentUser', JSON.stringify(user));
   };
-
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('currentUser');
     toast({
       title: "Logged out",
-      description: "You have been logged out successfully",
+      description: "You have been logged out successfully"
     });
   };
 
@@ -49,14 +47,11 @@ const Index = () => {
   if (!currentUser) {
     return <MobileLogin onLogin={handleLogin} />;
   }
-
   return <div className="min-h-screen bg-gradient-to-br from-background to-background/95 p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
           <div className="text-center sm:text-left">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              Panchayath Management System
-            </h1>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Agent Management System</h1>
             <p className="text-muted-foreground mt-2 text-sm sm:text-base">
               Welcome, {currentUser.name}
             </p>
@@ -65,33 +60,17 @@ const Index = () => {
             <UserProfile currentUser={currentUser} onUserUpdate={setCurrentUser} />
             
             {/* Show Team Admin Panel button only for team members */}
-            {currentUser.hasAdminAccess && (
-              <Button 
-                variant="outline" 
-                onClick={() => window.location.href = '/admin'}
-                className="w-full sm:w-auto border-primary/20 hover:border-primary"
-              >
+            {currentUser.hasAdminAccess && <Button variant="outline" onClick={() => window.location.href = '/admin'} className="w-full sm:w-auto border-primary/20 hover:border-primary">
                 Team Admin Panel
-              </Button>
-            )}
+              </Button>}
             
             {/* Show Reports button only for coordinators */}
-            {currentUser.role === 'coordinator' && (
-              <Button 
-                variant="outline" 
-                onClick={() => setIsReportsOpen(!isReportsOpen)}
-                className="w-full sm:w-auto border-blue-500/20 hover:border-blue-500 bg-blue-50 hover:bg-blue-100 text-blue-700 flex items-center gap-2"
-              >
+            {currentUser.role === 'coordinator' && <Button variant="outline" onClick={() => setIsReportsOpen(!isReportsOpen)} className="w-full sm:w-auto border-blue-500/20 hover:border-blue-500 bg-blue-50 hover:bg-blue-100 text-blue-700 flex items-center gap-2">
                 <FileText className="h-4 w-4" />
                 Reports
-              </Button>
-            )}
+              </Button>}
             
-            <Button 
-              variant="outline" 
-              onClick={handleLogout}
-              className="w-full sm:w-auto border-destructive/20 hover:border-destructive bg-destructive/10 hover:bg-destructive/20 text-destructive"
-            >
+            <Button variant="outline" onClick={handleLogout} className="w-full sm:w-auto border-destructive/20 hover:border-destructive bg-destructive/10 hover:bg-destructive/20 text-destructive">
               Logout
             </Button>
           </div>
@@ -103,11 +82,9 @@ const Index = () => {
         </div>
 
         {/* Coordinator Reports */}
-        {currentUser.role === 'coordinator' && isReportsOpen && (
-          <div className="mb-6">
+        {currentUser.role === 'coordinator' && isReportsOpen && <div className="mb-6">
             <CoordinatorReports currentUser={currentUser} />
-          </div>
-        )}
+          </div>}
 
         <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Collapsible open={isPanchayathOpen} onOpenChange={setIsPanchayathOpen}>
@@ -122,11 +99,7 @@ const Index = () => {
                         <h3 className="text-lg sm:text-xl font-semibold">Manage Panchayath</h3>
                       </div>
                       <div className="flex items-center gap-2">
-                        {isPanchayathOpen ? (
-                          <ChevronDown className="h-5 w-5 text-gray-700" />
-                        ) : (
-                          <ChevronRight className="h-5 w-5 text-gray-700" />
-                        )}
+                        {isPanchayathOpen ? <ChevronDown className="h-5 w-5 text-gray-700" /> : <ChevronRight className="h-5 w-5 text-gray-700" />}
                       </div>
                     </div>
                   </div>
