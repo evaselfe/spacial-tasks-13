@@ -46,10 +46,13 @@ export const TodoList = () => {
 
   const loadTasks = async () => {
     try {
+      console.log('Loading tasks...');
       const { data, error } = await supabase
         .from('todos')
         .select('*')
         .order('created_at', { ascending: false });
+
+      console.log('Tasks loaded:', { data, error });
 
       if (error) throw error;
       
@@ -63,6 +66,7 @@ export const TodoList = () => {
         finished_at: task.finished_at
       }));
       
+      console.log('Typed tasks:', typedTasks);
       setTasks(typedTasks);
     } catch (error) {
       console.error('Error loading tasks:', error);
