@@ -361,12 +361,16 @@ export const TodoList = () => {
         .eq('id', taskId);
 
       if (error) {
-        console.error('Assignment error details:', error);
+        console.error('Assignment error details:');
+        console.error('Error message:', error.message);
+        console.error('Error code:', error.code);
+        console.error('Full error:', JSON.stringify(error, null, 2));
+        
         // If error is about missing column, show helpful message
-        if (error.message.includes('assigned_to') || error.message.includes('column') || error.code === '42703') {
+        if (error.message.includes('assigned_to') || error.message.includes('column') || error.code === '42703' || error.code === '23503') {
           toast({
             title: "Database Update Required",
-            description: `Please run the SQL script 'add_assigned_to_column.sql' to enable task assignments. Error: ${error.message}`,
+            description: `Please run the SQL script 'fix_foreign_key_constraint.sql' to fix task assignments. Error: ${error.message}`,
             variant: "destructive",
           });
           return;
