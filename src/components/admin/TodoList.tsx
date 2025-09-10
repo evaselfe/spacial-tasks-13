@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
-import { CheckCircle, XCircle, Plus, Edit, Save, X, Calendar as CalendarIcon, Clock, Trash2 } from "lucide-react";
+import { CheckCircle, XCircle, Plus, Edit, Save, X, Calendar as CalendarIcon, Clock, Trash2, Search } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -37,6 +37,7 @@ export const TodoList = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [deletingTask, setDeletingTask] = useState<string | null>(null);
   const [deletePasskey, setDeletePasskey] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
   // Load tasks from database
@@ -298,8 +299,20 @@ export const TodoList = () => {
     });
   };
 
-  const unfinishedTasks = tasks.filter(task => task.status === 'unfinished');
-  const finishedTasks = tasks.filter(task => task.status === 'finished');
+  // Filter tasks based on search term
+  const filterTasksBySearch = (taskList: Task[]) => {
+    if (!searchTerm.trim()) return taskList;
+    
+    const searchLower = searchTerm.toLowerCase();
+    return taskList.filter(task => 
+      task.text.toLowerCase().includes(searchLower) ||
+      task.id.toLowerCase().includes(searchLower) ||
+      (task.remarks && task.remarks.toLowerCase().includes(searchLower))
+    );
+  };
+
+  const unfinishedTasks = filterTasksBySearch(tasks.filter(task => task.status === 'unfinished'));
+  const finishedTasks = filterTasksBySearch(tasks.filter(task => task.status === 'finished'));
 
   if (loading) {
     return (
@@ -396,6 +409,19 @@ export const TodoList = () => {
           <CardDescription>
             Manage your tasks and their completion status
           </CardDescription>
+          
+          {/* Search Input */}
+          <div className="px-6 pb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Search tasks by text, ID, or remarks..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {showCalendar ? (
