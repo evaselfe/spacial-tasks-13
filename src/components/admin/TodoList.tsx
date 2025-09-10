@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
-import { CheckCircle, XCircle, Plus, Edit, Save, X, Calendar as CalendarIcon, Clock, Trash2, Search } from "lucide-react";
+import { CheckCircle, XCircle, Plus, Edit, Save, X, Calendar as CalendarIcon, Clock, Trash2, Search, Users, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +20,21 @@ interface Task {
   remarks: string | null;
   created_at: string;
   finished_at?: string | null;
+  assigned_to?: string | null;
+  assigned_member?: {
+    id: string;
+    name: string;
+    mobile: string;
+  } | null;
+}
+
+interface AdminMember {
+  id: string;
+  name: string;
+  mobile: string;
+  team_id: string;
+  role: string;
+  panchayath: string;
 }
 
 export const TodoList = () => {
@@ -38,11 +53,15 @@ export const TodoList = () => {
   const [deletingTask, setDeletingTask] = useState<string | null>(null);
   const [deletePasskey, setDeletePasskey] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [adminMembers, setAdminMembers] = useState<AdminMember[]>([]);
+  const [assigningTask, setAssigningTask] = useState<string | null>(null);
+  const [selectedMember, setSelectedMember] = useState<string>('');
   const { toast } = useToast();
 
   // Load tasks from database
   useEffect(() => {
     loadTasks();
+    loadAdminMembers();
   }, []);
 
   const loadTasks = async () => {
@@ -57,18 +76,35 @@ export const TodoList = () => {
 
       if (error) throw error;
       
-      // Type the data properly from database
-      const typedTasks: Task[] = (data || []).map(task => ({
-        id: task.id,
-        text: task.text,
-        status: task.status as 'finished' | 'unfinished',
-        remarks: task.remarks,
-        created_at: task.created_at,
-        finished_at: task.finished_at
-      }));
+      // Get assigned members separately
+      const tasksWithMembers = await Promise.all(
+        (data || []).map(async (task) => {
+          let assigned_member = null;
+          const taskAny = task as any;
+          if (taskAny.assigned_to) {
+            const { data: memberData } = await supabase
+              .from('admin_members')
+              .select('id, name, mobile')
+              .eq('id', taskAny.assigned_to)
+              .single();
+            assigned_member = memberData;
+          }
+          
+          return {
+            id: task.id,
+            text: task.text,
+            status: task.status as 'finished' | 'unfinished',
+            remarks: task.remarks,
+            created_at: task.created_at,
+            finished_at: task.finished_at,
+            assigned_to: taskAny.assigned_to || null,
+            assigned_member
+          };
+        })
+      );
       
-      console.log('Typed tasks:', typedTasks);
-      setTasks(typedTasks);
+      console.log('Typed tasks:', tasksWithMembers);
+      setTasks(tasksWithMembers);
     } catch (error) {
       console.error('Error loading tasks:', error);
       toast({
@@ -78,6 +114,26 @@ export const TodoList = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAdminMembers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('admin_members')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      
+      setAdminMembers(data || []);
+    } catch (error) {
+      console.error('Error loading admin members:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load admin members",
+        variant: "destructive",
+      });
     }
   };
 
@@ -290,6 +346,61 @@ export const TodoList = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const assignTaskToMember = async (taskId: string, memberId: string | null) => {
+    try {
+      // Try to update the assignment - this will work once the database column is added
+      const updateData: any = { assigned_to: memberId };
+      
+      const { error } = await supabase
+        .from('todos')
+        .update(updateData)
+        .eq('id', taskId);
+
+      if (error) {
+        // If error is about missing column, show helpful message
+        if (error.message.includes('assigned_to')) {
+          toast({
+            title: "Database Update Required",
+            description: "Please run the SQL script 'add_assigned_to_column.sql' to enable task assignments.",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw error;
+      }
+      
+      await loadTasks();
+      setAssigningTask(null);
+      setSelectedMember('');
+      toast({
+        title: "Success",
+        description: memberId ? "Task assigned successfully" : "Task assignment removed",
+      });
+    } catch (error) {
+      console.error('Error assigning task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to assign task. Make sure database is properly configured.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const startAssigning = (taskId: string, currentAssignment?: string) => {
+    setAssigningTask(taskId);
+    setSelectedMember(currentAssignment || '');
+  };
+
+  const cancelAssigning = () => {
+    setAssigningTask(null);
+    setSelectedMember('');
+  };
+
+  const confirmAssignTask = () => {
+    if (!assigningTask) return;
+    assignTaskToMember(assigningTask, selectedMember || null);
   };
 
   const getTasksForDate = (date: Date) => {
@@ -507,6 +618,33 @@ export const TodoList = () => {
                               Created: {format(new Date(task.created_at), "PPP HH:mm")}
                             </div>
                             
+                            {/* Assigned Member Section */}
+                            <div className="flex items-center gap-2 text-sm">
+                              <Users className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Assigned to:</span>
+                              {task.assigned_member ? (
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="text-xs">
+                                    <UserCheck className="h-3 w-3 mr-1" />
+                                    {task.assigned_member.name}
+                                  </Badge>
+                                  <span className="text-xs text-muted-foreground">
+                                    {task.assigned_member.mobile}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">Not assigned</span>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => startAssigning(task.id, task.assigned_to || '')}
+                                className="ml-auto"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </div>
+
                             {/* Remarks Section */}
                             <div className="space-y-2">
                               {editingTask === task.id ? (
@@ -605,6 +743,20 @@ export const TodoList = () => {
                               )}
                             </div>
                             
+                            {/* Assigned Member Section */}
+                            {task.assigned_member && (
+                              <div className="flex items-center gap-2 text-sm">
+                                <Users className="h-4 w-4 text-muted-foreground" />
+                                <Badge variant="outline" className="text-xs">
+                                  <UserCheck className="h-3 w-3 mr-1" />
+                                  {task.assigned_member.name}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  {task.assigned_member.mobile}
+                                </span>
+                              </div>
+                            )}
+
                             {task.remarks && (
                               <div className="text-sm text-muted-foreground">
                                 <strong>Remarks:</strong> {task.remarks}
@@ -695,6 +847,49 @@ export const TodoList = () => {
             </Button>
             <Button variant="destructive" onClick={confirmDeleteTask}>
               Delete Task
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Task Dialog */}
+      <Dialog open={!!assigningTask} onOpenChange={(open) => !open && cancelAssigning()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign Task to Team Member</DialogTitle>
+            <DialogDescription>
+              Select an admin team member to assign this task to, or leave blank to unassign.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Select value={selectedMember} onValueChange={setSelectedMember}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select team member" />
+              </SelectTrigger>
+              <SelectContent className="bg-background border z-50">
+                <SelectItem value="">No assignment</SelectItem>
+                {adminMembers.map((member) => (
+                  <SelectItem key={member.id} value={member.id}>
+                    <div className="flex items-center justify-between w-full">
+                      <span>{member.name}</span>
+                      <div className="flex items-center gap-2 ml-2 text-xs text-muted-foreground">
+                        <span>{member.mobile}</span>
+                        <Badge variant="outline" className="text-xs">
+                          {member.role}
+                        </Badge>
+                      </div>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={cancelAssigning}>
+              Cancel
+            </Button>
+            <Button onClick={confirmAssignTask}>
+              {selectedMember ? 'Assign Task' : 'Remove Assignment'}
             </Button>
           </DialogFooter>
         </DialogContent>
