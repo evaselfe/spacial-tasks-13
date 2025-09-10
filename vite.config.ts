@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     hmr: {
-      clientPort: 443,
+      port: 8080,
     },
   },
   plugins: [
