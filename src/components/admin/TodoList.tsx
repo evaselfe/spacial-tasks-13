@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar } from "@/components/ui/calendar";
 import { CheckCircle, XCircle, Plus, Edit, Save, X, Calendar as CalendarIcon, Clock, Trash2, Search, Users, UserCheck } from "lucide-react";
 import { format } from "date-fns";
@@ -604,25 +605,155 @@ export const TodoList = () => {
                     No unfinished tasks. Great job!
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    {unfinishedTasks.map((task) => (
-                      <Card key={task.id} className="p-4">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 space-y-2">
-                            <div className="flex items-center gap-2">
-                              <span className="underline">{task.text}</span>
+                  <div className="border rounded-lg">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Task</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Assigned To</TableHead>
+                          <TableHead>Created</TableHead>
+                          <TableHead>Remarks</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {unfinishedTasks.map((task) => (
+                          <TableRow key={task.id}>
+                            <TableCell>
+                              <div className="font-medium underline">{task.text}</div>
+                            </TableCell>
+                            <TableCell>
                               <Badge variant="secondary">{task.status}</Badge>
-                            </div>
-                            
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <Clock className="h-3 w-3" />
-                              Created: {format(new Date(task.created_at), "PPP HH:mm")}
-                            </div>
-                            
-                            {/* Assigned Member Section */}
-                            <div className="flex items-center gap-2 text-sm">
-                              <Users className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-muted-foreground">Assigned to:</span>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                {task.assigned_member ? (
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="text-xs">
+                                      <UserCheck className="h-3 w-3 mr-1" />
+                                      {task.assigned_member.name}
+                                    </Badge>
+                                    <span className="text-xs text-muted-foreground">
+                                      {task.assigned_member.mobile}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <span className="text-sm text-muted-foreground">Not assigned</span>
+                                )}
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => startAssigning(task.id, task.assigned_to || '')}
+                                  className="h-6 text-xs"
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm text-muted-foreground">
+                                {format(new Date(task.created_at), "PPP HH:mm")}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {editingTask === task.id ? (
+                                <div className="flex gap-1">
+                                  <Input
+                                    placeholder="Add remarks..."
+                                    value={editRemarks}
+                                    onChange={(e) => setEditRemarks(e.target.value)}
+                                    className="h-8 text-sm"
+                                  />
+                                  <Button 
+                                    size="sm" 
+                                    onClick={() => updateTaskRemarks(task.id, editRemarks)}
+                                    className="h-8 px-2"
+                                  >
+                                    <Save className="h-3 w-3" />
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    onClick={cancelEditing}
+                                    className="h-8 px-2"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm text-muted-foreground">
+                                    {task.remarks || 'No remarks'}
+                                  </span>
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    onClick={() => startEditingRemarks(task)}
+                                    className="h-6 px-1"
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => toggleTaskStatus(task.id)}
+                                  className="h-8 px-2"
+                                >
+                                  <XCircle className="h-3 w-3 mr-1" />
+                                  Finish
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => startDeleting(task.id)}
+                                  className="h-8 px-2"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="finished" className="space-y-3 mt-4">
+                {finishedTasks.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No finished tasks yet.
+                  </div>
+                ) : (
+                  <div className="border rounded-lg">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Task</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Assigned To</TableHead>
+                          <TableHead>Created/Finished</TableHead>
+                          <TableHead>Remarks</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {finishedTasks.map((task) => (
+                          <TableRow key={task.id}>
+                            <TableCell>
+                              <div className="font-medium line-through text-muted-foreground">{task.text}</div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="default">{task.status}</Badge>
+                            </TableCell>
+                            <TableCell>
                               {task.assigned_member ? (
                                 <div className="flex items-center gap-2">
                                   <Badge variant="outline" className="text-xs">
@@ -634,161 +765,53 @@ export const TodoList = () => {
                                   </span>
                                 </div>
                               ) : (
-                                <span className="text-muted-foreground text-xs">Not assigned</span>
+                                <span className="text-sm text-muted-foreground">Not assigned</span>
                               )}
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => startAssigning(task.id, task.assigned_to || '')}
-                                className="ml-auto"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            </div>
-
-                            {/* Remarks Section */}
-                            <div className="space-y-2">
-                              {editingTask === task.id ? (
-                                <div className="flex gap-2">
-                                  <Input
-                                    placeholder="Add remarks..."
-                                    value={editRemarks}
-                                    onChange={(e) => setEditRemarks(e.target.value)}
-                                    className="flex-1"
-                                  />
-                                  <Button 
-                                    size="sm" 
-                                    onClick={() => updateTaskRemarks(task.id, editRemarks)}
-                                  >
-                                    <Save className="h-4 w-4" />
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline" 
-                                    onClick={cancelEditing}
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm text-muted-foreground">
-                                    Remarks: {task.remarks || 'No remarks'}
-                                  </span>
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    onClick={() => startEditingRemarks(task)}
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Action Buttons */}
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => toggleTaskStatus(task.id)}
-                              className="flex items-center gap-1"
-                            >
-                              <XCircle className="h-4 w-4" />
-                              Mark Finished
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => startDeleting(task.id)}
-                              className="flex items-center gap-1"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              Delete
-                            </Button>
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="finished" className="space-y-3 mt-4">
-                {finishedTasks.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No finished tasks yet.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {finishedTasks.map((task) => (
-                      <Card key={task.id} className="p-4">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 space-y-2">
-                            <div className="flex items-center gap-2">
-                              <span className="line-through text-muted-foreground">{task.text}</span>
-                              <Badge variant="default">{task.status}</Badge>
-                            </div>
-                            
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                Created: {format(new Date(task.created_at), "PPP HH:mm")}
-                              </div>
-                              {task.finished_at && (
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm text-muted-foreground space-y-1">
                                 <div className="flex items-center gap-1">
-                                  <CheckCircle className="h-3 w-3" />
-                                  Finished: {format(new Date(task.finished_at), "PPP HH:mm")}
+                                  <Clock className="h-3 w-3" />
+                                  Created: {format(new Date(task.created_at), "MMM dd, HH:mm")}
                                 </div>
-                              )}
-                            </div>
-                            
-                            {/* Assigned Member Section */}
-                            {task.assigned_member && (
-                              <div className="flex items-center gap-2 text-sm">
-                                <Users className="h-4 w-4 text-muted-foreground" />
-                                <Badge variant="outline" className="text-xs">
-                                  <UserCheck className="h-3 w-3 mr-1" />
-                                  {task.assigned_member.name}
-                                </Badge>
-                                <span className="text-xs text-muted-foreground">
-                                  {task.assigned_member.mobile}
-                                </span>
+                                {task.finished_at && (
+                                  <div className="flex items-center gap-1">
+                                    <CheckCircle className="h-3 w-3" />
+                                    Finished: {format(new Date(task.finished_at), "MMM dd, HH:mm")}
+                                  </div>
+                                )}
                               </div>
-                            )}
-
-                            {task.remarks && (
+                            </TableCell>
+                            <TableCell>
                               <div className="text-sm text-muted-foreground">
-                                <strong>Remarks:</strong> {task.remarks}
+                                {task.remarks || 'No remarks'}
                               </div>
-                            )}
-                          </div>
-
-                          {/* Action Buttons */}
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="default"
-                              onClick={() => toggleTaskStatus(task.id)}
-                              className="flex items-center gap-1"
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                              Mark Unfinished
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => startDeleting(task.id)}
-                              className="flex items-center gap-1"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              Delete
-                            </Button>
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  onClick={() => toggleTaskStatus(task.id)}
+                                  className="h-8 px-2"
+                                >
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Unfinish
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => startDeleting(task.id)}
+                                  className="h-8 px-2"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
                 )}
               </TabsContent>
