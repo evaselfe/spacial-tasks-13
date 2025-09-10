@@ -299,15 +299,13 @@ export const TodoList = () => {
     });
   };
 
-  // Filter tasks based on search term
+  // Filter tasks based on search term (search by task text only)
   const filterTasksBySearch = (taskList: Task[]) => {
     if (!searchTerm.trim()) return taskList;
     
     const searchLower = searchTerm.toLowerCase();
     return taskList.filter(task => 
-      task.text.toLowerCase().includes(searchLower) ||
-      task.id.toLowerCase().includes(searchLower) ||
-      (task.remarks && task.remarks.toLowerCase().includes(searchLower))
+      task.text.toLowerCase().includes(searchLower)
     );
   };
 
@@ -416,7 +414,7 @@ export const TodoList = () => {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
-                placeholder="Search tasks by text, ID, or remarks..."
+                placeholder="Search tasks by text..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
