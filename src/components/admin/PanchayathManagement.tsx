@@ -3,12 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PanchayathForm } from "@/components/PanchayathForm";
 import { PanchayathSelector } from "@/components/PanchayathSelector";
+import { MapPin } from "lucide-react";
 
 export const PanchayathManagement = () => {
   const [editingPanchayath, setEditingPanchayath] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("create");
   const [refreshKey, setRefreshKey] = useState(0);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showPanchayathList, setShowPanchayathList] = useState(false);
 
   const handlePanchayathCreatedOrUpdated = () => {
     setEditingPanchayath(null);
@@ -88,15 +90,44 @@ export const PanchayathManagement = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <PanchayathSelector 
-                  key={refreshKey} 
-                  onPanchayathSelect={() => {}} 
-                  onPanchayathEdit={panchayath => {
-                    setEditingPanchayath(panchayath);
-                    setShowCreateForm(true);
-                    setActiveTab("create");
-                  }} 
-                />
+                {!showPanchayathList ? (
+                  <div className="text-center py-8">
+                    <div className="mb-4">
+                      <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                      <h3 className="text-lg font-semibold mb-2">View Panchayath List</h3>
+                      <p className="text-muted-foreground mb-6">
+                        Click the button below to load and manage existing panchayaths
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowPanchayathList(true)}
+                      className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/80 transition-colors font-medium"
+                    >
+                      Show Panchayath List
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-semibold">Panchayath List</h3>
+                      <button
+                        onClick={() => setShowPanchayathList(false)}
+                        className="text-muted-foreground hover:text-foreground text-xl"
+                      >
+                        ×
+                      </button>
+                    </div>
+                    <PanchayathSelector 
+                      key={refreshKey} 
+                      onPanchayathSelect={() => {}} 
+                      onPanchayathEdit={panchayath => {
+                        setEditingPanchayath(panchayath);
+                        setShowCreateForm(true);
+                        setActiveTab("create");
+                      }} 
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

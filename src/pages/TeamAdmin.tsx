@@ -33,73 +33,98 @@ const TeamAdmin = () => {
         </div>
 
         {/* Admin Navigation Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <div className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] ${activeTab === "panchayath" ? "scale-[1.02]" : ""}`} onClick={() => setActiveTab("panchayath")}>
-            <Card className={`relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "panchayath" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
-              <CardHeader className="pb-3 bg-green-50">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-lg">Panchayath (പഞ്ചായത്ത് ചേർക്കാൻ)</CardTitle>
+            <Card className={`h-full relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "panchayath" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
+              <CardHeader className="pb-4">
+                <div className="flex flex-col items-center text-center gap-3">
+                  <div className="p-3 rounded-full bg-coordinator/10 border border-coordinator/20">
+                    <MapPin className="h-6 w-6 text-coordinator" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base font-semibold mb-1">Panchayath</CardTitle>
+                    <p className="text-xs text-muted-foreground mb-2">പഞ്ചായത്ത് ചേർക്കാൻ</p>
+                    <CardDescription className="text-xs">
+                      Create and manage panchayaths
+                    </CardDescription>
+                  </div>
                 </div>
-                <CardDescription>
-                  Create and manage panchayaths
-                </CardDescription>
               </CardHeader>
             </Card>
           </div>
 
           <div className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] ${activeTab === "analytics" ? "scale-[1.02]" : ""}`} onClick={() => setActiveTab("analytics")}>
-            <Card className={`relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "analytics" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
-              <CardHeader className="pb-3 bg-red-50">
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-lg">Hierarchy View (ശ്രേണി കാണാൻ)</CardTitle>
+            <Card className={`h-full relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "analytics" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
+              <CardHeader className="pb-4">
+                <div className="flex flex-col items-center text-center gap-3">
+                  <div className="p-3 rounded-full bg-supervisor/10 border border-supervisor/20">
+                    <BarChart3 className="h-6 w-6 text-supervisor" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base font-semibold mb-1">Hierarchy View</CardTitle>
+                    <p className="text-xs text-muted-foreground mb-2">ശ്രേണി കാണാൻ</p>
+                    <CardDescription className="text-xs">
+                      View panchayath analytics and hierarchy
+                    </CardDescription>
+                  </div>
                 </div>
-                <CardDescription>
-                  View panchayath analytics and hierarchy
-                </CardDescription>
               </CardHeader>
             </Card>
           </div>
 
           <div className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] ${activeTab === "testimonials" ? "scale-[1.02]" : ""}`} onClick={() => setActiveTab("testimonials")}>
-            <Card className={`relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "testimonials" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
-              <CardHeader className="pb-3 bg-blue-50">
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-lg">Testimonials (അനുമാന ചോദ്യങ്ങളും ഉത്തരങ്ങളും)</CardTitle>
+            <Card className={`h-full relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "testimonials" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
+              <CardHeader className="pb-4">
+                <div className="flex flex-col items-center text-center gap-3">
+                  <div className="p-3 rounded-full bg-accent/10 border border-accent/20">
+                    <MessageSquare className="h-6 w-6 text-accent" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base font-semibold mb-1">Testimonials</CardTitle>
+                    <p className="text-xs text-muted-foreground mb-2">അനുമാന ചോദ്യങ്ങളും ഉത്തരങ്ങളും</p>
+                    <CardDescription className="text-xs">
+                      View agent testimonials and feedback
+                    </CardDescription>
+                  </div>
                 </div>
-                <CardDescription>
-                  View agent testimonials and feedback
-                </CardDescription>
               </CardHeader>
             </Card>
           </div>
 
           <div className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] ${activeTab === "performance" ? "scale-[1.02]" : ""}`} onClick={() => setActiveTab("performance")}>
-            <Card className={`relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "performance" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
-              <CardHeader className="pb-3 bg-purple-50">
-                <div className="flex items-center gap-2">
-                  <TrendingDown className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-left text-lg px-0 my-0 mx-0">Performance (ഏജൻ്റുമാരുടെ പ്രകടന റിപ്പോർട്ടുകൾ)</CardTitle>
+            <Card className={`h-full relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "performance" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
+              <CardHeader className="pb-4">
+                <div className="flex flex-col items-center text-center gap-3">
+                  <div className="p-3 rounded-full bg-pro/10 border border-pro/20">
+                    <TrendingDown className="h-6 w-6 text-pro" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base font-semibold mb-1">Performance</CardTitle>
+                    <p className="text-xs text-muted-foreground mb-2">ഏജൻ്റുമാരുടെ പ്രകടന റിപ്പോർട്ടുകൾ</p>
+                    <CardDescription className="text-xs">
+                      View panchayath performance reports
+                    </CardDescription>
+                  </div>
                 </div>
-                <CardDescription>
-                  View panchayath performance reports
-                </CardDescription>
               </CardHeader>
             </Card>
           </div>
 
           <div className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] ${activeTab === "todo" ? "scale-[1.02]" : ""}`} onClick={() => setActiveTab("todo")}>
-            <Card className={`relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "todo" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
-              <CardHeader className="pb-3 bg-orange-50">
-                <div className="flex items-center gap-2">
-                  <ListTodo className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-lg">Todo List (ചെയ്യേണ്ട കാര്യങ്ങൾ)</CardTitle>
+            <Card className={`h-full relative overflow-hidden border-2 transition-all duration-300 ${activeTab === "todo" ? "border-primary shadow-xl bg-primary/10" : "border-border hover:border-primary/50 hover:shadow-lg"}`}>
+              <CardHeader className="pb-4">
+                <div className="flex flex-col items-center text-center gap-3">
+                  <div className="p-3 rounded-full bg-group-leader/10 border border-group-leader/20">
+                    <ListTodo className="h-6 w-6 text-group-leader" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base font-semibold mb-1">Todo List</CardTitle>
+                    <p className="text-xs text-muted-foreground mb-2">ചെയ്യേണ്ട കാര്യങ്ങൾ</p>
+                    <CardDescription className="text-xs">
+                      Manage tasks and to-do items
+                    </CardDescription>
+                  </div>
                 </div>
-                <CardDescription>
-                  Manage tasks and to-do items
-                </CardDescription>
               </CardHeader>
             </Card>
           </div>
