@@ -409,9 +409,10 @@ export const TodoList = () => {
           <CardDescription>
             Manage your tasks and their completion status
           </CardDescription>
-          
+        </CardHeader>
+        <CardContent>
           {/* Search Input */}
-          <div className="px-6 pb-4">
+          <div className="mb-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
@@ -422,8 +423,6 @@ export const TodoList = () => {
               />
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
           {showCalendar ? (
             <div className="space-y-4">
               <div className="flex justify-center">
