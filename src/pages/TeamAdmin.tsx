@@ -6,7 +6,6 @@ import { ViewAnalyze } from "@/components/admin/ViewAnalyze";
 import { PanchayathManagement } from "@/components/admin/PanchayathManagement";
 import { AgentTestimonialAnalytics } from "@/components/admin/AgentTestimonialAnalytics";
 import { PerformanceReport } from "@/components/admin/PerformanceReport";
-
 import { ArrowLeft, Shield, Settings, BarChart3, MapPin, Users, MessageSquare, TrendingDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 const TeamAdmin = () => {
@@ -39,7 +38,7 @@ const TeamAdmin = () => {
               <CardHeader className="pb-3 bg-green-50">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-lg">Panchayath</CardTitle>
+                  <CardTitle className="text-lg">Panchayath (പഞ്ചായത്ത് ചേർക്കാൻ)</CardTitle>
                 </div>
                 <CardDescription>
                   Create and manage panchayaths
@@ -53,7 +52,7 @@ const TeamAdmin = () => {
               <CardHeader className="pb-3 bg-red-50">
                 <div className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-lg">View & Analyze</CardTitle>
+                  <CardTitle className="text-lg">Hierarchy View (ശ്രേണി കാണാൻ)</CardTitle>
                 </div>
                 <CardDescription>
                   View panchayath analytics and hierarchy
@@ -67,7 +66,7 @@ const TeamAdmin = () => {
               <CardHeader className="pb-3 bg-blue-50">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-lg">Testimonials</CardTitle>
+                  <CardTitle className="text-lg">Testimonials (അനുമാന ചോദ്യങ്ങളും ഉത്തരങ്ങളും)</CardTitle>
                 </div>
                 <CardDescription>
                   View agent testimonials and feedback
@@ -81,7 +80,7 @@ const TeamAdmin = () => {
               <CardHeader className="pb-3 bg-purple-50">
                 <div className="flex items-center gap-2">
                   <TrendingDown className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-lg">Performance</CardTitle>
+                  <CardTitle className="text-lg">Performance (ഏജൻ്റുമാരുടെ പ്രകടന റിപ്പോർട്ടുകൾ)</CardTitle>
                 </div>
                 <CardDescription>
                   View panchayath performance reports
