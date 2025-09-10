@@ -8,109 +8,115 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Glass Morphism Color System - Light Mode */
+    --background: 240 20% 97%;
+    --foreground: 240 10% 15%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 240 20% 99%;
+    --card-foreground: 240 10% 20%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 240 20% 98%;
+    --popover-foreground: 240 10% 20%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 262 80% 55%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 240 30% 94%;
+    --secondary-foreground: 240 10% 25%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 240 20% 92%;
+    --muted-foreground: 240 8% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 220 70% 60%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 75% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 240 20% 88%;
+    --input: 240 20% 90%;
+    --ring: 262 80% 55%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Glass Effects */
+    --glass-background: 240 20% 99%;
+    --glass-border: 240 30% 85%;
+    --glass-shadow: 240 15% 80%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-background: 240 25% 96%;
+    --sidebar-foreground: 240 10% 25%;
+    --sidebar-primary: 262 80% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 25% 90%;
+    --sidebar-accent-foreground: 240 10% 25%;
+    --sidebar-border: 240 20% 85%;
+    --sidebar-ring: 262 80% 55%;
 
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-
-    /* Role-specific colors */
-    --coordinator: 142 76% 36%;
-    --coordinator-foreground: 210 40% 98%;
-    --supervisor: 221 83% 53%;
-    --supervisor-foreground: 210 40% 98%;
-    --group-leader: 25 95% 53%;
-    --group-leader-foreground: 210 40% 98%;
-    --pro: 291 64% 42%;
-    --pro-foreground: 210 40% 98%;
+    /* Role-specific colors - Glass Theme */
+    --coordinator: 150 70% 45%;
+    --coordinator-foreground: 0 0% 100%;
+    --supervisor: 230 75% 60%;
+    --supervisor-foreground: 0 0% 100%;
+    --group-leader: 35 85% 55%;
+    --group-leader-foreground: 0 0% 100%;
+    --pro: 280 70% 50%;
+    --pro-foreground: 0 0% 100%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Glass Morphism Color System - Dark Mode */
+    --background: 240 15% 8%;
+    --foreground: 240 20% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 240 15% 10%;
+    --card-foreground: 240 20% 92%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 240 15% 12%;
+    --popover-foreground: 240 20% 92%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 262 80% 65%;
+    --primary-foreground: 240 15% 8%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 240 20% 16%;
+    --secondary-foreground: 240 20% 85%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 240 15% 14%;
+    --muted-foreground: 240 10% 60%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 220 70% 70%;
+    --accent-foreground: 240 15% 8%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 75% 65%;
+    --destructive-foreground: 240 15% 8%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 240 20% 20%;
+    --input: 240 20% 18%;
+    --ring: 262 80% 65%;
 
-    /* Role-specific colors - Dark mode */
-    --coordinator: 142 76% 36%;
-    --coordinator-foreground: 210 40% 98%;
-    --supervisor: 221 83% 53%;
-    --supervisor-foreground: 210 40% 98%;
-    --group-leader: 25 95% 53%;
-    --group-leader-foreground: 210 40% 98%;
-    --pro: 291 64% 42%;
-    --pro-foreground: 210 40% 98%;
+    /* Glass Effects - Dark */
+    --glass-background: 240 15% 12%;
+    --glass-border: 240 25% 25%;
+    --glass-shadow: 240 10% 5%;
+
+    --sidebar-background: 240 20% 10%;
+    --sidebar-foreground: 240 20% 85%;
+    --sidebar-primary: 262 80% 65%;
+    --sidebar-primary-foreground: 240 15% 8%;
+    --sidebar-accent: 240 20% 15%;
+    --sidebar-accent-foreground: 240 20% 85%;
+    --sidebar-border: 240 20% 20%;
+    --sidebar-ring: 262 80% 65%;
+
+    /* Role-specific colors - Dark mode Glass */
+    --coordinator: 150 70% 55%;
+    --coordinator-foreground: 240 15% 8%;
+    --supervisor: 230 75% 70%;
+    --supervisor-foreground: 240 15% 8%;
+    --group-leader: 35 85% 65%;
+    --group-leader-foreground: 240 15% 8%;
+    --pro: 280 70% 60%;
+    --pro-foreground: 240 15% 8%;
   }
 }
 
@@ -120,6 +126,20 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-gradient-to-br from-background via-background to-primary/5 text-foreground min-h-screen;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply backdrop-blur-lg bg-card/80 border border-card-foreground/10 shadow-xl shadow-primary/5;
+  }
+  
+  .glass-subtle {
+    @apply backdrop-blur-md bg-card/60 border border-card-foreground/5;
+  }
+  
+  .glass-strong {
+    @apply backdrop-blur-xl bg-card/90 border border-card-foreground/20 shadow-2xl shadow-primary/10;
   }
 }
