@@ -80,13 +80,16 @@ export const TodoList = () => {
     if (!singleTaskText.trim()) return;
 
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { error } = await supabase
         .from('todos')
         .insert([{
           text: singleTaskText,
           status: 'unfinished',
           remarks: null,
-          created_by: (await supabase.auth.getUser()).data.user?.id
+          created_by: user?.id || null  // Handle null case properly
         }]);
 
       if (error) throw error;
@@ -113,12 +116,13 @@ export const TodoList = () => {
     const taskTexts = multiTaskText.split(',').map(text => text.trim()).filter(text => text.length > 0);
     
     try {
-      const userId = (await supabase.auth.getUser()).data.user?.id;
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
       const newTasks = taskTexts.map(text => ({
         text,
         status: 'unfinished' as const,
         remarks: null,
-        created_by: userId
+        created_by: user?.id || null  // Handle null case properly
       }));
 
       const { error } = await supabase
