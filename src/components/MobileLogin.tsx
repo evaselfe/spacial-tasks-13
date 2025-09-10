@@ -6,44 +6,41 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { findUserByMobile, User, getRoleDisplayName } from "@/lib/authService";
 import { Loader2, Search, Phone } from "lucide-react";
-
 interface MobileLoginProps {
   onLogin: (user: User) => void;
 }
-
-export const MobileLogin = ({ onLogin }: MobileLoginProps) => {
+export const MobileLogin = ({
+  onLogin
+}: MobileLoginProps) => {
   const [mobile, setMobile] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const handleFindMe = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!mobile.trim()) {
       toast({
         title: "Mobile number required",
         description: "Please enter your mobile number",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     setIsLoading(true);
-    
     try {
       const result = await findUserByMobile(mobile);
-      
       if (result.success && result.user) {
         toast({
           title: "Welcome!",
-          description: `Logged in as ${result.user.name} (${getRoleDisplayName(result.user.role)})`,
+          description: `Logged in as ${result.user.name} (${getRoleDisplayName(result.user.role)})`
         });
         onLogin(result.user);
       } else {
         toast({
           title: "Not registered",
           description: result.error || "You are not registered. Please contact administrator.",
-          variant: "destructive",
+          variant: "destructive"
         });
       }
     } catch (error) {
@@ -51,21 +48,19 @@ export const MobileLogin = ({ onLogin }: MobileLoginProps) => {
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
     }
   };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-background/95 p-4">
+  return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-background/95 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
             <Phone className="w-6 h-6 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold">Panchayath Management System</CardTitle>
+          <CardTitle className="text-2xl font-bold">Agent Management System (ഏജന്റ് മാനേജ്മെന്റ് സിസ്റ്റം)</CardTitle>
           <CardDescription>
             Enter your mobile number to access the system
           </CardDescription>
@@ -74,33 +69,17 @@ export const MobileLogin = ({ onLogin }: MobileLoginProps) => {
           <form onSubmit={handleFindMe} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="mobile">Mobile Number</Label>
-              <Input
-                id="mobile"
-                type="tel"
-                placeholder="Enter your mobile number"
-                value={mobile}
-                onChange={(e) => setMobile(e.target.value)}
-                className="text-center text-lg"
-                maxLength={15}
-              />
+              <Input id="mobile" type="tel" placeholder="Enter your mobile number" value={mobile} onChange={e => setMobile(e.target.value)} className="text-center text-lg" maxLength={15} />
             </div>
             
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Searching...
-                </>
-              ) : (
-                <>
+                </> : <>
                   <Search className="w-4 h-4 mr-2" />
                   Find Me
-                </>
-              )}
+                </>}
             </Button>
           </form>
           
@@ -111,6 +90,5 @@ export const MobileLogin = ({ onLogin }: MobileLoginProps) => {
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
