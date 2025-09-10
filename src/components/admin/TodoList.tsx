@@ -57,6 +57,7 @@ export const TodoList = () => {
   const [adminMembers, setAdminMembers] = useState<AdminMember[]>([]);
   const [assigningTask, setAssigningTask] = useState<string | null>(null);
   const [selectedMember, setSelectedMember] = useState<string>('unassigned');
+  const [filterByAssignedTo, setFilterByAssignedTo] = useState<string>('all');
   const { toast } = useToast();
 
   // Load tasks from database
@@ -412,18 +413,32 @@ export const TodoList = () => {
     });
   };
 
-  // Filter tasks based on search term (search by task text only)
-  const filterTasksBySearch = (taskList: Task[]) => {
-    if (!searchTerm.trim()) return taskList;
-    
-    const searchLower = searchTerm.toLowerCase();
-    return taskList.filter(task => 
-      task.text.toLowerCase().includes(searchLower)
-    );
+  // Filter tasks based on search term and assigned to
+  const filterTasks = (taskList: Task[]) => {
+    let filteredTasks = taskList;
+
+    // Filter by search term
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      filteredTasks = filteredTasks.filter(task => 
+        task.text.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Filter by assigned to
+    if (filterByAssignedTo !== 'all') {
+      if (filterByAssignedTo === 'unassigned') {
+        filteredTasks = filteredTasks.filter(task => !task.assigned_to);
+      } else {
+        filteredTasks = filteredTasks.filter(task => task.assigned_to === filterByAssignedTo);
+      }
+    }
+
+    return filteredTasks;
   };
 
-  const unfinishedTasks = filterTasksBySearch(tasks.filter(task => task.status === 'unfinished'));
-  const finishedTasks = filterTasksBySearch(tasks.filter(task => task.status === 'finished'));
+  const unfinishedTasks = filterTasks(tasks.filter(task => task.status === 'unfinished'));
+  const finishedTasks = filterTasks(tasks.filter(task => task.status === 'finished'));
 
   if (loading) {
     return (
@@ -522,8 +537,9 @@ export const TodoList = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Search Input */}
-          <div className="mb-4">
+          {/* Filters */}
+          <div className="mb-4 space-y-4">
+            {/* Search Input */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
@@ -532,6 +548,25 @@ export const TodoList = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
+            </div>
+            
+            {/* Filter by Assigned To */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium whitespace-nowrap">Filter by Assigned To:</label>
+              <Select value={filterByAssignedTo} onValueChange={setFilterByAssignedTo}>
+                <SelectTrigger className="w-full max-w-xs">
+                  <SelectValue placeholder="All tasks" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All tasks</SelectItem>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  {adminMembers.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.name} - {member.mobile}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           {showCalendar ? (
