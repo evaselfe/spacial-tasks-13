@@ -5,7 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, Plus, Edit, Save, X } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Calendar } from "@/components/ui/calendar";
+import { CheckCircle, XCircle, Plus, Edit, Save, X, Calendar as CalendarIcon, Clock } from "lucide-react";
+import { format } from "date-fns";
 
 interface Task {
   id: string;
@@ -13,6 +17,7 @@ interface Task {
   status: 'finished' | 'unfinished';
   remarks: string;
   createdAt: Date;
+  finishedAt?: Date;
 }
 
 export const TodoList = () => {
@@ -22,6 +27,11 @@ export const TodoList = () => {
   const [multiTaskText, setMultiTaskText] = useState('');
   const [editingTask, setEditingTask] = useState<string | null>(null);
   const [editRemarks, setEditRemarks] = useState('');
+  const [finishingTask, setFinishingTask] = useState<string | null>(null);
+  const [finishRemarks, setFinishRemarks] = useState('');
+  const [activeTab, setActiveTab] = useState('unfinished');
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
   const addSingleTask = () => {
     if (!singleTaskText.trim()) return;
@@ -56,11 +66,39 @@ export const TodoList = () => {
   };
 
   const toggleTaskStatus = (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    if (task.status === 'unfinished') {
+      // Show popup for remarks when finishing
+      setFinishingTask(taskId);
+      setFinishRemarks(task.remarks);
+    } else {
+      // Mark as unfinished
+      setTasks(tasks.map(t => 
+        t.id === taskId 
+          ? { ...t, status: 'unfinished', finishedAt: undefined }
+          : t
+      ));
+    }
+  };
+
+  const confirmFinishTask = () => {
+    if (!finishingTask) return;
+    
     setTasks(tasks.map(task => 
-      task.id === taskId 
-        ? { ...task, status: task.status === 'finished' ? 'unfinished' : 'finished' }
+      task.id === finishingTask 
+        ? { 
+            ...task, 
+            status: 'finished' as const, 
+            remarks: finishRemarks,
+            finishedAt: new Date()
+          }
         : task
     ));
+    
+    setFinishingTask(null);
+    setFinishRemarks('');
   };
 
   const updateTaskRemarks = (taskId: string, remarks: string) => {
@@ -80,6 +118,21 @@ export const TodoList = () => {
     setEditingTask(null);
     setEditRemarks('');
   };
+
+  const cancelFinishing = () => {
+    setFinishingTask(null);
+    setFinishRemarks('');
+  };
+
+  const getTasksForDate = (date: Date) => {
+    return tasks.filter(task => {
+      const taskDate = new Date(task.createdAt);
+      return taskDate.toDateString() === date.toDateString();
+    });
+  };
+
+  const unfinishedTasks = tasks.filter(task => task.status === 'unfinished');
+  const finishedTasks = tasks.filter(task => task.status === 'finished');
 
   return (
     <div className="space-y-6">
@@ -146,105 +199,259 @@ export const TodoList = () => {
         </CardContent>
       </Card>
 
-      {/* Tasks List */}
+      {/* Tasks Management */}
       <Card>
         <CardHeader>
-          <CardTitle>Tasks ({tasks.length})</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>Tasks Management</span>
+            <div className="flex gap-2">
+              <Button
+                variant={showCalendar ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowCalendar(!showCalendar)}
+              >
+                <CalendarIcon className="h-4 w-4 mr-1" />
+                {showCalendar ? "Hide Calendar" : "Calendar View"}
+              </Button>
+            </div>
+          </CardTitle>
           <CardDescription>
             Manage your tasks and their completion status
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {tasks.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No tasks added yet. Create your first task above.
+          {showCalendar ? (
+            <div className="space-y-4">
+              <div className="flex justify-center">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  className="rounded-md border"
+                />
+              </div>
+              {selectedDate && (
+                <div className="space-y-3">
+                  <h3 className="font-medium">
+                    Tasks for {format(selectedDate, "PPP")}
+                  </h3>
+                  {getTasksForDate(selectedDate).length === 0 ? (
+                    <div className="text-center py-4 text-muted-foreground">
+                      No tasks for this date.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {getTasksForDate(selectedDate).map((task) => (
+                        <Card key={task.id} className="p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <span className={task.status === 'finished' ? 'line-through text-muted-foreground' : 'underline'}>
+                                {task.text}
+                              </span>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge variant={task.status === 'finished' ? 'default' : 'secondary'}>
+                                  {task.status}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  Created: {format(task.createdAt, "HH:mm")}
+                                  {task.finishedAt && (
+                                    <> | Finished: {format(task.finishedAt, "HH:mm")}</>
+                                  )}
+                                </span>
+                              </div>
+                              {task.remarks && (
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  Remarks: {task.remarks}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
-            <div className="space-y-3">
-              {tasks.map((task) => (
-                <Card key={task.id} className="p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span 
-                          className={`${task.status === 'finished' ? 'line-through text-muted-foreground' : 'underline'}`}
-                        >
-                          {task.text}
-                        </span>
-                        <Badge variant={task.status === 'finished' ? 'default' : 'secondary'}>
-                          {task.status}
-                        </Badge>
-                      </div>
-                      
-                      {/* Remarks Section */}
-                      <div className="space-y-2">
-                        {editingTask === task.id ? (
-                          <div className="flex gap-2">
-                            <Input
-                              placeholder="Add remarks..."
-                              value={editRemarks}
-                              onChange={(e) => setEditRemarks(e.target.value)}
-                              className="flex-1"
-                            />
-                            <Button 
-                              size="sm" 
-                              onClick={() => updateTaskRemarks(task.id, editRemarks)}
-                            >
-                              <Save className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              onClick={cancelEditing}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground">
-                              Remarks: {task.remarks || 'No remarks'}
-                            </span>
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              onClick={() => startEditingRemarks(task)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Status Toggle */}
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant={task.status === 'finished' ? 'default' : 'outline'}
-                        onClick={() => toggleTaskStatus(task.id)}
-                        className="flex items-center gap-1"
-                      >
-                        {task.status === 'finished' ? (
-                          <>
-                            <CheckCircle className="h-4 w-4" />
-                            Finished
-                          </>
-                        ) : (
-                          <>
-                            <XCircle className="h-4 w-4" />
-                            Unfinished
-                          </>
-                        )}
-                      </Button>
-                    </div>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="unfinished">
+                  Unfinished ({unfinishedTasks.length})
+                </TabsTrigger>
+                <TabsTrigger value="finished">
+                  Finished ({finishedTasks.length})
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="unfinished" className="space-y-3 mt-4">
+                {unfinishedTasks.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No unfinished tasks. Great job!
                   </div>
-                </Card>
-              ))}
-            </div>
+                ) : (
+                  <div className="space-y-3">
+                    {unfinishedTasks.map((task) => (
+                      <Card key={task.id} className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <span className="underline">{task.text}</span>
+                              <Badge variant="secondary">{task.status}</Badge>
+                            </div>
+                            
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Clock className="h-3 w-3" />
+                              Created: {format(task.createdAt, "PPP HH:mm")}
+                            </div>
+                            
+                            {/* Remarks Section */}
+                            <div className="space-y-2">
+                              {editingTask === task.id ? (
+                                <div className="flex gap-2">
+                                  <Input
+                                    placeholder="Add remarks..."
+                                    value={editRemarks}
+                                    onChange={(e) => setEditRemarks(e.target.value)}
+                                    className="flex-1"
+                                  />
+                                  <Button 
+                                    size="sm" 
+                                    onClick={() => updateTaskRemarks(task.id, editRemarks)}
+                                  >
+                                    <Save className="h-4 w-4" />
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    onClick={cancelEditing}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm text-muted-foreground">
+                                    Remarks: {task.remarks || 'No remarks'}
+                                  </span>
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    onClick={() => startEditingRemarks(task)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Status Toggle */}
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => toggleTaskStatus(task.id)}
+                              className="flex items-center gap-1"
+                            >
+                              <XCircle className="h-4 w-4" />
+                              Mark Finished
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="finished" className="space-y-3 mt-4">
+                {finishedTasks.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No finished tasks yet.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {finishedTasks.map((task) => (
+                      <Card key={task.id} className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <span className="line-through text-muted-foreground">{task.text}</span>
+                              <Badge variant="default">{task.status}</Badge>
+                            </div>
+                            
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                Created: {format(task.createdAt, "PPP HH:mm")}
+                              </div>
+                              {task.finishedAt && (
+                                <div className="flex items-center gap-1">
+                                  <CheckCircle className="h-3 w-3" />
+                                  Finished: {format(task.finishedAt, "PPP HH:mm")}
+                                </div>
+                              )}
+                            </div>
+                            
+                            {task.remarks && (
+                              <div className="text-sm text-muted-foreground">
+                                <strong>Remarks:</strong> {task.remarks}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Status Toggle */}
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => toggleTaskStatus(task.id)}
+                              className="flex items-center gap-1"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                              Mark Unfinished
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           )}
         </CardContent>
       </Card>
+
+      {/* Finish Task Dialog */}
+      <Dialog open={!!finishingTask} onOpenChange={(open) => !open && cancelFinishing()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Finish Task</DialogTitle>
+            <DialogDescription>
+              Add remarks for completing this task (optional).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              placeholder="Add any remarks or notes about completing this task..."
+              value={finishRemarks}
+              onChange={(e) => setFinishRemarks(e.target.value)}
+              rows={3}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={cancelFinishing}>
+              Cancel
+            </Button>
+            <Button onClick={confirmFinishTask}>
+              Mark as Finished
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
