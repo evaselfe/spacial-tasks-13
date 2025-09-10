@@ -55,7 +55,7 @@ export const TodoList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [adminMembers, setAdminMembers] = useState<AdminMember[]>([]);
   const [assigningTask, setAssigningTask] = useState<string | null>(null);
-  const [selectedMember, setSelectedMember] = useState<string>('');
+  const [selectedMember, setSelectedMember] = useState<string>('unassigned');
   const { toast } = useToast();
 
   // Load tasks from database
@@ -373,7 +373,7 @@ export const TodoList = () => {
       
       await loadTasks();
       setAssigningTask(null);
-      setSelectedMember('');
+      setSelectedMember('unassigned');
       toast({
         title: "Success",
         description: memberId ? "Task assigned successfully" : "Task assignment removed",
@@ -390,17 +390,18 @@ export const TodoList = () => {
 
   const startAssigning = (taskId: string, currentAssignment?: string) => {
     setAssigningTask(taskId);
-    setSelectedMember(currentAssignment || '');
+    setSelectedMember(currentAssignment || 'unassigned');
   };
 
   const cancelAssigning = () => {
     setAssigningTask(null);
-    setSelectedMember('');
+    setSelectedMember('unassigned');
   };
 
   const confirmAssignTask = () => {
     if (!assigningTask) return;
-    assignTaskToMember(assigningTask, selectedMember || null);
+    const memberToAssign = selectedMember === "unassigned" ? null : selectedMember || null;
+    assignTaskToMember(assigningTask, memberToAssign);
   };
 
   const getTasksForDate = (date: Date) => {
@@ -866,8 +867,8 @@ export const TodoList = () => {
               <SelectTrigger>
                 <SelectValue placeholder="Select team member" />
               </SelectTrigger>
-              <SelectContent className="bg-background border z-50">
-                <SelectItem value="">No assignment</SelectItem>
+               <SelectContent className="bg-background border z-50">
+                <SelectItem value="unassigned">No assignment</SelectItem>
                 {adminMembers.map((member) => (
                   <SelectItem key={member.id} value={member.id}>
                     <div className="flex items-center justify-between w-full">
@@ -889,7 +890,7 @@ export const TodoList = () => {
               Cancel
             </Button>
             <Button onClick={confirmAssignTask}>
-              {selectedMember ? 'Assign Task' : 'Remove Assignment'}
+              {selectedMember && selectedMember !== "unassigned" ? 'Assign Task' : 'Remove Assignment'}
             </Button>
           </DialogFooter>
         </DialogContent>
