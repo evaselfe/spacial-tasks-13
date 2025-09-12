@@ -6,14 +6,16 @@ import { UserProfile } from "@/components/UserProfile";
 import { AgentTestimonialProfile } from "@/components/AgentTestimonialProfile";
 import { DailyNote } from "@/components/DailyNote";
 import { CoordinatorReports } from "@/components/CoordinatorReports";
+import { TodoList } from "@/components/admin/TodoList";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight, FileText } from "lucide-react";
+import { ChevronDown, ChevronRight, FileText, CheckSquare } from "lucide-react";
 import { User } from "@/lib/authService";
 import { useToast } from "@/hooks/use-toast";
 const Index = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isPanchayathOpen, setIsPanchayathOpen] = useState(false);
   const [isReportsOpen, setIsReportsOpen] = useState(false);
+  const [isTodoOpen, setIsTodoOpen] = useState(false);
   const {
     toast
   } = useToast();
@@ -70,6 +72,12 @@ const Index = () => {
                 Reports
               </Button>}
             
+            {/* Show Todo List button only for coordinators */}
+            {currentUser.role === 'coordinator' && <Button variant="outline" onClick={() => setIsTodoOpen(!isTodoOpen)} className="w-full sm:w-auto border-green-500/20 hover:border-green-500 bg-green-50 hover:bg-green-100 text-green-700 flex items-center gap-2">
+                <CheckSquare className="h-4 w-4" />
+                Tasks
+              </Button>}
+            
             <Button variant="outline" onClick={handleLogout} className="w-full sm:w-auto border-destructive/20 hover:border-destructive bg-destructive/10 hover:bg-destructive/20 text-destructive">
               Logout
             </Button>
@@ -84,6 +92,14 @@ const Index = () => {
         {/* Coordinator Reports */}
         {currentUser.role === 'coordinator' && isReportsOpen && <div className="mb-6">
             <CoordinatorReports currentUser={currentUser} />
+          </div>}
+
+        {/* Coordinator Todo List */}
+        {currentUser.role === 'coordinator' && isTodoOpen && <div className="mb-6">
+            <div className="glass-card p-6 rounded-xl">
+              <h2 className="text-xl font-semibold mb-4 text-foreground">Task Management</h2>
+              <TodoList />
+            </div>
           </div>}
 
         <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8">
