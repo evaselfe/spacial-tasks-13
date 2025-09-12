@@ -8,8 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
-import { CheckCircle, XCircle, Plus, Edit, Save, X, Calendar as CalendarIcon, Clock, Trash2, Search, Users, UserCheck } from "lucide-react";
+import { CheckCircle, XCircle, Plus, Edit, Save, X, Calendar as CalendarIcon, Clock, Trash2, Search, Users, UserCheck, Square, CheckSquare } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -59,6 +60,10 @@ export const TodoList = () => {
   const [selectedMember, setSelectedMember] = useState<string>('unassigned');
   const [filterByAssignedTo, setFilterByAssignedTo] = useState<string>('all');
   const [newTaskAssignee, setNewTaskAssignee] = useState<string>('unassigned');
+  const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
+  const [bulkAction, setBulkAction] = useState<'delete' | 'finish' | 'edit' | null>(null);
+  const [bulkRemarks, setBulkRemarks] = useState('');
+  const [bulkDeletePasskey, setBulkDeletePasskey] = useState('');
   const { toast } = useToast();
 
   // Load tasks from database
@@ -420,6 +425,153 @@ export const TodoList = () => {
     assignTaskToMember(assigningTask, memberToAssign);
   };
 
+  // Bulk action functions
+  const toggleTaskSelection = (taskId: string) => {
+    setSelectedTasks(prev => 
+      prev.includes(taskId) 
+        ? prev.filter(id => id !== taskId)
+        : [...prev, taskId]
+    );
+  };
+
+  const toggleSelectAll = (taskList: Task[]) => {
+    const allTaskIds = taskList.map(task => task.id);
+    const allSelected = allTaskIds.every(id => selectedTasks.includes(id));
+    
+    if (allSelected) {
+      setSelectedTasks(prev => prev.filter(id => !allTaskIds.includes(id)));
+    } else {
+      setSelectedTasks(prev => [...prev, ...allTaskIds.filter(id => !prev.includes(id))]);
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedTasks([]);
+  };
+
+  const startBulkAction = (action: 'delete' | 'finish' | 'edit') => {
+    if (selectedTasks.length === 0) {
+      toast({
+        title: "No Selection",
+        description: "Please select tasks to perform bulk action",
+        variant: "destructive",
+      });
+      return;
+    }
+    setBulkAction(action);
+    setBulkRemarks('');
+    setBulkDeletePasskey('');
+  };
+
+  const cancelBulkAction = () => {
+    setBulkAction(null);
+    setBulkRemarks('');
+    setBulkDeletePasskey('');
+  };
+
+  const confirmBulkDelete = async () => {
+    if (bulkDeletePasskey !== 's7025715877') {
+      toast({
+        title: "Error",
+        description: "Invalid passkey",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('todos')
+        .delete()
+        .in('id', selectedTasks);
+
+      if (error) throw error;
+      
+      await loadTasks();
+      clearSelection();
+      setBulkAction(null);
+      setBulkDeletePasskey('');
+      toast({
+        title: "Success",
+        description: `${selectedTasks.length} tasks deleted successfully`,
+      });
+    } catch (error) {
+      console.error('Error deleting tasks:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete tasks",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const confirmBulkFinish = async () => {
+    try {
+      const { error } = await supabase
+        .from('todos')
+        .update({ 
+          status: 'finished', 
+          remarks: bulkRemarks || null,
+          finished_at: new Date().toISOString()
+        })
+        .in('id', selectedTasks);
+
+      if (error) throw error;
+      
+      await loadTasks();
+      clearSelection();
+      setBulkAction(null);
+      setBulkRemarks('');
+      toast({
+        title: "Success",
+        description: `${selectedTasks.length} tasks marked as finished`,
+      });
+    } catch (error) {
+      console.error('Error finishing tasks:', error);
+      toast({
+        title: "Error",
+        description: "Failed to finish tasks",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const confirmBulkEdit = async () => {
+    if (!bulkRemarks.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter remarks for bulk edit",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('todos')
+        .update({ remarks: bulkRemarks })
+        .in('id', selectedTasks);
+
+      if (error) throw error;
+      
+      await loadTasks();
+      clearSelection();
+      setBulkAction(null);
+      setBulkRemarks('');
+      toast({
+        title: "Success",
+        description: `${selectedTasks.length} tasks updated successfully`,
+      });
+    } catch (error) {
+      console.error('Error updating tasks:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update tasks",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getTasksForDate = (date: Date) => {
     return tasks.filter(task => {
       const taskDate = new Date(task.created_at);
@@ -453,6 +605,11 @@ export const TodoList = () => {
 
   const unfinishedTasks = filterTasks(tasks.filter(task => task.status === 'unfinished'));
   const finishedTasks = filterTasks(tasks.filter(task => task.status === 'finished'));
+
+  // Clear selection when changing tabs
+  useEffect(() => {
+    clearSelection();
+  }, [activeTab]);
 
   if (loading) {
     return (
@@ -691,24 +848,80 @@ export const TodoList = () => {
                     No unfinished tasks. Great job!
                   </div>
                 ) : (
-                  <div className="border rounded-lg">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Task</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Assigned To</TableHead>
-                          <TableHead>Created</TableHead>
-                          <TableHead>Remarks</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {unfinishedTasks.map((task) => (
-                          <TableRow key={task.id}>
-                            <TableCell>
-                              <div className="font-medium underline">{task.text}</div>
-                            </TableCell>
+                  <div className="space-y-4">
+                    {/* Bulk Action Controls */}
+                    {selectedTasks.length > 0 && (
+                      <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                        <span className="text-sm font-medium">
+                          {selectedTasks.length} task{selectedTasks.length > 1 ? 's' : ''} selected
+                        </span>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => startBulkAction('finish')}
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Finish Selected
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => startBulkAction('edit')}
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Edit Selected
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => startBulkAction('delete')}
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Delete Selected
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={clearSelection}
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            Clear
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="border rounded-lg">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-12">
+                              <Checkbox
+                                checked={unfinishedTasks.length > 0 && unfinishedTasks.every(task => selectedTasks.includes(task.id))}
+                                onCheckedChange={() => toggleSelectAll(unfinishedTasks)}
+                              />
+                            </TableHead>
+                            <TableHead>Task</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Assigned To</TableHead>
+                            <TableHead>Created</TableHead>
+                            <TableHead>Remarks</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {unfinishedTasks.map((task) => (
+                            <TableRow key={task.id}>
+                              <TableCell>
+                                <Checkbox
+                                  checked={selectedTasks.includes(task.id)}
+                                  onCheckedChange={() => toggleTaskSelection(task.id)}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <div className="font-medium underline">{task.text}</div>
+                              </TableCell>
                             <TableCell>
                               <Badge variant="secondary">{task.status}</Badge>
                             </TableCell>
@@ -806,8 +1019,9 @@ export const TodoList = () => {
                             </TableCell>
                           </TableRow>
                         ))}
-                      </TableBody>
-                    </Table>
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
                 )}
               </TabsContent>
@@ -818,24 +1032,72 @@ export const TodoList = () => {
                     No finished tasks yet.
                   </div>
                 ) : (
-                  <div className="border rounded-lg">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Task</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Assigned To</TableHead>
-                          <TableHead>Created/Finished</TableHead>
-                          <TableHead>Remarks</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {finishedTasks.map((task) => (
-                          <TableRow key={task.id}>
-                            <TableCell>
-                              <div className="font-medium line-through text-muted-foreground">{task.text}</div>
-                            </TableCell>
+                  <div className="space-y-4">
+                    {/* Bulk Action Controls for Finished Tasks */}
+                    {selectedTasks.length > 0 && (
+                      <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                        <span className="text-sm font-medium">
+                          {selectedTasks.length} task{selectedTasks.length > 1 ? 's' : ''} selected
+                        </span>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => startBulkAction('edit')}
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Edit Selected
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => startBulkAction('delete')}
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Delete Selected
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={clearSelection}
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            Clear
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="border rounded-lg">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-12">
+                              <Checkbox
+                                checked={finishedTasks.length > 0 && finishedTasks.every(task => selectedTasks.includes(task.id))}
+                                onCheckedChange={() => toggleSelectAll(finishedTasks)}
+                              />
+                            </TableHead>
+                            <TableHead>Task</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Assigned To</TableHead>
+                            <TableHead>Created/Finished</TableHead>
+                            <TableHead>Remarks</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {finishedTasks.map((task) => (
+                            <TableRow key={task.id}>
+                              <TableCell>
+                                <Checkbox
+                                  checked={selectedTasks.includes(task.id)}
+                                  onCheckedChange={() => toggleTaskSelection(task.id)}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <div className="font-medium line-through text-muted-foreground">{task.text}</div>
+                              </TableCell>
                             <TableCell>
                               <Badge variant="default">{task.status}</Badge>
                             </TableCell>
@@ -896,8 +1158,9 @@ export const TodoList = () => {
                             </TableCell>
                           </TableRow>
                         ))}
-                      </TableBody>
-                    </Table>
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
                 )}
               </TabsContent>
@@ -905,6 +1168,97 @@ export const TodoList = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Bulk Action Dialogs */}
+      <Dialog open={bulkAction === 'delete'} onOpenChange={() => bulkAction === 'delete' && cancelBulkAction()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bulk Delete Tasks</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {selectedTasks.length} selected task{selectedTasks.length > 1 ? 's' : ''}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Enter passkey to confirm deletion:</label>
+              <Input
+                type="password"
+                placeholder="Enter passkey..."
+                value={bulkDeletePasskey}
+                onChange={(e) => setBulkDeletePasskey(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={cancelBulkAction}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmBulkDelete}>
+              Delete Tasks
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={bulkAction === 'finish'} onOpenChange={() => bulkAction === 'finish' && cancelBulkAction()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bulk Finish Tasks</DialogTitle>
+            <DialogDescription>
+              Mark {selectedTasks.length} selected task{selectedTasks.length > 1 ? 's' : ''} as finished.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Remarks (optional):</label>
+              <Textarea
+                placeholder="Add remarks for all selected tasks..."
+                value={bulkRemarks}
+                onChange={(e) => setBulkRemarks(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={cancelBulkAction}>
+              Cancel
+            </Button>
+            <Button onClick={confirmBulkFinish}>
+              Finish Tasks
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={bulkAction === 'edit'} onOpenChange={() => bulkAction === 'edit' && cancelBulkAction()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bulk Edit Tasks</DialogTitle>
+            <DialogDescription>
+              Update remarks for {selectedTasks.length} selected task{selectedTasks.length > 1 ? 's' : ''}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">New remarks:</label>
+              <Textarea
+                placeholder="Enter new remarks for all selected tasks..."
+                value={bulkRemarks}
+                onChange={(e) => setBulkRemarks(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={cancelBulkAction}>
+              Cancel
+            </Button>
+            <Button onClick={confirmBulkEdit}>
+              Update Tasks
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Finish Task Dialog */}
       <Dialog open={!!finishingTask} onOpenChange={(open) => !open && cancelFinishing()}>
