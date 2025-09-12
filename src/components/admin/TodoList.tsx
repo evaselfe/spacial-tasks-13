@@ -47,6 +47,8 @@ export const TodoList = () => {
   const [multiTaskText, setMultiTaskText] = useState('');
   const [editingTask, setEditingTask] = useState<string | null>(null);
   const [editRemarks, setEditRemarks] = useState('');
+  const [editingTaskText, setEditingTaskText] = useState<string | null>(null);
+  const [editTaskText, setEditTaskText] = useState('');
   const [finishingTask, setFinishingTask] = useState<string | null>(null);
   const [finishRemarks, setFinishRemarks] = useState('');
   const [activeTab, setActiveTab] = useState('unfinished');
@@ -61,7 +63,7 @@ export const TodoList = () => {
   const [filterByAssignedTo, setFilterByAssignedTo] = useState<string>('all');
   const [newTaskAssignee, setNewTaskAssignee] = useState<string>('unassigned');
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
-  const [bulkAction, setBulkAction] = useState<'delete' | 'finish' | 'edit' | null>(null);
+  const [bulkAction, setBulkAction] = useState<'delete' | 'finish' | null>(null);
   const [bulkRemarks, setBulkRemarks] = useState('');
   const [bulkDeletePasskey, setBulkDeletePasskey] = useState('');
   const { toast } = useToast();
@@ -302,14 +304,47 @@ export const TodoList = () => {
     }
   };
 
+  const updateTaskText = async (taskId: string, text: string) => {
+    try {
+      const { error } = await supabase
+        .from('todos')
+        .update({ text: text })
+        .eq('id', taskId);
+
+      if (error) throw error;
+      
+      await loadTasks();
+      setEditingTaskText(null);
+      setEditTaskText('');
+      toast({
+        title: "Success",
+        description: "Task text updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating task text:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update task text",
+        variant: "destructive",
+      });
+    }
+  };
+
   const startEditingRemarks = (task: Task) => {
     setEditingTask(task.id);
     setEditRemarks(task.remarks || '');
   };
 
+  const startEditingTaskText = (task: Task) => {
+    setEditingTaskText(task.id);
+    setEditTaskText(task.text);
+  };
+
   const cancelEditing = () => {
     setEditingTask(null);
     setEditRemarks('');
+    setEditingTaskText(null);
+    setEditTaskText('');
   };
 
   const cancelFinishing = () => {
@@ -449,7 +484,7 @@ export const TodoList = () => {
     setSelectedTasks([]);
   };
 
-  const startBulkAction = (action: 'delete' | 'finish' | 'edit') => {
+  const startBulkAction = (action: 'delete' | 'finish') => {
     if (selectedTasks.length === 0) {
       toast({
         title: "No Selection",
@@ -536,41 +571,6 @@ export const TodoList = () => {
     }
   };
 
-  const confirmBulkEdit = async () => {
-    if (!bulkRemarks.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter remarks for bulk edit",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('todos')
-        .update({ remarks: bulkRemarks })
-        .in('id', selectedTasks);
-
-      if (error) throw error;
-      
-      await loadTasks();
-      clearSelection();
-      setBulkAction(null);
-      setBulkRemarks('');
-      toast({
-        title: "Success",
-        description: `${selectedTasks.length} tasks updated successfully`,
-      });
-    } catch (error) {
-      console.error('Error updating tasks:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update tasks",
-        variant: "destructive",
-      });
-    }
-  };
 
   const getTasksForDate = (date: Date) => {
     return tasks.filter(task => {
@@ -866,14 +866,6 @@ export const TodoList = () => {
                           </Button>
                           <Button
                             size="sm"
-                            variant="outline"
-                            onClick={() => startBulkAction('edit')}
-                          >
-                            <Edit className="h-4 w-4 mr-1" />
-                            Edit Selected
-                          </Button>
-                          <Button
-                            size="sm"
                             variant="destructive"
                             onClick={() => startBulkAction('delete')}
                           >
@@ -919,9 +911,44 @@ export const TodoList = () => {
                                   onCheckedChange={() => toggleTaskSelection(task.id)}
                                 />
                               </TableCell>
-                              <TableCell>
-                                <div className="font-medium underline">{task.text}</div>
-                              </TableCell>
+                               <TableCell>
+                                 {editingTaskText === task.id ? (
+                                   <div className="flex gap-1">
+                                     <Input
+                                       value={editTaskText}
+                                       onChange={(e) => setEditTaskText(e.target.value)}
+                                       className="h-8 text-sm"
+                                     />
+                                     <Button 
+                                       size="sm" 
+                                       onClick={() => updateTaskText(task.id, editTaskText)}
+                                       className="h-8 px-2"
+                                     >
+                                       <Save className="h-3 w-3" />
+                                     </Button>
+                                     <Button 
+                                       size="sm" 
+                                       variant="outline" 
+                                       onClick={cancelEditing}
+                                       className="h-8 px-2"
+                                     >
+                                       <X className="h-3 w-3" />
+                                     </Button>
+                                   </div>
+                                 ) : (
+                                   <div className="flex items-center gap-2">
+                                     <div className="font-medium underline">{task.text}</div>
+                                     <Button 
+                                       size="sm" 
+                                       variant="ghost" 
+                                       onClick={() => startEditingTaskText(task)}
+                                       className="h-6 px-1"
+                                     >
+                                       <Edit className="h-3 w-3" />
+                                     </Button>
+                                   </div>
+                                 )}
+                               </TableCell>
                             <TableCell>
                               <Badge variant="secondary">{task.status}</Badge>
                             </TableCell>
@@ -1042,14 +1069,6 @@ export const TodoList = () => {
                         <div className="flex gap-2">
                           <Button
                             size="sm"
-                            variant="outline"
-                            onClick={() => startBulkAction('edit')}
-                          >
-                            <Edit className="h-4 w-4 mr-1" />
-                            Edit Selected
-                          </Button>
-                          <Button
-                            size="sm"
                             variant="destructive"
                             onClick={() => startBulkAction('delete')}
                           >
@@ -1095,9 +1114,44 @@ export const TodoList = () => {
                                   onCheckedChange={() => toggleTaskSelection(task.id)}
                                 />
                               </TableCell>
-                              <TableCell>
-                                <div className="font-medium line-through text-muted-foreground">{task.text}</div>
-                              </TableCell>
+                               <TableCell>
+                                 {editingTaskText === task.id ? (
+                                   <div className="flex gap-1">
+                                     <Input
+                                       value={editTaskText}
+                                       onChange={(e) => setEditTaskText(e.target.value)}
+                                       className="h-8 text-sm"
+                                     />
+                                     <Button 
+                                       size="sm" 
+                                       onClick={() => updateTaskText(task.id, editTaskText)}
+                                       className="h-8 px-2"
+                                     >
+                                       <Save className="h-3 w-3" />
+                                     </Button>
+                                     <Button 
+                                       size="sm" 
+                                       variant="outline" 
+                                       onClick={cancelEditing}
+                                       className="h-8 px-2"
+                                     >
+                                       <X className="h-3 w-3" />
+                                     </Button>
+                                   </div>
+                                 ) : (
+                                   <div className="flex items-center gap-2">
+                                     <div className="font-medium line-through text-muted-foreground">{task.text}</div>
+                                     <Button 
+                                       size="sm" 
+                                       variant="ghost" 
+                                       onClick={() => startEditingTaskText(task)}
+                                       className="h-6 px-1"
+                                     >
+                                       <Edit className="h-3 w-3" />
+                                     </Button>
+                                   </div>
+                                 )}
+                               </TableCell>
                             <TableCell>
                               <Badge variant="default">{task.status}</Badge>
                             </TableCell>
@@ -1130,11 +1184,47 @@ export const TodoList = () => {
                                 )}
                               </div>
                             </TableCell>
-                            <TableCell>
-                              <div className="text-sm text-muted-foreground">
-                                {task.remarks || 'No remarks'}
-                              </div>
-                            </TableCell>
+                             <TableCell>
+                               {editingTask === task.id ? (
+                                 <div className="flex gap-1">
+                                   <Input
+                                     placeholder="Add remarks..."
+                                     value={editRemarks}
+                                     onChange={(e) => setEditRemarks(e.target.value)}
+                                     className="h-8 text-sm"
+                                   />
+                                   <Button 
+                                     size="sm" 
+                                     onClick={() => updateTaskRemarks(task.id, editRemarks)}
+                                     className="h-8 px-2"
+                                   >
+                                     <Save className="h-3 w-3" />
+                                   </Button>
+                                   <Button 
+                                     size="sm" 
+                                     variant="outline" 
+                                     onClick={cancelEditing}
+                                     className="h-8 px-2"
+                                   >
+                                     <X className="h-3 w-3" />
+                                   </Button>
+                                 </div>
+                               ) : (
+                                 <div className="flex items-center gap-2">
+                                   <div className="text-sm text-muted-foreground">
+                                     {task.remarks || 'No remarks'}
+                                   </div>
+                                   <Button 
+                                     size="sm" 
+                                     variant="ghost" 
+                                     onClick={() => startEditingRemarks(task)}
+                                     className="h-6 px-1"
+                                   >
+                                     <Edit className="h-3 w-3" />
+                                   </Button>
+                                 </div>
+                               )}
+                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center justify-end gap-1">
                                 <Button
@@ -1230,35 +1320,6 @@ export const TodoList = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={bulkAction === 'edit'} onOpenChange={() => bulkAction === 'edit' && cancelBulkAction()}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Bulk Edit Tasks</DialogTitle>
-            <DialogDescription>
-              Update remarks for {selectedTasks.length} selected task{selectedTasks.length > 1 ? 's' : ''}.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">New remarks:</label>
-              <Textarea
-                placeholder="Enter new remarks for all selected tasks..."
-                value={bulkRemarks}
-                onChange={(e) => setBulkRemarks(e.target.value)}
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={cancelBulkAction}>
-              Cancel
-            </Button>
-            <Button onClick={confirmBulkEdit}>
-              Update Tasks
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Finish Task Dialog */}
       <Dialog open={!!finishingTask} onOpenChange={(open) => !open && cancelFinishing()}>
