@@ -58,6 +58,7 @@ export const TodoList = () => {
   const [assigningTask, setAssigningTask] = useState<string | null>(null);
   const [selectedMember, setSelectedMember] = useState<string>('unassigned');
   const [filterByAssignedTo, setFilterByAssignedTo] = useState<string>('all');
+  const [newTaskAssignee, setNewTaskAssignee] = useState<string>('unassigned');
   const { toast } = useToast();
 
   // Load tasks from database
@@ -146,18 +147,22 @@ export const TodoList = () => {
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       
+      const assignedTo = newTaskAssignee === 'unassigned' ? null : newTaskAssignee;
+      
       const { error } = await supabase
         .from('todos')
         .insert([{
           text: singleTaskText,
           status: 'unfinished',
           remarks: null,
-          created_by: user?.id || null  // Handle null case properly
+          created_by: user?.id || null,
+          assigned_to: assignedTo
         }]);
 
       if (error) throw error;
       
       setSingleTaskText('');
+      setNewTaskAssignee('unassigned');
       await loadTasks();
       toast({
         title: "Success",
@@ -181,11 +186,14 @@ export const TodoList = () => {
     try {
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
+      const assignedTo = newTaskAssignee === 'unassigned' ? null : newTaskAssignee;
+      
       const newTasks = taskTexts.map(text => ({
         text,
         status: 'unfinished' as const,
         remarks: null,
-        created_by: user?.id || null  // Handle null case properly
+        created_by: user?.id || null,
+        assigned_to: assignedTo
       }));
 
       const { error } = await supabase
@@ -195,6 +203,7 @@ export const TodoList = () => {
       if (error) throw error;
       
       setMultiTaskText('');
+      setNewTaskAssignee('unassigned');
       await loadTasks();
       toast({
         title: "Success",
@@ -498,6 +507,24 @@ export const TodoList = () => {
                   Add Task
                 </Button>
               </div>
+              
+              {/* Assign To Dropdown - Optional */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Assign To (Optional)</label>
+                <Select value={newTaskAssignee} onValueChange={setNewTaskAssignee}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select team member (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                    {adminMembers.map(member => (
+                      <SelectItem key={member.id} value={member.id}>
+                        {member.name} - {member.mobile}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
 
@@ -512,6 +539,25 @@ export const TodoList = () => {
                   onChange={(e) => setMultiTaskText(e.target.value)}
                   rows={3}
                 />
+                
+                {/* Assign To Dropdown - Optional */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Assign All To (Optional)</label>
+                  <Select value={newTaskAssignee} onValueChange={setNewTaskAssignee}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select team member (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unassigned">Unassigned</SelectItem>
+                      {adminMembers.map(member => (
+                        <SelectItem key={member.id} value={member.id}>
+                          {member.name} - {member.mobile}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
                 <Button onClick={addMultiTasks} disabled={!multiTaskText.trim()}>
                   Add Tasks
                 </Button>
