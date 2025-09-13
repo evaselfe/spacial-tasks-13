@@ -265,7 +265,7 @@ export const SupervisorForm = ({ selectedPanchayath: preSelectedPanchayath, edit
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {!preSelectedPanchayath && (
+          {!preSelectedPanchayath && !isEditing && (
             <div className="space-y-2">
               <Label>Select Panchayath</Label>
               <Select value={panchayathId} onValueChange={setPanchayathId}>
@@ -283,12 +283,16 @@ export const SupervisorForm = ({ selectedPanchayath: preSelectedPanchayath, edit
             </div>
           )}
           
-          {preSelectedPanchayath && (
+          {(preSelectedPanchayath || (isEditing && selectedPanchayath)) && (
             <div className="space-y-2">
               <Label>Selected Panchayath</Label>
               <div className="p-3 bg-muted rounded-md border">
-                <span className="font-medium">{preSelectedPanchayath.name}</span>
-                <span className="text-muted-foreground ml-2">({preSelectedPanchayath.number_of_wards} wards)</span>
+                <span className="font-medium">
+                  {preSelectedPanchayath?.name || selectedPanchayath?.name}
+                </span>
+                <span className="text-muted-foreground ml-2">
+                  ({preSelectedPanchayath?.number_of_wards || selectedPanchayath?.number_of_wards} wards)
+                </span>
               </div>
             </div>
           )}
