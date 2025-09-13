@@ -9,9 +9,11 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     hmr: {
-      clientPort: 443,
-      protocol: 'wss',
+      port: 24678,
     },
+  },
+  define: {
+    __WS_TOKEN__: JSON.stringify(process.env.WS_TOKEN || ''),
   },
   plugins: [
     react(),
