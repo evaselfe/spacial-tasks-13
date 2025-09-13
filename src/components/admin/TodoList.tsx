@@ -23,10 +23,22 @@ interface Task {
   created_at: string;
   finished_at?: string | null;
   assigned_to?: string | null;
+  reassigned_to_coordinator?: string | null;
+  reassigned_to_supervisor?: string | null;
   assigned_member?: {
     id: string;
     name: string;
     mobile: string;
+  } | null;
+  reassigned_coordinator?: {
+    id: string;
+    name: string;
+    mobile_number: string;
+  } | null;
+  reassigned_supervisor?: {
+    id: string;
+    name: string;
+    mobile_number: string;
   } | null;
 }
 
@@ -77,6 +89,9 @@ export const TodoList = () => {
   const [assignees, setAssignees] = useState<Assignee[]>([]);
   const [assigneeSearchTerm, setAssigneeSearchTerm] = useState('');
   const [bulkSelectedAssignee, setBulkSelectedAssignee] = useState<string>('unassigned');
+  const [reassigningTask, setReassigningTask] = useState<string | null>(null);
+  const [selectedReassignee, setSelectedReassignee] = useState<string>('unassigned');
+  const [reassigneeType, setReassigneeType] = useState<'coordinator' | 'supervisor'>('coordinator');
   const { toast } = useToast();
 
   // Load tasks from database
@@ -98,11 +113,14 @@ export const TodoList = () => {
 
       if (error) throw error;
       
-      // Get assigned members separately
+      // Get assigned members and reassigned coordinators/supervisors separately
       const tasksWithMembers = await Promise.all(
         (data || []).map(async (task) => {
           let assigned_member = null;
+          let reassigned_coordinator = null;
+          let reassigned_supervisor = null;
           const taskAny = task as any;
+          
           if (taskAny.assigned_to) {
             const { data: memberData } = await supabase
               .from('admin_members')
@@ -110,6 +128,24 @@ export const TodoList = () => {
               .eq('id', taskAny.assigned_to)
               .single();
             assigned_member = memberData;
+          }
+
+          if (taskAny.reassigned_to_coordinator) {
+            const { data: coordinatorData } = await supabase
+              .from('coordinators')
+              .select('id, name, mobile_number')
+              .eq('id', taskAny.reassigned_to_coordinator)
+              .single();
+            reassigned_coordinator = coordinatorData;
+          }
+
+          if (taskAny.reassigned_to_supervisor) {
+            const { data: supervisorData } = await supabase
+              .from('supervisors')
+              .select('id, name, mobile_number')
+              .eq('id', taskAny.reassigned_to_supervisor)
+              .single();
+            reassigned_supervisor = supervisorData;
           }
           
           return {
@@ -120,7 +156,11 @@ export const TodoList = () => {
             created_at: task.created_at,
             finished_at: task.finished_at,
             assigned_to: taskAny.assigned_to || null,
-            assigned_member
+            reassigned_to_coordinator: taskAny.reassigned_to_coordinator || null,
+            reassigned_to_supervisor: taskAny.reassigned_to_supervisor || null,
+            assigned_member,
+            reassigned_coordinator,
+            reassigned_supervisor
           };
         })
       );
@@ -474,6 +514,56 @@ export const TodoList = () => {
     }
   };
 
+  const reassignTaskToCoordinatorOrSupervisor = async (taskId: string, assigneeId: string | null, type: 'coordinator' | 'supervisor') => {
+    try {
+      const updateData: any = {};
+      
+      if (type === 'coordinator') {
+        updateData.reassigned_to_coordinator = assigneeId;
+        // Clear supervisor assignment when assigning to coordinator
+        updateData.reassigned_to_supervisor = null;
+      } else {
+        updateData.reassigned_to_supervisor = assigneeId;
+        // Clear coordinator assignment when assigning to supervisor
+        updateData.reassigned_to_coordinator = null;
+      }
+      
+      const { error } = await supabase
+        .from('todos')
+        .update(updateData)
+        .eq('id', taskId);
+
+      if (error) {
+        console.error('Reassignment error details:', error);
+        
+        if (error.message.includes('reassigned_to') || error.message.includes('column') || error.code === '42703') {
+          toast({
+            title: "Database Update Required",
+            description: `Please run the SQL script 'add_reassigned_to_column.sql' to add reassignment columns. Error: ${error.message}`,
+            variant: "destructive",
+          });
+          return;
+        }
+        throw error;
+      }
+      
+      await loadTasks();
+      setReassigningTask(null);
+      setSelectedReassignee('unassigned');
+      toast({
+        title: "Success",
+        description: assigneeId ? `Task reassigned to ${type} successfully` : "Task reassignment removed",
+      });
+    } catch (error) {
+      console.error('Error reassigning task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reassign task. Make sure database is properly configured.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const assignTaskToMember = async (taskId: string, memberId: string | null) => {
     try {
       // Try to update the assignment - this will work once the database column is added
@@ -533,6 +623,23 @@ export const TodoList = () => {
     if (!assigningTask) return;
     const memberToAssign = selectedMember === "unassigned" ? null : selectedMember || null;
     assignTaskToMember(assigningTask, memberToAssign);
+  };
+
+  const startReassigning = (taskId: string) => {
+    setReassigningTask(taskId);
+    setSelectedReassignee('unassigned');
+    setReassigneeType('coordinator');
+  };
+
+  const cancelReassigning = () => {
+    setReassigningTask(null);
+    setSelectedReassignee('unassigned');
+  };
+
+  const confirmReassignTask = () => {
+    if (!reassigningTask) return;
+    const assigneeToReassign = selectedReassignee === "unassigned" ? null : selectedReassignee || null;
+    reassignTaskToCoordinatorOrSupervisor(reassigningTask, assigneeToReassign, reassigneeType);
   };
 
   // Bulk action functions
@@ -651,10 +758,42 @@ export const TodoList = () => {
 
   const confirmBulkReassign = async () => {
     try {
+      // For bulk reassign, we'll reassign to coordinators by default
+      // Users can use individual reassign for supervisors
       const assignedTo = bulkSelectedAssignee === 'unassigned' ? null : bulkSelectedAssignee;
       
-      // Try to update the assignment - this will work once the database column is added
-      const updateData: any = { assigned_to: assignedTo };
+      let updateData: any = {};
+      
+      // Check if the selected assignee is a coordinator, supervisor, or team member
+      const selectedAssignee = assignees.find(a => a.id === assignedTo);
+      
+      if (!selectedAssignee || bulkSelectedAssignee === 'unassigned') {
+        // Clear all assignments and reassignments
+        updateData = { 
+          assigned_to: null,
+          reassigned_to_coordinator: null,
+          reassigned_to_supervisor: null
+        };
+      } else if (selectedAssignee.type === 'admin_member') {
+        // Assign to team member (assigned_to)
+        updateData = { 
+          assigned_to: assignedTo,
+          reassigned_to_coordinator: null,
+          reassigned_to_supervisor: null
+        };
+      } else if (selectedAssignee.type === 'coordinator') {
+        // Reassign to coordinator
+        updateData = { 
+          reassigned_to_coordinator: assignedTo,
+          reassigned_to_supervisor: null
+        };
+      } else if (selectedAssignee.type === 'supervisor') {
+        // Reassign to supervisor  
+        updateData = { 
+          reassigned_to_supervisor: assignedTo,
+          reassigned_to_coordinator: null
+        };
+      }
       
       const { error } = await supabase
         .from('todos')
@@ -662,15 +801,13 @@ export const TodoList = () => {
         .in('id', selectedTasks);
 
       if (error) {
-        console.error('Bulk assignment error details:');
-        console.error('Error message:', error.message);
-        console.error('Error code:', error.code);
+        console.error('Bulk assignment error details:', error);
         
         // If error is about missing column, show helpful message
-        if (error.message.includes('assigned_to') || error.message.includes('column') || error.code === '42703' || error.code === '23503') {
+        if (error.message.includes('reassigned_to') || error.message.includes('assigned_to') || error.message.includes('column') || error.code === '42703') {
           toast({
             title: "Database Update Required",
-            description: `Please run the SQL script 'fix_foreign_key_constraint.sql' to fix task assignments. Error: ${error.message}`,
+            description: `Please run the SQL scripts 'fix_foreign_key_constraint.sql' and 'add_reassigned_to_column.sql' to add assignment columns. Error: ${error.message}`,
             variant: "destructive",
           });
           return;
@@ -1035,7 +1172,8 @@ export const TodoList = () => {
                             </TableHead>
                             <TableHead>Task</TableHead>
                             <TableHead>Status</TableHead>
-                            <TableHead>Assigned To</TableHead>
+                            <TableHead>Assigned To (Team)</TableHead>
+                            <TableHead>Reassigned To (Coord/Sup)</TableHead>
                             <TableHead>Created</TableHead>
                             <TableHead>Remarks</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
@@ -1091,31 +1229,66 @@ export const TodoList = () => {
                             <TableCell>
                               <Badge variant="secondary">{task.status}</Badge>
                             </TableCell>
-                            <TableCell>
-                              <div className="space-y-1">
-                                {task.assigned_member ? (
-                                  <div className="flex items-center gap-2">
-                                    <Badge variant="outline" className="text-xs">
-                                      <UserCheck className="h-3 w-3 mr-1" />
-                                      {task.assigned_member.name}
-                                    </Badge>
-                                    <span className="text-xs text-muted-foreground">
-                                      {task.assigned_member.mobile}
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <span className="text-sm text-muted-foreground">Not assigned</span>
-                                )}
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => startAssigning(task.id, task.assigned_to || '')}
-                                  className="h-6 text-xs"
-                                >
-                                  <Edit className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </TableCell>
+                             <TableCell>
+                               <div className="space-y-1">
+                                 {task.assigned_member ? (
+                                   <div className="flex items-center gap-2">
+                                     <Badge variant="outline" className="text-xs">
+                                       <UserCheck className="h-3 w-3 mr-1" />
+                                       {task.assigned_member.name}
+                                     </Badge>
+                                     <span className="text-xs text-muted-foreground">
+                                       {task.assigned_member.mobile}
+                                     </span>
+                                   </div>
+                                 ) : (
+                                   <span className="text-sm text-muted-foreground">Not assigned</span>
+                                 )}
+                                 <Button
+                                   size="sm"
+                                   variant="ghost"
+                                   onClick={() => startAssigning(task.id, task.assigned_to || '')}
+                                   className="h-6 text-xs"
+                                 >
+                                   <Edit className="h-3 w-3" />
+                                 </Button>
+                               </div>
+                             </TableCell>
+                             <TableCell>
+                               <div className="space-y-1">
+                                 {task.reassigned_coordinator ? (
+                                   <div className="flex items-center gap-2">
+                                     <Badge variant="secondary" className="text-xs">
+                                       <Users className="h-3 w-3 mr-1" />
+                                       Coord: {task.reassigned_coordinator.name}
+                                     </Badge>
+                                     <span className="text-xs text-muted-foreground">
+                                       {task.reassigned_coordinator.mobile_number}
+                                     </span>
+                                   </div>
+                                 ) : task.reassigned_supervisor ? (
+                                   <div className="flex items-center gap-2">
+                                     <Badge variant="secondary" className="text-xs">
+                                       <Users className="h-3 w-3 mr-1" />
+                                       Sup: {task.reassigned_supervisor.name}
+                                     </Badge>
+                                     <span className="text-xs text-muted-foreground">
+                                       {task.reassigned_supervisor.mobile_number}
+                                     </span>
+                                   </div>
+                                 ) : (
+                                   <span className="text-sm text-muted-foreground">Not reassigned</span>
+                                 )}
+                                 <Button
+                                   size="sm"
+                                   variant="ghost"
+                                   onClick={() => startReassigning(task.id)}
+                                   className="h-6 text-xs"
+                                 >
+                                   <RefreshCcw className="h-3 w-3" />
+                                 </Button>
+                               </div>
+                             </TableCell>
                             <TableCell>
                               <div className="text-sm text-muted-foreground">
                                 {format(new Date(task.created_at), "PPP HH:mm")}
@@ -1246,7 +1419,8 @@ export const TodoList = () => {
                             </TableHead>
                             <TableHead>Task</TableHead>
                             <TableHead>Status</TableHead>
-                            <TableHead>Assigned To</TableHead>
+                            <TableHead>Assigned To (Team)</TableHead>
+                            <TableHead>Reassigned To (Coord/Sup)</TableHead>
                             <TableHead>Created/Finished</TableHead>
                             <TableHead>Remarks</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
@@ -1302,21 +1476,50 @@ export const TodoList = () => {
                             <TableCell>
                               <Badge variant="default">{task.status}</Badge>
                             </TableCell>
-                            <TableCell>
-                              {task.assigned_member ? (
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="outline" className="text-xs">
-                                    <UserCheck className="h-3 w-3 mr-1" />
-                                    {task.assigned_member.name}
-                                  </Badge>
-                                  <span className="text-xs text-muted-foreground">
-                                    {task.assigned_member.mobile}
-                                  </span>
-                                </div>
-                              ) : (
-                                <span className="text-sm text-muted-foreground">Not assigned</span>
-                              )}
-                            </TableCell>
+                             <TableCell>
+                               <div className="space-y-1">
+                                 {task.assigned_member ? (
+                                   <div className="flex items-center gap-2">
+                                     <Badge variant="outline" className="text-xs">
+                                       <UserCheck className="h-3 w-3 mr-1" />
+                                       {task.assigned_member.name}
+                                     </Badge>
+                                     <span className="text-xs text-muted-foreground">
+                                       {task.assigned_member.mobile}
+                                     </span>
+                                   </div>
+                                 ) : (
+                                   <span className="text-sm text-muted-foreground">Not assigned</span>
+                                 )}
+                               </div>
+                             </TableCell>
+                             <TableCell>
+                               <div className="space-y-1">
+                                 {task.reassigned_coordinator ? (
+                                   <div className="flex items-center gap-2">
+                                     <Badge variant="secondary" className="text-xs">
+                                       <Users className="h-3 w-3 mr-1" />
+                                       Coord: {task.reassigned_coordinator.name}
+                                     </Badge>
+                                     <span className="text-xs text-muted-foreground">
+                                       {task.reassigned_coordinator.mobile_number}
+                                     </span>
+                                   </div>
+                                 ) : task.reassigned_supervisor ? (
+                                   <div className="flex items-center gap-2">
+                                     <Badge variant="secondary" className="text-xs">
+                                       <Users className="h-3 w-3 mr-1" />
+                                       Sup: {task.reassigned_supervisor.name}
+                                     </Badge>
+                                     <span className="text-xs text-muted-foreground">
+                                       {task.reassigned_supervisor.mobile_number}
+                                     </span>
+                                   </div>
+                                 ) : (
+                                   <span className="text-sm text-muted-foreground">Not reassigned</span>
+                                 )}
+                               </div>
+                             </TableCell>
                             <TableCell>
                               <div className="text-sm text-muted-foreground space-y-1">
                                 <div className="flex items-center gap-1">
@@ -1578,38 +1781,110 @@ export const TodoList = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Reassignment Dialog */}
+      <Dialog open={!!reassigningTask} onOpenChange={() => setReassigningTask(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reassign Task to Coordinator/Supervisor</DialogTitle>
+            <DialogDescription>
+              Reassign this task to a coordinator or supervisor while keeping the original team member assignment.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Reassign Type:</label>
+              <Select value={reassigneeType} onValueChange={(value: 'coordinator' | 'supervisor') => setReassigneeType(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="coordinator">Coordinator</SelectItem>
+                  <SelectItem value="supervisor">Supervisor</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                {reassigneeType === 'coordinator' ? 'Select Coordinator:' : 'Select Supervisor:'}
+              </label>
+              <div className="space-y-2">
+                <Input
+                  placeholder={`Search ${reassigneeType}s by name or mobile...`}
+                  value={assigneeSearchTerm}
+                  onChange={(e) => setAssigneeSearchTerm(e.target.value)}
+                />
+                <Select value={selectedReassignee} onValueChange={setSelectedReassignee}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={`Select ${reassigneeType}`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Remove Reassignment</SelectItem>
+                    {filteredAssignees
+                      .filter(assignee => assignee.type === reassigneeType)
+                      .map(assignee => (
+                        <SelectItem key={assignee.id} value={assignee.id}>
+                          <div className="flex items-center justify-between w-full">
+                            <span>{assignee.name}</span>
+                            <Badge variant="outline" className="ml-2">
+                              {assignee.mobile}
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={cancelReassigning}>
+              Cancel
+            </Button>
+            <Button onClick={confirmReassignTask}>
+              {selectedReassignee === 'unassigned' ? 'Remove Reassignment' : 'Reassign Task'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Assign Task Dialog */}
       <Dialog open={!!assigningTask} onOpenChange={(open) => !open && cancelAssigning()}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Assign Task to Team Member</DialogTitle>
             <DialogDescription>
-              Select an admin team member to assign this task to, or leave blank to unassign.
+              Select an admin team member to assign this task to, or leave unassigned.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Search by name or mobile number:</label>
+              <label className="text-sm font-medium">Search admin team members:</label>
               <Input
-                placeholder="Search assignees..."
+                placeholder="Search team members..."
                 value={assigneeSearchTerm}
                 onChange={(e) => setAssigneeSearchTerm(e.target.value)}
               />
             </div>
             <Select value={selectedMember} onValueChange={setSelectedMember}>
               <SelectTrigger>
-                <SelectValue placeholder="Select assignee" />
+                <SelectValue placeholder="Select team member" />
               </SelectTrigger>
                <SelectContent className="bg-background border z-50">
                 <SelectItem value="unassigned">No assignment</SelectItem>
-                {filteredAssignees.map((assignee) => (
-                  <SelectItem key={assignee.id} value={assignee.id}>
+                {adminMembers
+                  .filter(member => 
+                    member.name.toLowerCase().includes(assigneeSearchTerm.toLowerCase()) ||
+                    member.mobile.includes(assigneeSearchTerm)
+                  )
+                  .map((member) => (
+                  <SelectItem key={member.id} value={member.id}>
                     <div className="flex items-center justify-between w-full">
-                      <span>{assignee.name}</span>
+                      <span>{member.name}</span>
                       <div className="flex items-center gap-2 ml-2 text-xs text-muted-foreground">
-                        <span>{assignee.mobile}</span>
+                        <span>{member.mobile}</span>
                         <Badge variant="outline" className="text-xs">
-                          {assignee.role}
+                          {member.role}
                         </Badge>
                       </div>
                     </div>
