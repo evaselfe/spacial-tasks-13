@@ -507,36 +507,60 @@ export type Database = {
       }
       todos: {
         Row: {
+          assigned_to: string | null
           created_at: string
           created_by: string | null
           finished_at: string | null
           id: string
+          reassigned_to_coordinator: string | null
+          reassigned_to_supervisor: string | null
           remarks: string | null
           status: string
           text: string
           updated_at: string
         }
         Insert: {
+          assigned_to?: string | null
           created_at?: string
           created_by?: string | null
           finished_at?: string | null
           id?: string
+          reassigned_to_coordinator?: string | null
+          reassigned_to_supervisor?: string | null
           remarks?: string | null
           status?: string
           text: string
           updated_at?: string
         }
         Update: {
+          assigned_to?: string | null
           created_at?: string
           created_by?: string | null
           finished_at?: string | null
           id?: string
+          reassigned_to_coordinator?: string | null
+          reassigned_to_supervisor?: string | null
           remarks?: string | null
           status?: string
           text?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "todos_reassigned_to_coordinator_fkey"
+            columns: ["reassigned_to_coordinator"]
+            isOneToOne: false
+            referencedRelation: "coordinators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "todos_reassigned_to_supervisor_fkey"
+            columns: ["reassigned_to_supervisor"]
+            isOneToOne: false
+            referencedRelation: "supervisors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
