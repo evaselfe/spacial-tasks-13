@@ -2,8 +2,12 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { CheckCircle, Clock, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface MyTasksProps {
   userId: string;
@@ -23,6 +27,9 @@ interface Task {
 export const MyTasks = ({ userId }: MyTasksProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingTask, setEditingTask] = useState<string | null>(null);
+  const [newRemarks, setNewRemarks] = useState("");
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -47,15 +54,51 @@ export const MyTasks = ({ userId }: MyTasksProps) => {
     if (userId) fetchTasks();
   }, [userId]);
 
+  const handleUpdateRemarks = async (taskId: string, remarks: string) => {
+    try {
+      const { error } = await supabase
+        .from('todos')
+        .update({ remarks })
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      // Update local state
+      setTasks(prev => prev.map(task => 
+        task.id === taskId ? { ...task, remarks } : task
+      ));
+
+      setEditingTask(null);
+      setNewRemarks("");
+
+      toast({
+        title: "Remarks updated",
+        description: "Your remarks have been saved successfully."
+      });
+    } catch (error) {
+      console.error('Error updating remarks:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update remarks. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const openRemarksDialog = (task: Task) => {
+    setEditingTask(task.id);
+    setNewRemarks(task.remarks || "");
+  };
+
   const TaskItem = ({ task }: { task: Task }) => (
     <div className="flex items-start justify-between gap-3 p-3 rounded-lg border bg-card mb-2">
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3 flex-1">
         {task.status === 'finished' ? (
           <CheckCircle className="h-5 w-5 text-primary" />
         ) : (
           <Clock className="h-5 w-5 text-muted-foreground" />
         )}
-        <div>
+        <div className="flex-1">
           <p className="font-medium text-foreground">{task.text}</p>
           {task.remarks && <p className="text-sm text-muted-foreground mt-1">{task.remarks}</p>}
           <p className="text-xs text-muted-foreground mt-1">
@@ -63,9 +106,57 @@ export const MyTasks = ({ userId }: MyTasksProps) => {
           </p>
         </div>
       </div>
-      <Badge variant={task.status === 'finished' ? 'secondary' : 'outline'}>
-        {task.status === 'finished' ? 'Finished' : 'Pending'}
-      </Badge>
+      <div className="flex items-center gap-2">
+        <Dialog open={editingTask === task.id} onOpenChange={(open) => !open && setEditingTask(null)}>
+          <DialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => openRemarksDialog(task)}
+              className="h-8 w-8 p-0"
+            >
+              <MessageSquare className="h-4 w-4" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add/Edit Remarks</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium mb-2">Task:</p>
+                <p className="text-sm text-muted-foreground">{task.text}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Remarks:</label>
+                <Textarea
+                  value={newRemarks}
+                  onChange={(e) => setNewRemarks(e.target.value)}
+                  placeholder="Add your remarks here..."
+                  className="mt-2"
+                  rows={4}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setEditingTask(null)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => handleUpdateRemarks(task.id, newRemarks)}
+                >
+                  Save Remarks
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+        <Badge variant={task.status === 'finished' ? 'secondary' : 'outline'}>
+          {task.status === 'finished' ? 'Finished' : 'Pending'}
+        </Badge>
+      </div>
     </div>
   );
 
