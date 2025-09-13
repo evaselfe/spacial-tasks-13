@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 
 interface MyTasksProps {
   userId: string;
+  userRole?: string;
+  userTable?: string;
 }
 
 type TaskStatus = 'finished' | 'unfinished';
@@ -24,7 +26,7 @@ interface Task {
   finished_at?: string | null;
 }
 
-export const MyTasks = ({ userId }: MyTasksProps) => {
+export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingTask, setEditingTask] = useState<string | null>(null);
@@ -35,11 +37,26 @@ export const MyTasks = ({ userId }: MyTasksProps) => {
     const fetchTasks = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase
-          .from('todos')
-          .select('id, text, status, remarks, created_at, finished_at')
-          .filter('assigned_to', 'eq', userId)
-          .order('created_at', { ascending: false });
+        let query = supabase.from('todos').select('id, text, status, remarks, created_at, finished_at');
+        
+        // For team members (admin_members table), show assigned tasks
+        if (userTable === 'admin_members') {
+          query = query.filter('assigned_to', 'eq', userId);
+        }
+        // For coordinators, show tasks reassigned to them
+        else if (userRole === 'coordinator') {
+          query = query.filter('reassigned_to_coordinator', 'eq', userId);
+        }
+        // For supervisors, show tasks reassigned to them
+        else if (userRole === 'supervisor') {
+          query = query.filter('reassigned_to_supervisor', 'eq', userId);
+        }
+        // Fallback: try to match by assigned_to
+        else {
+          query = query.filter('assigned_to', 'eq', userId);
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false });
 
         if (error) throw error;
         setTasks((data || []) as Task[]);
@@ -52,7 +69,7 @@ export const MyTasks = ({ userId }: MyTasksProps) => {
     };
 
     if (userId) fetchTasks();
-  }, [userId]);
+  }, [userId, userRole, userTable]);
 
   const handleUpdateRemarks = async (taskId: string, remarks: string) => {
     try {
@@ -186,16 +203,21 @@ export const MyTasks = ({ userId }: MyTasksProps) => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Clock className="h-5 w-5 text-primary" />
-          Your Assigned Tasks ({tasks.length})
+          {userTable === 'admin_members' ? 'Your Assigned Tasks' : 'Your Reassigned Tasks'} ({tasks.length})
         </CardTitle>
       </CardHeader>
       <CardContent>
         {tasks.length === 0 ? (
           <div className="text-center py-8">
             <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">No tasks assigned to you yet.</p>
+            <p className="text-muted-foreground">
+              {userTable === 'admin_members' ? 'No tasks assigned to you yet.' : 'No tasks reassigned to you yet.'}
+            </p>
             <p className="text-xs text-muted-foreground mt-2">
-              Tasks will appear here when administrators assign them to you.
+              {userTable === 'admin_members' 
+                ? 'Tasks will appear here when administrators assign them to you.'
+                : 'Tasks will appear here when they are reassigned to you.'
+              }
             </p>
           </div>
         ) : (

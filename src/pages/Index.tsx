@@ -90,9 +90,13 @@ const Index = () => {
           <DailyNote currentUser={currentUser} />
         </div>
 
-        {/* Assigned Tasks - Show for team members */}
+        {/* Assigned Tasks - Show for all users */}
         <div className="mb-6">
-          <MyTasks userId={currentUser.id} />
+          <MyTasks 
+            userId={currentUser.id} 
+            userRole={currentUser.role}
+            userTable={currentUser.table}
+          />
         </div>
 
         {/* Coordinator Reports */}
