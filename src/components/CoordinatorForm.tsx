@@ -130,6 +130,9 @@ export const CoordinatorForm = ({ selectedPanchayath: preSelectedPanchayath, edi
       }
 
       if (isEditing) {
+        console.log("Updating coordinator with ID:", editingCoordinator.id);
+        console.log("Coordinator data:", editingCoordinator);
+        
         const { data: updated, error } = await supabase
           .from("coordinators")
           .update({
@@ -140,6 +143,8 @@ export const CoordinatorForm = ({ selectedPanchayath: preSelectedPanchayath, edi
           })
           .eq("id", editingCoordinator.id)
           .select("id");
+
+        console.log("Update result:", { updated, error });
 
         if (error) throw error;
         if (!updated || updated.length === 0) {
