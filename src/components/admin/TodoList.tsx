@@ -626,9 +626,20 @@ export const TodoList = () => {
   };
 
   const startReassigning = (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
     setReassigningTask(taskId);
-    setSelectedReassignee('unassigned');
-    setReassigneeType('coordinator');
+    
+    // Set the current assignment as the selected value
+    if (task?.reassigned_to_coordinator) {
+      setSelectedReassignee(task.reassigned_to_coordinator);
+      setReassigneeType('coordinator');
+    } else if (task?.reassigned_to_supervisor) {
+      setSelectedReassignee(task.reassigned_to_supervisor);
+      setReassigneeType('supervisor');
+    } else {
+      setSelectedReassignee('unassigned');
+      setReassigneeType('coordinator');
+    }
   };
 
   const cancelReassigning = () => {
@@ -1254,41 +1265,45 @@ export const TodoList = () => {
                                  </Button>
                                </div>
                              </TableCell>
-                             <TableCell>
-                               <div className="space-y-1">
-                                 {task.reassigned_coordinator ? (
-                                   <div className="flex items-center gap-2">
-                                     <Badge variant="secondary" className="text-xs">
-                                       <Users className="h-3 w-3 mr-1" />
-                                       Coord: {task.reassigned_coordinator.name}
-                                     </Badge>
-                                     <span className="text-xs text-muted-foreground">
-                                       {task.reassigned_coordinator.mobile_number}
-                                     </span>
-                                   </div>
-                                 ) : task.reassigned_supervisor ? (
-                                   <div className="flex items-center gap-2">
-                                     <Badge variant="secondary" className="text-xs">
-                                       <Users className="h-3 w-3 mr-1" />
-                                       Sup: {task.reassigned_supervisor.name}
-                                     </Badge>
-                                     <span className="text-xs text-muted-foreground">
-                                       {task.reassigned_supervisor.mobile_number}
-                                     </span>
-                                   </div>
-                                 ) : (
-                                   <span className="text-sm text-muted-foreground">Not reassigned</span>
-                                 )}
-                                 <Button
-                                   size="sm"
-                                   variant="ghost"
-                                   onClick={() => startReassigning(task.id)}
-                                   className="h-6 text-xs"
-                                 >
-                                   <RefreshCcw className="h-3 w-3" />
-                                 </Button>
-                               </div>
-                             </TableCell>
+                              <TableCell>
+                                <div className="space-y-1">
+                                  {task.reassigned_coordinator ? (
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant="secondary" className="text-xs">
+                                        <Users className="h-3 w-3 mr-1" />
+                                        Coord: {task.reassigned_coordinator.name}
+                                      </Badge>
+                                      <span className="text-xs text-muted-foreground">
+                                        {task.reassigned_coordinator.mobile_number}
+                                      </span>
+                                    </div>
+                                  ) : task.reassigned_supervisor ? (
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant="secondary" className="text-xs">
+                                        <Users className="h-3 w-3 mr-1" />
+                                        Sup: {task.reassigned_supervisor.name}
+                                      </Badge>
+                                      <span className="text-xs text-muted-foreground">
+                                        {task.reassigned_supervisor.mobile_number}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-sm text-muted-foreground">Not reassigned</span>
+                                  )}
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => startReassigning(task.id)}
+                                    className="h-6 text-xs"
+                                    title={task.reassigned_coordinator || task.reassigned_supervisor ? "Remove or Change Reassignment" : "Reassign Task"}
+                                  >
+                                    <RefreshCcw className="h-3 w-3" />
+                                    <span className="ml-1">
+                                      {task.reassigned_coordinator || task.reassigned_supervisor ? "Change" : "Reassign"}
+                                    </span>
+                                  </Button>
+                                </div>
+                              </TableCell>
                             <TableCell>
                               <div className="text-sm text-muted-foreground">
                                 {format(new Date(task.created_at), "PPP HH:mm")}
