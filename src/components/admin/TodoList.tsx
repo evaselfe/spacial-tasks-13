@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
-import { CheckCircle, XCircle, Plus, Edit, Save, X, Calendar as CalendarIcon, Clock, Trash2, Search, Users, UserCheck, Square, CheckSquare } from "lucide-react";
+import { CheckCircle, XCircle, Plus, Edit, Save, X, Calendar as CalendarIcon, Clock, Trash2, Search, Users, UserCheck, Square, CheckSquare, RefreshCcw } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -39,6 +39,14 @@ interface AdminMember {
   panchayath: string;
 }
 
+interface Assignee {
+  id: string;
+  name: string;
+  mobile: string;
+  type: 'admin_member' | 'coordinator' | 'supervisor';
+  role?: string;
+}
+
 export const TodoList = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,15 +71,19 @@ export const TodoList = () => {
   const [filterByAssignedTo, setFilterByAssignedTo] = useState<string>('all');
   const [newTaskAssignee, setNewTaskAssignee] = useState<string>('unassigned');
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
-  const [bulkAction, setBulkAction] = useState<'delete' | 'finish' | null>(null);
+  const [bulkAction, setBulkAction] = useState<'delete' | 'finish' | 'reassign' | null>(null);
   const [bulkRemarks, setBulkRemarks] = useState('');
   const [bulkDeletePasskey, setBulkDeletePasskey] = useState('');
+  const [assignees, setAssignees] = useState<Assignee[]>([]);
+  const [assigneeSearchTerm, setAssigneeSearchTerm] = useState('');
+  const [bulkSelectedAssignee, setBulkSelectedAssignee] = useState<string>('unassigned');
   const { toast } = useToast();
 
   // Load tasks from database
   useEffect(() => {
     loadTasks();
     loadAdminMembers();
+    loadAssignees();
   }, []);
 
   const loadTasks = async () => {
@@ -142,6 +154,69 @@ export const TodoList = () => {
       toast({
         title: "Error",
         description: "Failed to load admin members",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const loadAssignees = async () => {
+    try {
+      const allAssignees: Assignee[] = [];
+
+      // Load admin members
+      const { data: adminData, error: adminError } = await supabase
+        .from('admin_members')
+        .select('id, name, mobile, role')
+        .order('name');
+
+      if (!adminError && adminData) {
+        allAssignees.push(...adminData.map((member: any) => ({
+          id: member.id,
+          name: member.name,
+          mobile: member.mobile,
+          type: 'admin_member' as const,
+          role: member.role
+        })));
+      }
+
+      // Load coordinators
+      const { data: coordinatorData, error: coordinatorError } = await supabase
+        .from('coordinators')
+        .select('id, name, mobile_number')
+        .order('name');
+
+      if (!coordinatorError && coordinatorData) {
+        allAssignees.push(...coordinatorData.map((coordinator: any) => ({
+          id: coordinator.id,
+          name: coordinator.name,
+          mobile: coordinator.mobile_number,
+          type: 'coordinator' as const,
+          role: 'Coordinator'
+        })));
+      }
+
+      // Load supervisors
+      const { data: supervisorData, error: supervisorError } = await supabase
+        .from('supervisors')
+        .select('id, name, mobile_number')
+        .order('name');
+
+      if (!supervisorError && supervisorData) {
+        allAssignees.push(...supervisorData.map((supervisor: any) => ({
+          id: supervisor.id,
+          name: supervisor.name,
+          mobile: supervisor.mobile_number,
+          type: 'supervisor' as const,
+          role: 'Supervisor'
+        })));
+      }
+
+      setAssignees(allAssignees);
+    } catch (error) {
+      console.error('Error loading assignees:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load assignees",
         variant: "destructive",
       });
     }
@@ -484,7 +559,7 @@ export const TodoList = () => {
     setSelectedTasks([]);
   };
 
-  const startBulkAction = (action: 'delete' | 'finish') => {
+  const startBulkAction = (action: 'delete' | 'finish' | 'reassign') => {
     if (selectedTasks.length === 0) {
       toast({
         title: "No Selection",
@@ -496,12 +571,15 @@ export const TodoList = () => {
     setBulkAction(action);
     setBulkRemarks('');
     setBulkDeletePasskey('');
+    setBulkSelectedAssignee('unassigned');
   };
 
   const cancelBulkAction = () => {
     setBulkAction(null);
     setBulkRemarks('');
     setBulkDeletePasskey('');
+    setBulkSelectedAssignee('unassigned');
+    setAssigneeSearchTerm('');
   };
 
   const confirmBulkDelete = async () => {
@@ -571,6 +649,59 @@ export const TodoList = () => {
     }
   };
 
+  const confirmBulkReassign = async () => {
+    try {
+      const assignedTo = bulkSelectedAssignee === 'unassigned' ? null : bulkSelectedAssignee;
+      
+      // Try to update the assignment - this will work once the database column is added
+      const updateData: any = { assigned_to: assignedTo };
+      
+      const { error } = await supabase
+        .from('todos')
+        .update(updateData)
+        .in('id', selectedTasks);
+
+      if (error) {
+        console.error('Bulk assignment error details:');
+        console.error('Error message:', error.message);
+        console.error('Error code:', error.code);
+        
+        // If error is about missing column, show helpful message
+        if (error.message.includes('assigned_to') || error.message.includes('column') || error.code === '42703' || error.code === '23503') {
+          toast({
+            title: "Database Update Required",
+            description: `Please run the SQL script 'fix_foreign_key_constraint.sql' to fix task assignments. Error: ${error.message}`,
+            variant: "destructive",
+          });
+          return;
+        }
+        throw error;
+      }
+      
+      await loadTasks();
+      clearSelection();
+      setBulkAction(null);
+      setBulkSelectedAssignee('unassigned');
+      setAssigneeSearchTerm('');
+      toast({
+        title: "Success",
+        description: `${selectedTasks.length} tasks reassigned successfully`,
+      });
+    } catch (error) {
+      console.error('Error reassigning tasks:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reassign tasks. Make sure database is properly configured.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Filter assignees based on search term
+  const filteredAssignees = assignees.filter(assignee => 
+    assignee.name.toLowerCase().includes(assigneeSearchTerm.toLowerCase()) ||
+    assignee.mobile.includes(assigneeSearchTerm)
+  );
 
   const getTasksForDate = (date: Date) => {
     return tasks.filter(task => {
@@ -866,6 +997,14 @@ export const TodoList = () => {
                           </Button>
                           <Button
                             size="sm"
+                            variant="outline"
+                            onClick={() => startBulkAction('reassign')}
+                          >
+                            <RefreshCcw className="h-4 w-4 mr-1" />
+                            Reassign Selected
+                          </Button>
+                          <Button
+                            size="sm"
                             variant="destructive"
                             onClick={() => startBulkAction('delete')}
                           >
@@ -1067,6 +1206,14 @@ export const TodoList = () => {
                           {selectedTasks.length} task{selectedTasks.length > 1 ? 's' : ''} selected
                         </span>
                         <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => startBulkAction('reassign')}
+                          >
+                            <RefreshCcw className="h-4 w-4 mr-1" />
+                            Reassign Selected
+                          </Button>
                           <Button
                             size="sm"
                             variant="destructive"
@@ -1320,6 +1467,60 @@ export const TodoList = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Bulk Reassign Dialog */}
+      <Dialog open={bulkAction === 'reassign'} onOpenChange={() => bulkAction === 'reassign' && cancelBulkAction()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bulk Reassign Tasks</DialogTitle>
+            <DialogDescription>
+              Reassign {selectedTasks.length} selected task{selectedTasks.length > 1 ? 's' : ''} to a new assignee.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Search by name or mobile number:</label>
+              <Input
+                placeholder="Search assignees..."
+                value={assigneeSearchTerm}
+                onChange={(e) => setAssigneeSearchTerm(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Select assignee:</label>
+              <Select value={bulkSelectedAssignee} onValueChange={setBulkSelectedAssignee}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select assignee" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border z-50">
+                  <SelectItem value="unassigned">Unassign all tasks</SelectItem>
+                  {filteredAssignees.map((assignee) => (
+                    <SelectItem key={assignee.id} value={assignee.id}>
+                      <div className="flex items-center justify-between w-full">
+                        <span>{assignee.name}</span>
+                        <div className="flex items-center gap-2 ml-2 text-xs text-muted-foreground">
+                          <span>{assignee.mobile}</span>
+                          <Badge variant="outline" className="text-xs">
+                            {assignee.role}
+                          </Badge>
+                        </div>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={cancelBulkAction}>
+              Cancel
+            </Button>
+            <Button onClick={confirmBulkReassign}>
+              {bulkSelectedAssignee === "unassigned" ? 'Unassign Tasks' : 'Reassign Tasks'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       {/* Finish Task Dialog */}
       <Dialog open={!!finishingTask} onOpenChange={(open) => !open && cancelFinishing()}>
@@ -1387,20 +1588,28 @@ export const TodoList = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Search by name or mobile number:</label>
+              <Input
+                placeholder="Search assignees..."
+                value={assigneeSearchTerm}
+                onChange={(e) => setAssigneeSearchTerm(e.target.value)}
+              />
+            </div>
             <Select value={selectedMember} onValueChange={setSelectedMember}>
               <SelectTrigger>
-                <SelectValue placeholder="Select team member" />
+                <SelectValue placeholder="Select assignee" />
               </SelectTrigger>
                <SelectContent className="bg-background border z-50">
                 <SelectItem value="unassigned">No assignment</SelectItem>
-                {adminMembers.map((member) => (
-                  <SelectItem key={member.id} value={member.id}>
+                {filteredAssignees.map((assignee) => (
+                  <SelectItem key={assignee.id} value={assignee.id}>
                     <div className="flex items-center justify-between w-full">
-                      <span>{member.name}</span>
+                      <span>{assignee.name}</span>
                       <div className="flex items-center gap-2 ml-2 text-xs text-muted-foreground">
-                        <span>{member.mobile}</span>
+                        <span>{assignee.mobile}</span>
                         <Badge variant="outline" className="text-xs">
-                          {member.role}
+                          {assignee.role}
                         </Badge>
                       </div>
                     </div>
