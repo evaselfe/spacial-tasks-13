@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,11 +7,22 @@ import { PanchayathManagement } from "@/components/admin/PanchayathManagement";
 import { AgentTestimonialAnalytics } from "@/components/admin/AgentTestimonialAnalytics";
 import { PerformanceReport } from "@/components/admin/PerformanceReport";
 import { TodoList } from "@/components/admin/TodoList";
-import { ArrowLeft, Shield, Settings, BarChart3, MapPin, Users, MessageSquare, TrendingDown, ListTodo } from "lucide-react";
+import { MyTasks } from "@/components/admin/MyTasks";
+import { ArrowLeft, Shield, Settings, BarChart3, MapPin, Users, MessageSquare, TrendingDown, ListTodo, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { User } from "@/lib/authService";
 const TeamAdmin = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("panchayath");
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  // Get current user from localStorage on component mount
+  useEffect(() => {
+    const userData = localStorage.getItem('currentUser');
+    if (userData) {
+      setCurrentUser(JSON.parse(userData));
+    }
+  }, []);
   return <div className="min-h-screen bg-gradient-to-br from-background to-background/95 p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -129,6 +140,13 @@ const TeamAdmin = () => {
             </Card>
           </div>
         </div>
+
+        {/* Assigned Tasks Section - Show for team members */}
+        {currentUser && currentUser.hasAdminAccess && (
+          <div className="mb-6 sm:mb-8">
+            <MyTasks userId={currentUser.id} />
+          </div>
+        )}
 
         {/* Content Area */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
