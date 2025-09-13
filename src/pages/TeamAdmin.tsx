@@ -7,8 +7,7 @@ import { PanchayathManagement } from "@/components/admin/PanchayathManagement";
 import { AgentTestimonialAnalytics } from "@/components/admin/AgentTestimonialAnalytics";
 import { PerformanceReport } from "@/components/admin/PerformanceReport";
 import { TodoList } from "@/components/admin/TodoList";
-import { MyTasks } from "@/components/admin/MyTasks";
-import { ArrowLeft, Shield, Settings, BarChart3, MapPin, Users, MessageSquare, TrendingDown, ListTodo, Clock } from "lucide-react";
+import { ArrowLeft, Shield, Settings, BarChart3, MapPin, Users, MessageSquare, TrendingDown, ListTodo } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { User } from "@/lib/authService";
 const TeamAdmin = () => {
@@ -141,12 +140,6 @@ const TeamAdmin = () => {
           </div>
         </div>
 
-        {/* Assigned Tasks Section - Show for team members */}
-        {currentUser && currentUser.hasAdminAccess && (
-          <div className="mb-6 sm:mb-8">
-            <MyTasks userId={currentUser.id} />
-          </div>
-        )}
 
         {/* Content Area */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

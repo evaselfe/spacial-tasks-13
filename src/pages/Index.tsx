@@ -7,6 +7,7 @@ import { AgentTestimonialProfile } from "@/components/AgentTestimonialProfile";
 import { DailyNote } from "@/components/DailyNote";
 import { CoordinatorReports } from "@/components/CoordinatorReports";
 import { TodoList } from "@/components/admin/TodoList";
+import { MyTasks } from "@/components/admin/MyTasks";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronRight, FileText, CheckSquare } from "lucide-react";
 import { User } from "@/lib/authService";
@@ -87,6 +88,11 @@ const Index = () => {
         {/* Daily Note Feature */}
         <div className="mb-6">
           <DailyNote currentUser={currentUser} />
+        </div>
+
+        {/* Assigned Tasks - Show for team members */}
+        <div className="mb-6">
+          <MyTasks userId={currentUser.id} />
         </div>
 
         {/* Coordinator Reports */}
