@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckCircle, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -86,6 +87,9 @@ export const MyTasks = ({ userId }: MyTasksProps) => {
     );
   }
 
+  const pendingTasks = tasks.filter(task => task.status === 'unfinished');
+  const finishedTasks = tasks.filter(task => task.status === 'finished');
+
   return (
     <Card className="glass-card">
       <CardHeader>
@@ -104,11 +108,48 @@ export const MyTasks = ({ userId }: MyTasksProps) => {
             </p>
           </div>
         ) : (
-          <div>
-            {tasks.map((task) => (
-              <TaskItem key={task.id} task={task} />
-            ))}
-          </div>
+          <Tabs defaultValue="pending" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="pending" className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                Pending ({pendingTasks.length})
+              </TabsTrigger>
+              <TabsTrigger value="finished" className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4" />
+                Finished ({finishedTasks.length})
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="pending" className="mt-4">
+              {pendingTasks.length === 0 ? (
+                <div className="text-center py-8">
+                  <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No pending tasks.</p>
+                </div>
+              ) : (
+                <div>
+                  {pendingTasks.map((task) => (
+                    <TaskItem key={task.id} task={task} />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="finished" className="mt-4">
+              {finishedTasks.length === 0 ? (
+                <div className="text-center py-8">
+                  <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No finished tasks.</p>
+                </div>
+              ) : (
+                <div>
+                  {finishedTasks.map((task) => (
+                    <TaskItem key={task.id} task={task} />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         )}
       </CardContent>
     </Card>
