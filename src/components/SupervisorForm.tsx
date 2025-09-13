@@ -118,10 +118,16 @@ export const SupervisorForm = ({ selectedPanchayath: preSelectedPanchayath, edit
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !mobile.trim() || !coordinatorId || selectedWards.length === 0 || !panchayathId) {
+    
+    // For editing, get panchayath ID from either editing data or state
+    const effectivePanchayathId = isEditing ? (editingSupervisor?.panchayath_id || panchayathId) : panchayathId;
+    
+    if (!name.trim() || !mobile.trim() || !coordinatorId || selectedWards.length === 0 || (!effectivePanchayathId && !isEditing)) {
       toast({
         title: "Error",
-        description: "Please fill in all fields, select a panchayath, and select at least one ward",
+        description: isEditing 
+          ? "Please fill in all fields and select at least one ward"
+          : "Please fill in all fields, select a panchayath, and select at least one ward",
         variant: "destructive",
       });
       return;

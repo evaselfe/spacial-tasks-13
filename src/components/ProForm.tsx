@@ -103,10 +103,16 @@ export const ProForm = ({ selectedPanchayath: preSelectedPanchayath, editingPro,
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !mobile.trim() || !ward || !groupLeaderId || !panchayathId) {
+    
+    // For editing, get panchayath ID from either editing data or state
+    const effectivePanchayathId = isEditing ? (editingPro?.panchayath_id || panchayathId) : panchayathId;
+    
+    if (!name.trim() || !mobile.trim() || !ward || !groupLeaderId || (!effectivePanchayathId && !isEditing)) {
       toast({
         title: "Error",
-        description: "Please fill in all fields and select a panchayath",
+        description: isEditing 
+          ? "Please fill in all fields"
+          : "Please fill in all fields and select a panchayath",
         variant: "destructive",
       });
       return;

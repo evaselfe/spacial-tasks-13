@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -137,6 +137,9 @@ export const UserProfile = ({ currentUser, onUserUpdate }: UserProfileProps) => 
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Edit Profile</DialogTitle>
+                <DialogDescription>
+                  Update your profile information
+                </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleUpdate} className="space-y-4">
                 <div className="space-y-2">

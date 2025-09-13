@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -84,6 +84,9 @@ export const AgentDailyNotes = ({
             <FileText className="h-5 w-5" />
             Daily Notes History
           </DialogTitle>
+          <DialogDescription>
+            View and manage daily notes for this agent
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">
