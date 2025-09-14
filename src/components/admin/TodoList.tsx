@@ -94,6 +94,8 @@ export const TodoList = () => {
   const [reassigneeType, setReassigneeType] = useState<'coordinator' | 'supervisor'>('coordinator');
   const { toast } = useToast();
 
+  const isRequested = (task: Task) => task.status !== 'finished' && (task.remarks?.toLowerCase().includes('requested completion') ?? false);
+
   // Load tasks from database
   useEffect(() => {
     loadTasks();
@@ -882,7 +884,7 @@ export const TodoList = () => {
     return filteredTasks;
   };
 
-  const unfinishedTasks = filterTasks(tasks.filter(task => task.status === 'unfinished' || task.status === 'requested'));
+  const unfinishedTasks = filterTasks(tasks.filter(task => task.status === 'unfinished'));
   const finishedTasks = filterTasks(tasks.filter(task => task.status === 'finished'));
 
   // Clear selection when changing tabs
@@ -1087,9 +1089,9 @@ export const TodoList = () => {
                               <div className="flex items-center gap-2 mt-1">
                                 <Badge variant={
                                   task.status === 'finished' ? 'default' : 
-                                  task.status === 'requested' ? 'destructive' : 'secondary'
-                                } className={task.status === 'requested' ? 'bg-orange-500 hover:bg-orange-600' : ''}>
-                                  {task.status === 'requested' ? 'Requested' : task.status}
+                                  isRequested(task) ? 'destructive' : 'secondary'
+                                } className={isRequested(task) ? 'bg-orange-500 hover:bg-orange-600' : ''}>
+                                  {isRequested(task) ? 'Requested' : task.status}
                                 </Badge>
                                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                                   <Clock className="h-3 w-3" />
@@ -1243,9 +1245,9 @@ export const TodoList = () => {
                             <TableCell>
                                <Badge variant={
                                  task.status === 'finished' ? 'secondary' : 
-                                 task.status === 'requested' ? 'destructive' : 'outline'
-                               } className={task.status === 'requested' ? 'bg-orange-500 hover:bg-orange-600' : ''}>
-                                 {task.status === 'requested' ? 'Requested' : task.status}
+                                 isRequested(task) ? 'destructive' : 'outline'
+                               } className={isRequested(task) ? 'bg-orange-500 hover:bg-orange-600' : ''}>
+                                 {isRequested(task) ? 'Requested' : task.status}
                                </Badge>
                             </TableCell>
                              <TableCell>
@@ -1499,9 +1501,9 @@ export const TodoList = () => {
                             <TableCell>
                                <Badge variant={
                                  task.status === 'finished' ? 'default' : 
-                                 task.status === 'requested' ? 'destructive' : 'secondary'
-                               } className={task.status === 'requested' ? 'bg-orange-500 hover:bg-orange-600' : ''}>
-                                 {task.status === 'requested' ? 'Requested' : task.status}
+                                 isRequested(task) ? 'destructive' : 'secondary'
+                               } className={isRequested(task) ? 'bg-orange-500 hover:bg-orange-600' : ''}>
+                                 {isRequested(task) ? 'Requested' : task.status}
                                </Badge>
                             </TableCell>
                              <TableCell>

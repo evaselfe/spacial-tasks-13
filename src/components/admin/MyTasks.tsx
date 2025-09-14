@@ -80,7 +80,7 @@ function TaskItem({
   onRequestFinish,
   onFinishTask,
 }: TaskItemProps) {
-  const isRequested = task.status === 'requested';
+  const isRequested = task.status !== 'finished' && (task.remarks?.toLowerCase().includes('requested completion') ?? false);
   
   return (
     <div className={`flex items-start justify-between gap-3 p-3 rounded-lg border mb-2 ${
@@ -185,7 +185,7 @@ function TaskItem({
             Request to Finish
           </Button>
         )}
-        {userTable === 'admin_members' && task.status === 'requested' && onFinishTask && (
+        {userTable === 'admin_members' && isRequested && onFinishTask && (
           <Button
             variant="outline"
             size="sm"
@@ -198,10 +198,10 @@ function TaskItem({
         )}
         <Badge variant={
           task.status === 'finished' ? 'secondary' : 
-          task.status === 'requested' ? 'destructive' : 'outline'
-        } className={task.status === 'requested' ? 'bg-orange-500 hover:bg-orange-600' : ''}>
+          isRequested ? 'destructive' : 'outline'
+        } className={isRequested ? 'bg-orange-500 hover:bg-orange-600' : ''}>
           {task.status === 'finished' ? 'Finished' : 
-           task.status === 'requested' ? 'Requested' : 'Pending'}
+           isRequested ? 'Requested' : 'Pending'}
         </Badge>
       </div>
     </div>
@@ -519,20 +519,26 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
 
   const handleRequestFinish = async (taskId: string) => {
     try {
-      // Update the task status to requested and add completion remarks
+      // Only add a "requested completion" marker to remarks; keep status as 'unfinished'
+      const marker = `${userRole === 'coordinator' ? 'Coordinator' : 'Supervisor'} requested completion - Awaiting final approval`;
+      const current = tasks.find(t => t.id === taskId);
+      const alreadyRequested = current?.remarks?.toLowerCase().includes('requested completion');
+      const newRemarks = alreadyRequested
+        ? current?.remarks || marker
+        : current?.remarks
+          ? `${current.remarks} | ${marker}`
+          : marker;
+
       const { error } = await supabase
         .from('todos')
-        .update({ 
-          status: 'requested',
-          remarks: `${userRole === 'coordinator' ? 'Coordinator' : 'Supervisor'} requested completion - Awaiting final approval`
-        })
+        .update({ remarks: newRemarks })
         .eq('id', taskId);
 
       if (error) throw error;
 
       toast({
         title: "Request Sent",
-        description: "Task marked as completed - awaiting team member approval."
+        description: "Task marked as requested - awaiting team member approval."
       });
       
       // Refresh tasks by refetching
@@ -638,7 +644,7 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
     );
   }
 
-  const pendingTasks = tasks.filter(task => task.status === 'unfinished' || task.status === 'requested');
+  const pendingTasks = tasks.filter(task => task.status === 'unfinished');
   const finishedTasks = tasks.filter(task => task.status === 'finished');
 
   return (
