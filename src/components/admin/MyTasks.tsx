@@ -457,7 +457,7 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
                 <label className="text-sm font-medium">Remarks:</label>
                 <Textarea
                   value={newRemarks}
-                  onChange={(e) => setNewRemarks(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewRemarks(e.target.value)}
                   placeholder="Add your remarks here..."
                   className="mt-2"
                   rows={4}
