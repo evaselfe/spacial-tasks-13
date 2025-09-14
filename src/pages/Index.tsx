@@ -82,12 +82,6 @@ const Index = () => {
           <DailyNote currentUser={currentUser} />
         </div>
 
-        {/* Panchayath Management - Show for admin users */}
-        {currentUser.hasAdminAccess && (
-          <div className="mb-6">
-            <PanchayathManagement />
-          </div>
-        )}
 
         {/* Agent Management - Show for admin users and coordinators */}
         {(currentUser.hasAdminAccess || currentUser.role === 'coordinator') && (
