@@ -26,6 +26,7 @@ interface Task {
   remarks: string | null;
   created_at: string;
   finished_at?: string | null;
+  assigned_to?: string | null;
   reassigned_to_coordinator?: string | null;
   reassigned_to_supervisor?: string | null;
   reassigned_coordinator?: {
@@ -34,6 +35,11 @@ interface Task {
     mobile_number: string;
   } | null;
   reassigned_supervisor?: {
+    id: string;
+    name: string;
+    mobile_number: string;
+  } | null;
+  assigned_by?: {
     id: string;
     name: string;
     mobile_number: string;
@@ -91,6 +97,7 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
           (data || []).map(async (task) => {
             let reassigned_coordinator = null;
             let reassigned_supervisor = null;
+            let assigned_by = null;
             const taskAny = task as any;
 
             if (taskAny.reassigned_to_coordinator) {
@@ -111,6 +118,16 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
               reassigned_supervisor = supervisorData;
             }
 
+            // For agents, get the team member who assigned the task
+            if ((userRole === 'coordinator' || userRole === 'supervisor') && taskAny.assigned_to) {
+              const { data: teamMemberData } = await supabase
+                .from('admin_members')
+                .select('id, name, mobile_number')
+                .eq('id', taskAny.assigned_to)
+                .single();
+              assigned_by = teamMemberData;
+            }
+
             return {
               id: task.id,
               text: task.text,
@@ -118,10 +135,12 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
               remarks: task.remarks,
               created_at: task.created_at,
               finished_at: task.finished_at,
+              assigned_to: taskAny.assigned_to || null,
               reassigned_to_coordinator: taskAny.reassigned_to_coordinator || null,
               reassigned_to_supervisor: taskAny.reassigned_to_supervisor || null,
               reassigned_coordinator,
-              reassigned_supervisor
+              reassigned_supervisor,
+              assigned_by
             };
           })
         );
@@ -265,6 +284,7 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
             (data || []).map(async (task) => {
               let reassigned_coordinator = null;
               let reassigned_supervisor = null;
+              let assigned_by = null;
               const taskAny = task as any;
 
               if (taskAny.reassigned_to_coordinator) {
@@ -285,6 +305,16 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
                 reassigned_supervisor = supervisorData;
               }
 
+              // For agents, get the team member who assigned the task
+              if ((userRole === 'coordinator' || userRole === 'supervisor') && taskAny.assigned_to) {
+                const { data: teamMemberData } = await supabase
+                  .from('admin_members')
+                  .select('id, name, mobile_number')
+                  .eq('id', taskAny.assigned_to)
+                  .single();
+                assigned_by = teamMemberData;
+              }
+
               return {
                 id: task.id,
                 text: task.text,
@@ -292,10 +322,12 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
                 remarks: task.remarks,
                 created_at: task.created_at,
                 finished_at: task.finished_at,
+                assigned_to: taskAny.assigned_to || null,
                 reassigned_to_coordinator: taskAny.reassigned_to_coordinator || null,
                 reassigned_to_supervisor: taskAny.reassigned_to_supervisor || null,
                 reassigned_coordinator,
-                reassigned_supervisor
+                reassigned_supervisor,
+                assigned_by
               };
             })
           );
@@ -389,7 +421,7 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
                   )
                 ) : (
                   // For agents: show "Reassigned from team member"
-                  <>Reassigned from <span className="text-secondary font-medium">Team Member</span></>
+                  <>Reassigned from <span className="text-secondary font-medium">{task.assigned_by?.name || 'Team Member'}</span> {task.assigned_by?.mobile_number && `(${task.assigned_by.mobile_number})`}</>
                 )}
               </Badge>
             </div>
