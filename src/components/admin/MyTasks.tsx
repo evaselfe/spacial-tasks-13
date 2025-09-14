@@ -380,10 +380,16 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
           {(task.reassigned_coordinator || task.reassigned_supervisor) && (
             <div className="flex items-center gap-2 mt-2">
               <Badge variant="secondary" className="text-xs">
-                {task.reassigned_coordinator ? (
-                  <>Reassigned to Coordinator: {task.reassigned_coordinator.name}</>
+                {userTable === 'admin_members' ? (
+                  // For team members: show "Reassigned to"
+                  task.reassigned_coordinator ? (
+                    <>Reassigned to <span className="text-primary font-medium">{task.reassigned_coordinator.name}</span> ({task.reassigned_coordinator.mobile_number})</>
+                  ) : (
+                    <>Reassigned to <span className="text-primary font-medium">{task.reassigned_supervisor?.name}</span> ({task.reassigned_supervisor?.mobile_number})</>
+                  )
                 ) : (
-                  <>Reassigned to Supervisor: {task.reassigned_supervisor?.name}</>
+                  // For agents: show "Reassigned from team member"
+                  <>Reassigned from <span className="text-secondary font-medium">Team Member</span></>
                 )}
               </Badge>
             </div>
@@ -400,7 +406,7 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
               variant="ghost"
               size="sm"
               onClick={() => openRemarksDialog(task)}
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 text-primary hover:text-primary/80"
               title="Add/Edit Remarks"
             >
               <MessageSquare className="h-4 w-4" />
@@ -446,7 +452,7 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
           variant="ghost"
           size="sm"
           onClick={() => startReassigning(task)}
-          className="h-8 w-8 p-0"
+          className="h-8 w-8 p-0 text-secondary hover:text-secondary/80"
           title={task.reassigned_coordinator || task.reassigned_supervisor ? "Change Reassignment" : "Reassign Task"}
         >
           <RefreshCcw className="h-4 w-4" />
