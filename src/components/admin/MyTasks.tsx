@@ -64,6 +64,7 @@ interface TaskItemProps {
   onSaveRemarks: (taskId: string, remarks: string) => void;
   onStartReassign: (task: Task) => void;
   onRequestFinish?: (taskId: string) => void;
+  onFinishTask?: (taskId: string) => void;
 }
 
 function TaskItem({
@@ -77,9 +78,14 @@ function TaskItem({
   onSaveRemarks,
   onStartReassign,
   onRequestFinish,
+  onFinishTask,
 }: TaskItemProps) {
+  const isCompletionRequest = task.remarks?.includes('completed - Awaiting final approval');
+  
   return (
-    <div className="flex items-start justify-between gap-3 p-3 rounded-lg border bg-card mb-2">
+    <div className={`flex items-start justify-between gap-3 p-3 rounded-lg border mb-2 ${
+      isCompletionRequest ? 'bg-green-50 border-green-200' : 'bg-card'
+    }`}>
       <div className="flex items-start gap-3 flex-1">
         {task.status === 'finished' ? (
           <CheckCircle className="h-5 w-5 text-primary" />
@@ -177,6 +183,17 @@ function TaskItem({
           >
             <Bell className="h-4 w-4" />
             Request to Finish
+          </Button>
+        )}
+        {userTable === 'admin_members' && isCompletionRequest && task.status === 'unfinished' && onFinishTask && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onFinishTask(task.id)}
+            className="flex items-center gap-2 text-green-600 hover:text-green-700 border-green-200"
+          >
+            <CheckCircle className="h-4 w-4" />
+            Finish Task
           </Button>
         )}
         <Badge variant={task.status === 'finished' ? 'secondary' : 'outline'}>
@@ -498,33 +515,64 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
 
   const handleRequestFinish = async (taskId: string) => {
     try {
-      const task = tasks.find(t => t.id === taskId);
-      if (!task || !task.assigned_to) return;
-
-      // Create a notification record for the team member who originally has this task
-      const { error: notificationError } = await supabase
+      // Update the task to indicate completion request
+      const { error } = await supabase
         .from('todos')
-        .insert({
-          text: `${userRole === 'coordinator' ? 'Coordinator' : 'Supervisor'} has completed task: "${task.text}" - Please review and mark as finished if appropriate.`,
-          assigned_to: task.assigned_to,
-          status: 'unfinished',
-          remarks: `Completion notification from ${userRole}`
-        });
+        .update({ 
+          remarks: `${userRole === 'coordinator' ? 'Coordinator' : 'Supervisor'} completed - Awaiting final approval`
+        })
+        .eq('id', taskId);
 
-      if (notificationError) {
-        console.error('Error creating notification:', notificationError);
-        throw notificationError;
-      }
+      if (error) throw error;
 
       toast({
         title: "Request Sent",
-        description: "The team member has been notified that you completed the task."
+        description: "Task marked as completed - awaiting team member approval."
       });
+      
+      // Refresh tasks by refetching
+      const { data: updatedTasks } = await supabase
+        .from('todos')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (updatedTasks) setTasks(updatedTasks as Task[]);
     } catch (error) {
       console.error('Error sending completion request:', error);
       toast({
-        title: "Error",
+        title: "Error", 
         description: "Failed to send completion request. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleFinishTask = async (taskId: string) => {
+    try {
+      const { error } = await supabase
+        .from('todos')
+        .update({ status: 'finished' })
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Task Finished",
+        description: "Task has been marked as completed."
+      });
+      
+      // Refresh tasks
+      const { data: updatedTasks } = await supabase
+        .from('todos')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (updatedTasks) setTasks(updatedTasks as Task[]);
+    } catch (error) {
+      console.error('Error finishing task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to finish task. Please try again.",
         variant: "destructive"
       });
     }
@@ -644,6 +692,7 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
                       onSaveRemarks={handleUpdateRemarks}
                       onStartReassign={startReassigning}
                       onRequestFinish={handleRequestFinish}
+                      onFinishTask={handleFinishTask}
                     />
                   ))}
                 </div>
@@ -671,6 +720,7 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
                       onSaveRemarks={handleUpdateRemarks}
                       onStartReassign={startReassigning}
                       onRequestFinish={handleRequestFinish}
+                      onFinishTask={handleFinishTask}
                     />
                   ))}
                 </div>
