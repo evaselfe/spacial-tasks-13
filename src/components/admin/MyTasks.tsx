@@ -480,15 +480,18 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
           </DialogContent>
         </Dialog>
         
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => startReassigning(task)}
-          className="h-8 w-8 p-0 text-secondary hover:text-secondary/80"
-          title={task.reassigned_coordinator || task.reassigned_supervisor ? "Change Reassignment" : "Reassign Task"}
-        >
-          <RefreshCcw className="h-4 w-4" />
-        </Button>
+        {/* Only team members (admin_members) can reassign tasks */}
+        {userTable === 'admin_members' && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => startReassigning(task)}
+            className="h-8 w-8 p-0 text-secondary hover:text-secondary/80"
+            title={task.reassigned_coordinator || task.reassigned_supervisor ? "Change Reassignment" : "Reassign Task"}
+          >
+            <RefreshCcw className="h-4 w-4" />
+          </Button>
+        )}
         
         <Badge variant={task.status === 'finished' ? 'secondary' : 'outline'}>
           {task.status === 'finished' ? 'Finished' : 'Pending'}
