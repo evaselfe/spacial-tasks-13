@@ -431,17 +431,17 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
         <Dialog open={editingTask === task.id} onOpenChange={(open) => !open && setEditingTask(null)}>
           <DialogTrigger asChild>
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={() => openRemarksDialog(task)}
-              className="h-8 w-8 p-0 text-primary hover:text-primary/80"
-              title="Add/Edit Remarks"
+              className="flex items-center gap-2 text-primary hover:text-primary/80"
             >
               <MessageSquare className="h-4 w-4" />
+              Remarks
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
@@ -483,13 +483,13 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
         {/* Only team members (admin_members) can reassign tasks */}
         {userTable === 'admin_members' && (
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={() => startReassigning(task)}
-            className="h-8 w-8 p-0 text-secondary hover:text-secondary/80"
-            title={task.reassigned_coordinator || task.reassigned_supervisor ? "Change Reassignment" : "Reassign Task"}
+            className="flex items-center gap-2 text-secondary hover:text-secondary/80"
           >
             <RefreshCcw className="h-4 w-4" />
+            {task.reassigned_coordinator || task.reassigned_supervisor ? "Change Assignment" : "Reassign Task"}
           </Button>
         )}
         
