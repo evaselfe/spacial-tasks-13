@@ -89,8 +89,8 @@ const Index = () => {
           </div>
         )}
 
-        {/* Agent Management - Show for admin users */}
-        {currentUser.hasAdminAccess && (
+        {/* Agent Management - Show for admin users and coordinators */}
+        {(currentUser.hasAdminAccess || currentUser.role === 'coordinator') && (
           <div className="mb-6">
             <TaskManagement currentUser={currentUser} />
           </div>
