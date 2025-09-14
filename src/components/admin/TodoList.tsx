@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 interface Task {
   id: string;
   text: string;
-  status: 'finished' | 'unfinished';
+  status: 'finished' | 'unfinished' | 'requested';
   remarks: string | null;
   created_at: string;
   finished_at?: string | null;
@@ -148,20 +148,20 @@ export const TodoList = () => {
             reassigned_supervisor = supervisorData;
           }
           
-          return {
-            id: task.id,
-            text: task.text,
-            status: task.status as 'finished' | 'unfinished',
-            remarks: task.remarks,
-            created_at: task.created_at,
-            finished_at: task.finished_at,
-            assigned_to: taskAny.assigned_to || null,
-            reassigned_to_coordinator: taskAny.reassigned_to_coordinator || null,
-            reassigned_to_supervisor: taskAny.reassigned_to_supervisor || null,
-            assigned_member,
-            reassigned_coordinator,
-            reassigned_supervisor
-          };
+            return {
+              id: task.id,
+              text: task.text,
+              status: task.status as 'finished' | 'unfinished' | 'requested',
+              remarks: task.remarks,
+              created_at: task.created_at,
+              finished_at: task.finished_at,
+              assigned_to: taskAny.assigned_to || null,
+              reassigned_to_coordinator: taskAny.reassigned_to_coordinator || null,
+              reassigned_to_supervisor: taskAny.reassigned_to_supervisor || null,
+              assigned_member,
+              reassigned_coordinator,
+              reassigned_supervisor
+            };
         })
       );
       
@@ -355,7 +355,7 @@ export const TodoList = () => {
     }
   };
 
-  const updateTaskStatus = async (taskId: string, status: 'finished' | 'unfinished', remarks: string) => {
+  const updateTaskStatus = async (taskId: string, status: 'finished' | 'unfinished' | 'requested', remarks: string) => {
     try {
       const updateData: any = { 
         status, 
@@ -882,7 +882,7 @@ export const TodoList = () => {
     return filteredTasks;
   };
 
-  const unfinishedTasks = filterTasks(tasks.filter(task => task.status === 'unfinished'));
+  const unfinishedTasks = filterTasks(tasks.filter(task => task.status === 'unfinished' || task.status === 'requested'));
   const finishedTasks = filterTasks(tasks.filter(task => task.status === 'finished'));
 
   // Clear selection when changing tabs
@@ -1085,8 +1085,11 @@ export const TodoList = () => {
                                 {task.text}
                               </span>
                               <div className="flex items-center gap-2 mt-1">
-                                <Badge variant={task.status === 'finished' ? 'default' : 'secondary'}>
-                                  {task.status}
+                                <Badge variant={
+                                  task.status === 'finished' ? 'default' : 
+                                  task.status === 'requested' ? 'destructive' : 'secondary'
+                                } className={task.status === 'requested' ? 'bg-orange-500 hover:bg-orange-600' : ''}>
+                                  {task.status === 'requested' ? 'Requested' : task.status}
                                 </Badge>
                                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                                   <Clock className="h-3 w-3" />
@@ -1238,7 +1241,12 @@ export const TodoList = () => {
                                  )}
                                </TableCell>
                             <TableCell>
-                              <Badge variant="secondary">{task.status}</Badge>
+                               <Badge variant={
+                                 task.status === 'finished' ? 'secondary' : 
+                                 task.status === 'requested' ? 'destructive' : 'outline'
+                               } className={task.status === 'requested' ? 'bg-orange-500 hover:bg-orange-600' : ''}>
+                                 {task.status === 'requested' ? 'Requested' : task.status}
+                               </Badge>
                             </TableCell>
                              <TableCell>
                                <div className="space-y-1">
@@ -1489,7 +1497,12 @@ export const TodoList = () => {
                                  )}
                                </TableCell>
                             <TableCell>
-                              <Badge variant="default">{task.status}</Badge>
+                               <Badge variant={
+                                 task.status === 'finished' ? 'default' : 
+                                 task.status === 'requested' ? 'destructive' : 'secondary'
+                               } className={task.status === 'requested' ? 'bg-orange-500 hover:bg-orange-600' : ''}>
+                                 {task.status === 'requested' ? 'Requested' : task.status}
+                               </Badge>
                             </TableCell>
                              <TableCell>
                                <div className="space-y-1">

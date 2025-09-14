@@ -17,7 +17,7 @@ interface MyTasksProps {
   userTable?: string;
 }
 
-type TaskStatus = 'finished' | 'unfinished';
+type TaskStatus = 'finished' | 'unfinished' | 'requested';
 
 interface Task {
   id: string;
@@ -80,11 +80,11 @@ function TaskItem({
   onRequestFinish,
   onFinishTask,
 }: TaskItemProps) {
-  const isCompletionRequest = task.remarks?.includes('completed - Awaiting final approval');
+  const isRequested = task.status === 'requested';
   
   return (
     <div className={`flex items-start justify-between gap-3 p-3 rounded-lg border mb-2 ${
-      isCompletionRequest ? 'bg-green-50 border-green-200' : 'bg-card'
+      isRequested ? 'bg-orange-50 border-orange-200' : 'bg-card'
     }`}>
       <div className="flex items-start gap-3 flex-1">
         {task.status === 'finished' ? (
@@ -185,7 +185,7 @@ function TaskItem({
             Request to Finish
           </Button>
         )}
-        {userTable === 'admin_members' && isCompletionRequest && task.status === 'unfinished' && onFinishTask && (
+        {userTable === 'admin_members' && task.status === 'requested' && onFinishTask && (
           <Button
             variant="outline"
             size="sm"
@@ -196,8 +196,12 @@ function TaskItem({
             Finish Task
           </Button>
         )}
-        <Badge variant={task.status === 'finished' ? 'secondary' : 'outline'}>
-          {task.status === 'finished' ? 'Finished' : 'Pending'}
+        <Badge variant={
+          task.status === 'finished' ? 'secondary' : 
+          task.status === 'requested' ? 'destructive' : 'outline'
+        } className={task.status === 'requested' ? 'bg-orange-500 hover:bg-orange-600' : ''}>
+          {task.status === 'finished' ? 'Finished' : 
+           task.status === 'requested' ? 'Requested' : 'Pending'}
         </Badge>
       </div>
     </div>
@@ -515,11 +519,12 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
 
   const handleRequestFinish = async (taskId: string) => {
     try {
-      // Update the task to indicate completion request
+      // Update the task status to requested and add completion remarks
       const { error } = await supabase
         .from('todos')
         .update({ 
-          remarks: `${userRole === 'coordinator' ? 'Coordinator' : 'Supervisor'} completed - Awaiting final approval`
+          status: 'requested',
+          remarks: `${userRole === 'coordinator' ? 'Coordinator' : 'Supervisor'} requested completion - Awaiting final approval`
         })
         .eq('id', taskId);
 
@@ -633,7 +638,7 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
     );
   }
 
-  const pendingTasks = tasks.filter(task => task.status === 'unfinished');
+  const pendingTasks = tasks.filter(task => task.status === 'unfinished' || task.status === 'requested');
   const finishedTasks = tasks.filter(task => task.status === 'finished');
 
   return (
