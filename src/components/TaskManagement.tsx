@@ -48,8 +48,23 @@ export const TaskManagement = ({ currentUser }: TaskManagementProps) => {
           <CardTitle className="text-primary text-sm">Agent Management (Please create panchayath first from Admin Panel)</CardTitle>
         </CardHeader>
         <CardContent className="p-6">
+          <Card className="border border-supervisor/20 bg-supervisor/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-supervisor"></div>
+                Select Panchayath to Manage Agents
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PanchayathSelector 
+                key={refreshKey} 
+                onPanchayathSelect={handlePanchayathSelect} 
+                onPanchayathEdit={() => {}} 
+              />
+            </CardContent>
+          </Card>
 
-          <div className="mt-8 space-y-6">
+          {selectedPanchayath && <div className="mt-8 space-y-6">
               <Card className="border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
                 <CardHeader>
                   <CardTitle className="text-xl">
@@ -113,7 +128,7 @@ export const TaskManagement = ({ currentUser }: TaskManagementProps) => {
                   </div>
                 </CardContent>
               </Card>
-            </div>
+            </div>}
         </CardContent>
       </Card>
     </div>;
