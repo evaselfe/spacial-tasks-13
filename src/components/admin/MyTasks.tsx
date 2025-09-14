@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { CheckCircle, Clock, MessageSquare, RefreshCcw } from "lucide-react";
+import { CheckCircle, Clock, MessageSquare, RefreshCcw, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -63,6 +63,7 @@ interface TaskItemProps {
   onChangeRemarks: (value: string) => void;
   onSaveRemarks: (taskId: string, remarks: string) => void;
   onStartReassign: (task: Task) => void;
+  onRequestFinish?: (taskId: string) => void;
 }
 
 function TaskItem({
@@ -75,6 +76,7 @@ function TaskItem({
   onChangeRemarks,
   onSaveRemarks,
   onStartReassign,
+  onRequestFinish,
 }: TaskItemProps) {
   return (
     <div className="flex items-start justify-between gap-3 p-3 rounded-lg border bg-card mb-2">
@@ -164,6 +166,17 @@ function TaskItem({
           >
             <RefreshCcw className="h-4 w-4" />
             {task.reassigned_coordinator || task.reassigned_supervisor ? "Change Assignment" : "Reassign Task"}
+          </Button>
+        )}
+        {userTable !== 'admin_members' && task.status === 'unfinished' && onRequestFinish && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onRequestFinish(task.id)}
+            className="flex items-center gap-2 text-accent hover:text-accent/80"
+          >
+            <Bell className="h-4 w-4" />
+            Request to Finish
           </Button>
         )}
         <Badge variant={task.status === 'finished' ? 'secondary' : 'outline'}>
@@ -483,6 +496,40 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
     setNewRemarks(task.remarks || "");
   };
 
+  const handleRequestFinish = async (taskId: string) => {
+    try {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task || !task.assigned_to) return;
+
+      // Create a notification record for the team member who originally has this task
+      const { error: notificationError } = await supabase
+        .from('todos')
+        .insert({
+          text: `${userRole === 'coordinator' ? 'Coordinator' : 'Supervisor'} has completed task: "${task.text}" - Please review and mark as finished if appropriate.`,
+          assigned_to: task.assigned_to,
+          status: 'unfinished',
+          remarks: `Completion notification from ${userRole}`
+        });
+
+      if (notificationError) {
+        console.error('Error creating notification:', notificationError);
+        throw notificationError;
+      }
+
+      toast({
+        title: "Request Sent",
+        description: "The team member has been notified that you completed the task."
+      });
+    } catch (error) {
+      console.error('Error sending completion request:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send completion request. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const startReassigning = (task: Task) => {
     setReassigningTask(task.id);
     setAssigneeSearchTerm('');
@@ -596,6 +643,7 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
                       onChangeRemarks={setNewRemarks}
                       onSaveRemarks={handleUpdateRemarks}
                       onStartReassign={startReassigning}
+                      onRequestFinish={handleRequestFinish}
                     />
                   ))}
                 </div>
@@ -622,6 +670,7 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
                       onChangeRemarks={setNewRemarks}
                       onSaveRemarks={handleUpdateRemarks}
                       onStartReassign={startReassigning}
+                      onRequestFinish={handleRequestFinish}
                     />
                   ))}
                 </div>
