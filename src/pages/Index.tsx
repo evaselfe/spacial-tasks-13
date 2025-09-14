@@ -6,6 +6,7 @@ import { DailyNote } from "@/components/DailyNote";
 import { CoordinatorReports } from "@/components/CoordinatorReports";
 import { MyTasks } from "@/components/admin/MyTasks";
 import { PanchayathManagement } from "@/components/admin/PanchayathManagement";
+import { TaskManagement } from "@/components/TaskManagement";
 import { FileText } from "lucide-react";
 import { User } from "@/lib/authService";
 import { useToast } from "@/hooks/use-toast";
@@ -85,6 +86,13 @@ const Index = () => {
         {currentUser.hasAdminAccess && (
           <div className="mb-6">
             <PanchayathManagement />
+          </div>
+        )}
+
+        {/* Agent Management - Show for admin users */}
+        {currentUser.hasAdminAccess && (
+          <div className="mb-6">
+            <TaskManagement currentUser={currentUser} />
           </div>
         )}
 
