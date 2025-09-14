@@ -53,6 +53,127 @@ interface Assignee {
   type: 'coordinator' | 'supervisor';
 }
 
+interface TaskItemProps {
+  task: Task;
+  userTable?: string;
+  editingTaskId: string | null;
+  newRemarks: string;
+  onOpenRemarks: (task: Task) => void;
+  onCloseRemarks: () => void;
+  onChangeRemarks: (value: string) => void;
+  onSaveRemarks: (taskId: string, remarks: string) => void;
+  onStartReassign: (task: Task) => void;
+}
+
+function TaskItem({
+  task,
+  userTable,
+  editingTaskId,
+  newRemarks,
+  onOpenRemarks,
+  onCloseRemarks,
+  onChangeRemarks,
+  onSaveRemarks,
+  onStartReassign,
+}: TaskItemProps) {
+  return (
+    <div className="flex items-start justify-between gap-3 p-3 rounded-lg border bg-card mb-2">
+      <div className="flex items-start gap-3 flex-1">
+        {task.status === 'finished' ? (
+          <CheckCircle className="h-5 w-5 text-primary" />
+        ) : (
+          <Clock className="h-5 w-5 text-muted-foreground" />
+        )}
+        <div className="flex-1">
+          <p className="font-medium text-foreground">{task.text}</p>
+          {task.remarks && <p className="text-sm text-muted-foreground mt-1">{task.remarks}</p>}
+          {(task.reassigned_coordinator || task.reassigned_supervisor) && (
+            <div className="flex items-center gap-2 mt-2">
+              <Badge variant="secondary" className="text-xs">
+                {userTable === 'admin_members' ? (
+                  task.reassigned_coordinator ? (
+                    <>Reassigned to <span className="text-primary font-medium">{task.reassigned_coordinator.name}</span> ({task.reassigned_coordinator.mobile_number})</>
+                  ) : (
+                    <>Reassigned to <span className="text-primary font-medium">{task.reassigned_supervisor?.name}</span> ({task.reassigned_supervisor?.mobile_number})</>
+                  )
+                ) : (
+                  <>Reassigned from <span className="text-secondary font-medium">{task.assigned_by?.name || 'Team Member'}</span> {task.assigned_by?.mobile_number && `(${task.assigned_by.mobile_number})`}</>
+                )}
+              </Badge>
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground mt-1">
+            {new Date(task.created_at).toLocaleString()}
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
+        <Dialog open={editingTaskId === task.id} onOpenChange={(open) => !open && onCloseRemarks()}>
+          <DialogTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onOpenRemarks(task)}
+              className="flex items-center gap-2 text-primary hover:text-primary/80"
+            >
+              <MessageSquare className="h-4 w-4" />
+              Remarks
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add/Edit Remarks</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium mb-2">Task:</p>
+                <p className="text-sm text-muted-foreground">{task.text}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Remarks:</label>
+                <Textarea
+                  value={newRemarks}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onChangeRemarks(e.target.value)}
+                  placeholder="Add your remarks here..."
+                  className="mt-2"
+                  rows={4}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={onCloseRemarks}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => onSaveRemarks(task.id, newRemarks)}
+                >
+                  Save Remarks
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+        {userTable === 'admin_members' && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onStartReassign(task)}
+            className="flex items-center gap-2 text-secondary hover:text-secondary/80"
+          >
+            <RefreshCcw className="h-4 w-4" />
+            {task.reassigned_coordinator || task.reassigned_supervisor ? "Change Assignment" : "Reassign Task"}
+          </Button>
+        )}
+        <Badge variant={task.status === 'finished' ? 'secondary' : 'outline'}>
+          {task.status === 'finished' ? 'Finished' : 'Pending'}
+        </Badge>
+      </div>
+    </div>
+  );
+}
+
 export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -398,107 +519,6 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
      assignee.mobile.includes(assigneeSearchTerm))
   );
 
-  const TaskItem = ({ task }: { task: Task }) => (
-    <div className="flex items-start justify-between gap-3 p-3 rounded-lg border bg-card mb-2">
-      <div className="flex items-start gap-3 flex-1">
-        {task.status === 'finished' ? (
-          <CheckCircle className="h-5 w-5 text-primary" />
-        ) : (
-          <Clock className="h-5 w-5 text-muted-foreground" />
-        )}
-        <div className="flex-1">
-          <p className="font-medium text-foreground">{task.text}</p>
-          {task.remarks && <p className="text-sm text-muted-foreground mt-1">{task.remarks}</p>}
-          {(task.reassigned_coordinator || task.reassigned_supervisor) && (
-            <div className="flex items-center gap-2 mt-2">
-              <Badge variant="secondary" className="text-xs">
-                {userTable === 'admin_members' ? (
-                  // For team members: show "Reassigned to"
-                  task.reassigned_coordinator ? (
-                    <>Reassigned to <span className="text-primary font-medium">{task.reassigned_coordinator.name}</span> ({task.reassigned_coordinator.mobile_number})</>
-                  ) : (
-                    <>Reassigned to <span className="text-primary font-medium">{task.reassigned_supervisor?.name}</span> ({task.reassigned_supervisor?.mobile_number})</>
-                  )
-                ) : (
-                  // For agents: show "Reassigned from team member"
-                  <>Reassigned from <span className="text-secondary font-medium">{task.assigned_by?.name || 'Team Member'}</span> {task.assigned_by?.mobile_number && `(${task.assigned_by.mobile_number})`}</>
-                )}
-              </Badge>
-            </div>
-          )}
-          <p className="text-xs text-muted-foreground mt-1">
-            {new Date(task.created_at).toLocaleString()}
-          </p>
-        </div>
-      </div>
-      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
-        <Dialog open={editingTask === task.id} onOpenChange={(open) => !open && setEditingTask(null)}>
-          <DialogTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => openRemarksDialog(task)}
-              className="flex items-center gap-2 text-primary hover:text-primary/80"
-            >
-              <MessageSquare className="h-4 w-4" />
-              Remarks
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Add/Edit Remarks</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-medium mb-2">Task:</p>
-                <p className="text-sm text-muted-foreground">{task.text}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Remarks:</label>
-                <Textarea
-                  value={newRemarks}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewRemarks(e.target.value)}
-                  placeholder="Add your remarks here..."
-                  className="mt-2"
-                  rows={4}
-                />
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setEditingTask(null)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => handleUpdateRemarks(task.id, newRemarks)}
-                >
-                  Save Remarks
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-        
-        {/* Only team members (admin_members) can reassign tasks */}
-        {userTable === 'admin_members' && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => startReassigning(task)}
-            className="flex items-center gap-2 text-secondary hover:text-secondary/80"
-          >
-            <RefreshCcw className="h-4 w-4" />
-            {task.reassigned_coordinator || task.reassigned_supervisor ? "Change Assignment" : "Reassign Task"}
-          </Button>
-        )}
-        
-        <Badge variant={task.status === 'finished' ? 'secondary' : 'outline'}>
-          {task.status === 'finished' ? 'Finished' : 'Pending'}
-        </Badge>
-      </div>
-    </div>
-  );
 
   if (loading) {
     return (
@@ -565,7 +585,18 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
               ) : (
                 <div>
                   {pendingTasks.map((task) => (
-                    <TaskItem key={task.id} task={task} />
+                    <TaskItem
+                      key={task.id}
+                      task={task}
+                      userTable={userTable}
+                      editingTaskId={editingTask}
+                      newRemarks={newRemarks}
+                      onOpenRemarks={openRemarksDialog}
+                      onCloseRemarks={() => setEditingTask(null)}
+                      onChangeRemarks={setNewRemarks}
+                      onSaveRemarks={handleUpdateRemarks}
+                      onStartReassign={startReassigning}
+                    />
                   ))}
                 </div>
               )}
@@ -580,7 +611,18 @@ export const MyTasks = ({ userId, userRole, userTable }: MyTasksProps) => {
               ) : (
                 <div>
                   {finishedTasks.map((task) => (
-                    <TaskItem key={task.id} task={task} />
+                    <TaskItem
+                      key={task.id}
+                      task={task}
+                      userTable={userTable}
+                      editingTaskId={editingTask}
+                      newRemarks={newRemarks}
+                      onOpenRemarks={openRemarksDialog}
+                      onCloseRemarks={() => setEditingTask(null)}
+                      onChangeRemarks={setNewRemarks}
+                      onSaveRemarks={handleUpdateRemarks}
+                      onStartReassign={startReassigning}
+                    />
                   ))}
                 </div>
               )}
