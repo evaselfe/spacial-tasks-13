@@ -5,6 +5,7 @@ import { UserProfile } from "@/components/UserProfile";
 import { DailyNote } from "@/components/DailyNote";
 import { CoordinatorReports } from "@/components/CoordinatorReports";
 import { MyTasks } from "@/components/admin/MyTasks";
+import { PanchayathManagement } from "@/components/admin/PanchayathManagement";
 import { FileText } from "lucide-react";
 import { User } from "@/lib/authService";
 import { useToast } from "@/hooks/use-toast";
@@ -79,6 +80,13 @@ const Index = () => {
         <div className="mb-6">
           <DailyNote currentUser={currentUser} />
         </div>
+
+        {/* Panchayath Management - Show for admin users */}
+        {currentUser.hasAdminAccess && (
+          <div className="mb-6">
+            <PanchayathManagement />
+          </div>
+        )}
 
         {/* Assigned Tasks - Show for all users */}
         <div className="mb-6">
