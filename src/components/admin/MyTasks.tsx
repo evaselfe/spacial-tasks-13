@@ -123,7 +123,7 @@ function TaskItem({
             </div>
           </DialogContent>
         </Dialog>
-        {userTable === 'admin_members' && <Button variant="outline" size="sm" onClick={() => onStartReassign(task)} className="flex items-center gap-2 text-secondary hover:text-secondary/80 bg-amber-300 hover:bg-amber-200">
+        {userTable === 'admin_members' && <Button variant="outline" size="sm" onClick={() => onStartReassign(task)} className="flex items-center gap-2 text-secondary hover:text-secondary/80 bg-fuchsia-700 hover:bg-fuchsia-600">
             <RefreshCcw className="h-4 w-4" />
             {task.reassigned_coordinator || task.reassigned_supervisor ? "Change Assignment" : "Reassign Task"}
           </Button>}
