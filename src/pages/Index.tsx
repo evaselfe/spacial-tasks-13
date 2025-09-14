@@ -47,12 +47,12 @@ const Index = () => {
   if (!currentUser) {
     return <MobileLogin onLogin={handleLogin} />;
   }
-  return <div className="min-h-screen bg-gradient-to-br from-background to-background/95 p-3 sm:p-6">
+  return <div className="min-h-screen bg-gradient-green-blue p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
           <div className="text-center sm:text-left">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Agent Management System</h1>
-            <p className="text-muted-foreground mt-2 text-sm sm:text-base">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent drop-shadow-lg">Agent Management System</h1>
+            <p className="text-white/90 mt-2 text-sm sm:text-base drop-shadow-md">
               Welcome, {currentUser.name}
             </p>
           </div>

@@ -79,6 +79,10 @@ export default {
 					foreground: 'hsl(var(--pro-foreground))'
 				}
 			},
+			backgroundImage: {
+				'gradient-green-blue': 'linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-middle)), hsl(var(--gradient-end)))',
+				'gradient-green-blue-radial': 'radial-gradient(ellipse at top, hsl(var(--gradient-start)), hsl(var(--gradient-middle)), hsl(var(--gradient-end)))'
+			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',

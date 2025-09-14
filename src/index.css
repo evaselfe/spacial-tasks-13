@@ -44,6 +44,11 @@ All colors MUST be HSL.
     --glass-border: 240 30% 85%;
     --glass-shadow: 240 15% 80%;
 
+    /* Green-Blue Gradient System */
+    --gradient-start: 150 70% 45%;
+    --gradient-middle: 180 70% 50%;
+    --gradient-end: 220 70% 60%;
+
     --sidebar-background: 240 25% 96%;
     --sidebar-foreground: 240 10% 25%;
     --sidebar-primary: 262 80% 55%;
