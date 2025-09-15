@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Users, UserPlus, Trash2, Edit, Shield } from "lucide-react";
+import { Plus, Users, UserPlus, Trash2, Edit, Shield, FileText } from "lucide-react";
 import { AdminTeamForm } from "./AdminTeamForm";
 import { AdminMemberForm } from "./AdminMemberForm";
+import { AgentDailyNotes } from "../AgentDailyNotes";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -35,6 +36,8 @@ export const AdminTeamManagement = () => {
   const [editingTeam, setEditingTeam] = useState<AdminTeam | null>(null);
   const [editingMember, setEditingMember] = useState<AdminMember | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showDailyNotes, setShowDailyNotes] = useState(false);
+  const [selectedMemberForNotes, setSelectedMemberForNotes] = useState<AdminMember | null>(null);
   const { toast } = useToast();
 
   // Fetch teams on component mount
@@ -330,6 +333,17 @@ export const AdminTeamManagement = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => {
+                            setSelectedMemberForNotes(member);
+                            setShowDailyNotes(true);
+                          }}
+                          title="View Daily Notes"
+                        >
+                          <FileText className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
                             setEditingMember(member);
                             setShowMemberForm(true);
                           }}
@@ -395,6 +409,22 @@ export const AdminTeamManagement = () => {
           onCancel={() => {
             setShowMemberForm(false);
             setEditingMember(null);
+          }}
+        />
+      )}
+
+      {/* Daily Notes Dialog */}
+      {selectedMemberForNotes && (
+        <AgentDailyNotes
+          agentName={selectedMemberForNotes.name}
+          agentType={selectedMemberForNotes.role}
+          agentMobile={selectedMemberForNotes.mobile}
+          open={showDailyNotes}
+          onOpenChange={(open) => {
+            setShowDailyNotes(open);
+            if (!open) {
+              setSelectedMemberForNotes(null);
+            }
           }}
         />
       )}
