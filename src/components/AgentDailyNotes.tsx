@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, FileText, User, Phone } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon, FileText, User, Phone } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +35,8 @@ export const AgentDailyNotes = ({
 }: AgentDailyNotesProps) => {
   const [notes, setNotes] = useState<DailyNote[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedNote, setSelectedNote] = useState<DailyNote | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -50,7 +53,7 @@ export const AgentDailyNotes = ({
         .select('*')
         .eq('mobile_number', agentMobile)
         .order('date', { ascending: false })
-        .limit(30); // Show last 30 days
+        .limit(90); // Show last 90 days for better calendar view
 
       if (error) throw error;
       setNotes(data || []);
@@ -65,6 +68,30 @@ export const AgentDailyNotes = ({
       setLoading(false);
     }
   };
+
+  // Helper functions for calendar
+  const hasActivity = (date: Date) => {
+    const dateString = format(date, 'yyyy-MM-dd');
+    return notes.some(note => note.date === dateString && note.activity && !note.is_leave);
+  };
+
+  const isOnLeave = (date: Date) => {
+    const dateString = format(date, 'yyyy-MM-dd');
+    return notes.some(note => note.date === dateString && (note.is_leave || !note.activity));
+  };
+
+  const getNoteForDate = (date: Date) => {
+    const dateString = format(date, 'yyyy-MM-dd');
+    return notes.find(note => note.date === dateString);
+  };
+
+  // Update selected note when date changes
+  useEffect(() => {
+    if (selectedDate) {
+      const note = getNoteForDate(selectedDate);
+      setSelectedNote(note || null);
+    }
+  }, [selectedDate, notes]);
 
   const getActivityStats = () => {
     const totalDays = notes.length;
@@ -139,65 +166,101 @@ export const AgentDailyNotes = ({
             </Card>
           </div>
 
-          {/* Notes List */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Recent Activity (Last 30 days)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Loading daily notes...
+          {/* Calendar View and Selected Date Details */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Calendar */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CalendarIcon className="h-4 w-4" />
+                  Daily Notes Calendar (Last 90 days)
+                </CardTitle>
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span>Active</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <span>Leave/No Activity</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 bg-muted rounded-full"></div>
+                    <span>No Data</span>
+                  </div>
                 </div>
-              ) : notes.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No daily notes found for this agent
-                </div>
-              ) : (
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {notes.map((note) => (
-                    <div
-                      key={note.id}
-                      className={`p-3 rounded-lg border ${
-                        note.is_leave || !note.activity
-                          ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950'
-                          : 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">
-                            {format(new Date(note.date), 'EEEE, MMMM do, yyyy')}
-                          </span>
-                          <Badge 
-                            variant={note.is_leave || !note.activity ? "destructive" : "default"}
-                            className="text-xs"
-                          >
-                            {note.is_leave || !note.activity ? "Leave" : "Active"}
-                          </Badge>
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          {format(new Date(note.updated_at), 'HH:mm')}
-                        </span>
-                      </div>
-                      {note.activity && (
-                        <div className="text-sm">
-                          <span className="font-medium">Activity: </span>
-                          <span>{note.activity}</span>
-                        </div>
-                      )}
-                      {(note.is_leave || !note.activity) && (
-                        <div className="text-sm text-muted-foreground italic">
-                          No activity recorded (marked as leave)
-                        </div>
-                      )}
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Loading daily notes...
+                  </div>
+                ) : (
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
+                    className="rounded-md border"
+                    modifiers={{
+                      hasActivity: (date) => hasActivity(date),
+                      onLeave: (date) => isOnLeave(date),
+                    }}
+                    modifiersClassNames={{
+                      hasActivity: "bg-green-500 text-white hover:bg-green-600",
+                      onLeave: "bg-red-500 text-white hover:bg-red-600",
+                    }}
+                  />
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Selected Date Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">
+                  {selectedDate ? format(selectedDate, 'EEEE, MMMM do, yyyy') : 'Select a Date'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {!selectedDate ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Click on a date in the calendar to view details
+                  </div>
+                ) : selectedNote ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant={selectedNote.is_leave || !selectedNote.activity ? "destructive" : "default"}
+                      >
+                        {selectedNote.is_leave || !selectedNote.activity ? "Leave" : "Active"}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        Updated: {format(new Date(selectedNote.updated_at), 'HH:mm')}
+                      </span>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    
+                    {selectedNote.activity ? (
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-sm">Daily Activity:</h4>
+                        <p className="text-sm bg-muted p-3 rounded-md">
+                          {selectedNote.activity}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground italic">
+                        No activity recorded for this date
+                        {selectedNote.is_leave && " (marked as leave)"}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No data available for {format(selectedDate, 'MMMM do, yyyy')}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
