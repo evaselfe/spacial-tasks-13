@@ -98,7 +98,46 @@ export const AgentDailyNotes = ({
     const activeDays = notes.filter(note => !note.is_leave && note.activity).length;
     const leaveDays = notes.filter(note => note.is_leave || !note.activity).length;
     
-    return { totalDays, activeDays, leaveDays };
+    // Calculate inactive days (3+ consecutive leave days)
+    const inactiveDays = calculateInactiveDays();
+    
+    return { totalDays, activeDays, leaveDays, inactiveDays };
+  };
+
+  const calculateInactiveDays = () => {
+    if (notes.length === 0) return 0;
+    
+    // Sort notes by date to check for consecutive days
+    const sortedNotes = [...notes].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+    let inactiveDays = 0;
+    let consecutiveLeaveDays = 0;
+    let isCurrentlyInactive = false;
+    
+    for (let i = 0; i < sortedNotes.length; i++) {
+      const note = sortedNotes[i];
+      const isLeaveDay = note.is_leave || !note.activity;
+      
+      if (isLeaveDay) {
+        consecutiveLeaveDays++;
+        
+        // If we reach 3 consecutive leave days and not already counting as inactive
+        if (consecutiveLeaveDays >= 3 && !isCurrentlyInactive) {
+          isCurrentlyInactive = true;
+          // Count all the consecutive leave days as inactive
+          inactiveDays += consecutiveLeaveDays;
+        } else if (isCurrentlyInactive) {
+          // Continue counting if already in inactive period
+          inactiveDays++;
+        }
+      } else {
+        // Reset on active day
+        consecutiveLeaveDays = 0;
+        isCurrentlyInactive = false;
+      }
+    }
+    
+    return inactiveDays;
   };
 
   const stats = getActivityStats();
@@ -139,7 +178,7 @@ export const AgentDailyNotes = ({
           </Card>
 
           {/* Activity Stats */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             <Card>
               <CardContent className="pt-4">
                 <div className="text-center">
@@ -161,6 +200,15 @@ export const AgentDailyNotes = ({
                 <div className="text-center">
                   <div className="text-2xl font-bold text-red-600">{stats.leaveDays}</div>
                   <div className="text-sm text-muted-foreground">Leave Days</div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-600">{stats.inactiveDays}</div>
+                  <div className="text-sm text-muted-foreground">Inactive Days</div>
+                  <div className="text-xs text-muted-foreground mt-1">(3+ consecutive leave)</div>
                 </div>
               </CardContent>
             </Card>
