@@ -202,32 +202,69 @@ export const PerformanceReport = () => {
         .eq('mobile_number', mobileNumber)
         .gte('date', startOfMonth.toISOString().split('T')[0])
         .lte('date', endOfMonth.toISOString().split('T')[0])
-        .order('date', { ascending: false });
+        .order('date', { ascending: true });
 
       if (error) throw error;
 
+      // Create a map of notes by date for easy lookup
+      const notesMap = new Map();
+      (notes || []).forEach(note => {
+        notesMap.set(note.date, note);
+      });
+
+      // Generate all dates in the month to check for gaps
+      const allDates = [];
+      const currentDate = new Date(startOfMonth);
+      const today = new Date();
+      
+      while (currentDate <= endOfMonth && currentDate <= today) {
+        allDates.push(currentDate.toISOString().split('T')[0]);
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      // Sort dates in descending order to start from most recent
+      allDates.reverse();
+
       let consecutiveLeaveDays = 0;
-      let maxConsecutiveLeaveDays = 0;
-      let currentStreak = 0;
+      let lastActivityDate = null;
       
-      // Sort notes by date descending to check recent activity
-      const sortedNotes = (notes || []).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      
-      // Count consecutive leave days from most recent
-      for (const note of sortedNotes) {
-        if (note.is_leave || !note.activity) {
-          currentStreak++;
-          maxConsecutiveLeaveDays = Math.max(maxConsecutiveLeaveDays, currentStreak);
+      // Count consecutive leave days from most recent date
+      for (const dateStr of allDates) {
+        const note = notesMap.get(dateStr);
+        
+        // If no note exists for this date, or note is marked as leave, or no activity
+        const isLeaveDay = !note || note.is_leave || !note.activity || note.activity.trim() === '';
+        
+        if (isLeaveDay) {
+          consecutiveLeaveDays++;
         } else {
-          if (currentStreak > 0) {
-            break; // Stop counting when we hit a non-leave day
+          // Found an active day, stop counting consecutive leave days
+          if (!lastActivityDate) {
+            lastActivityDate = dateStr;
+          }
+          break;
+        }
+        
+        // Track last activity date regardless of consecutive streak
+        if (note && !note.is_leave && note.activity && note.activity.trim() !== '' && !lastActivityDate) {
+          lastActivityDate = dateStr;
+        }
+      }
+
+      // If we didn't find last activity in consecutive check, search all notes
+      if (!lastActivityDate) {
+        // Sort all dates in descending order to find most recent activity
+        const sortedDates = allDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+        for (const dateStr of sortedDates) {
+          const note = notesMap.get(dateStr);
+          if (note && !note.is_leave && note.activity && note.activity.trim() !== '') {
+            lastActivityDate = dateStr;
+            break;
           }
         }
       }
 
-      consecutiveLeaveDays = currentStreak;
       const isInactive = consecutiveLeaveDays >= 3;
-      const lastActivityDate = sortedNotes.find(note => !note.is_leave && note.activity)?.date || null;
 
       return {
         consecutive_leave_days: consecutiveLeaveDays,
