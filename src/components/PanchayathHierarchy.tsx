@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Search, Users, MapPin, Building, BarChart3, Edit, Trash2, MessageSquare, ChevronDown, ChevronRight, Eye, EyeOff } from "lucide-react";
+import { Search, Users, MapPin, Building, BarChart3, Edit, Trash2, MessageSquare, ChevronDown, ChevronRight, Eye, EyeOff, User, UserCheck } from "lucide-react";
 import { PanchayathChart } from "@/components/PanchayathChart";
 import { PanchayathForm } from "@/components/PanchayathForm";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -21,6 +21,10 @@ interface PanchayathData {
   supervisor_count: number;
   group_leader_count: number;
   pro_count: number;
+  coordinators?: any[];
+  supervisors?: any[];
+  group_leaders?: any[];
+  pros?: any[];
 }
 
 export const PanchayathHierarchy = () => {
@@ -31,6 +35,7 @@ export const PanchayathHierarchy = () => {
   const [editingPanchayath, setEditingPanchayath] = useState<any>(null);
   const [showEditForm, setShowEditForm] = useState(false);
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
+  const [expandedRoleCards, setExpandedRoleCards] = useState<Record<string, boolean>>({});
   const [showAgentNames, setShowAgentNames] = useState<Record<string, boolean>>({
     coordinator: true,
     supervisor: true,
@@ -47,10 +52,10 @@ export const PanchayathHierarchy = () => {
           id,
           name,
           number_of_wards,
-          coordinators:coordinators(count),
-          supervisors:supervisors(count),
-          group_leaders:group_leaders(count),
-          pros:pros(count)
+          coordinators:coordinators(id, name, mobile),
+          supervisors:supervisors(id, name, mobile, coordinator_id, coordinators!inner(name)),
+          group_leaders:group_leaders(id, name, mobile, supervisor_id, supervisors!inner(name)),
+          pros:pros(id, name, mobile, group_leader_id, group_leaders!inner(name))
         `);
 
       if (error) throw error;
@@ -59,10 +64,14 @@ export const PanchayathHierarchy = () => {
         id: p.id,
         name: p.name,
         number_of_wards: p.number_of_wards,
-        coordinator_count: p.coordinators?.[0]?.count || 0,
-        supervisor_count: p.supervisors?.[0]?.count || 0,
-        group_leader_count: p.group_leaders?.[0]?.count || 0,
-        pro_count: p.pros?.[0]?.count || 0,
+        coordinator_count: p.coordinators?.length || 0,
+        supervisor_count: p.supervisors?.length || 0,
+        group_leader_count: p.group_leaders?.length || 0,
+        pro_count: p.pros?.length || 0,
+        coordinators: p.coordinators || [],
+        supervisors: p.supervisors || [],
+        group_leaders: p.group_leaders || [],
+        pros: p.pros || [],
       })) || [];
 
       setPanchayaths(panchayathsWithCounts);
@@ -151,6 +160,13 @@ export const PanchayathHierarchy = () => {
 
   const toggleCardExpansion = (cardId: string) => {
     setExpandedCards(prev => ({
+      ...prev,
+      [cardId]: !prev[cardId]
+    }));
+  };
+
+  const toggleRoleCardExpansion = (cardId: string) => {
+    setExpandedRoleCards(prev => ({
       ...prev,
       [cardId]: !prev[cardId]
     }));
@@ -322,46 +338,245 @@ export const PanchayathHierarchy = () => {
                             </div>
 
                             <CollapsibleContent>
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                <div className="flex items-center gap-2 p-2 rounded-lg bg-coordinator/10 border border-coordinator/20">
-                                  <div className="h-3 w-3 rounded-full bg-coordinator"></div>
-                                  <div>
-                                    <p className="text-xs text-muted-foreground">
-                                      Coordinators {showAgentNames.coordinator ? '(Names Shown)' : '(Names Hidden)'}
-                                    </p>
-                                    <p className="font-semibold">{panchayath.coordinator_count}</p>
-                                  </div>
-                                </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Coordinators Card */}
+                                <Collapsible open={expandedRoleCards[`${panchayath.id}-coordinator`] ?? false}>
+                                  <Card className="border border-coordinator/20 bg-coordinator/5">
+                                    <CardContent className="p-3">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                          <div className="h-3 w-3 rounded-full bg-coordinator"></div>
+                                          <span className="text-sm font-medium">Coordinators</span>
+                                          <Badge variant="secondary" className="h-5 text-xs">
+                                            {panchayath.coordinator_count}
+                                          </Badge>
+                                        </div>
+                                        <CollapsibleTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => toggleRoleCardExpansion(`${panchayath.id}-coordinator`)}
+                                            className="h-6 w-6 p-0"
+                                          >
+                                            {expandedRoleCards[`${panchayath.id}-coordinator`] ? (
+                                              <ChevronDown className="h-3 w-3" />
+                                            ) : (
+                                              <ChevronRight className="h-3 w-3" />
+                                            )}
+                                          </Button>
+                                        </CollapsibleTrigger>
+                                      </div>
+                                      <CollapsibleContent>
+                                        <div className="space-y-1 pl-5">
+                                          {panchayath.coordinators?.map((coordinator: any) => (
+                                            <div key={coordinator.id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                                              <User className="h-3 w-3" />
+                                              <span>{showAgentNames.coordinator ? coordinator.name : '***'}</span>
+                                            </div>
+                                          ))}
+                                          {panchayath.coordinators?.length === 0 && (
+                                            <p className="text-xs text-muted-foreground pl-5">No coordinators assigned</p>
+                                          )}
+                                        </div>
+                                      </CollapsibleContent>
+                                    </CardContent>
+                                  </Card>
+                                </Collapsible>
 
-                                <div className="flex items-center gap-2 p-2 rounded-lg bg-supervisor/10 border border-supervisor/20">
-                                  <div className="h-3 w-3 rounded-full bg-supervisor"></div>
-                                  <div>
-                                    <p className="text-xs text-muted-foreground">
-                                      Supervisors {showAgentNames.supervisor ? '(Names Shown)' : '(Names Hidden)'}
-                                    </p>
-                                    <p className="font-semibold">{panchayath.supervisor_count}</p>
-                                  </div>
-                                </div>
+                                {/* Supervisors Card */}
+                                <Collapsible open={expandedRoleCards[`${panchayath.id}-supervisor`] ?? false}>
+                                  <Card className="border border-supervisor/20 bg-supervisor/5">
+                                    <CardContent className="p-3">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                          <div className="h-3 w-3 rounded-full bg-supervisor"></div>
+                                          <span className="text-sm font-medium">Supervisors</span>
+                                          <Badge variant="secondary" className="h-5 text-xs">
+                                            {panchayath.supervisor_count}
+                                          </Badge>
+                                        </div>
+                                        <CollapsibleTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => toggleRoleCardExpansion(`${panchayath.id}-supervisor`)}
+                                            className="h-6 w-6 p-0"
+                                          >
+                                            {expandedRoleCards[`${panchayath.id}-supervisor`] ? (
+                                              <ChevronDown className="h-3 w-3" />
+                                            ) : (
+                                              <ChevronRight className="h-3 w-3" />
+                                            )}
+                                          </Button>
+                                        </CollapsibleTrigger>
+                                      </div>
+                                      <CollapsibleContent>
+                                        <div className="space-y-2 pl-5">
+                                          {panchayath.coordinators?.map((coordinator: any) => {
+                                            const supervisorsUnderCoordinator = panchayath.supervisors?.filter(
+                                              (supervisor: any) => supervisor.coordinator_id === coordinator.id
+                                            ) || [];
+                                            
+                                            if (supervisorsUnderCoordinator.length === 0) return null;
+                                            
+                                            return (
+                                              <div key={coordinator.id} className="space-y-1">
+                                                <div className="flex items-center gap-2 text-xs font-medium text-coordinator">
+                                                  <UserCheck className="h-3 w-3" />
+                                                  <span>Under {showAgentNames.coordinator ? coordinator.name : 'Coordinator ***'}</span>
+                                                  <Badge variant="outline" className="h-4 text-xs">
+                                                    {supervisorsUnderCoordinator.length}
+                                                  </Badge>
+                                                </div>
+                                                <div className="pl-5 space-y-1">
+                                                  {supervisorsUnderCoordinator.map((supervisor: any) => (
+                                                    <div key={supervisor.id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                      <User className="h-3 w-3" />
+                                                      <span>{showAgentNames.supervisor ? supervisor.name : '***'}</span>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                          {panchayath.supervisors?.length === 0 && (
+                                            <p className="text-xs text-muted-foreground pl-5">No supervisors assigned</p>
+                                          )}
+                                        </div>
+                                      </CollapsibleContent>
+                                    </CardContent>
+                                  </Card>
+                                </Collapsible>
 
-                                <div className="flex items-center gap-2 p-2 rounded-lg bg-group-leader/10 border border-group-leader/20">
-                                  <div className="h-3 w-3 rounded-full bg-group-leader"></div>
-                                  <div>
-                                    <p className="text-xs text-muted-foreground">
-                                      Group Leaders {showAgentNames.group_leader ? '(Names Shown)' : '(Names Hidden)'}
-                                    </p>
-                                    <p className="font-semibold">{panchayath.group_leader_count}</p>
-                                  </div>
-                                </div>
+                                {/* Group Leaders Card */}
+                                <Collapsible open={expandedRoleCards[`${panchayath.id}-group-leader`] ?? false}>
+                                  <Card className="border border-group-leader/20 bg-group-leader/5">
+                                    <CardContent className="p-3">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                          <div className="h-3 w-3 rounded-full bg-group-leader"></div>
+                                          <span className="text-sm font-medium">Group Leaders</span>
+                                          <Badge variant="secondary" className="h-5 text-xs">
+                                            {panchayath.group_leader_count}
+                                          </Badge>
+                                        </div>
+                                        <CollapsibleTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => toggleRoleCardExpansion(`${panchayath.id}-group-leader`)}
+                                            className="h-6 w-6 p-0"
+                                          >
+                                            {expandedRoleCards[`${panchayath.id}-group-leader`] ? (
+                                              <ChevronDown className="h-3 w-3" />
+                                            ) : (
+                                              <ChevronRight className="h-3 w-3" />
+                                            )}
+                                          </Button>
+                                        </CollapsibleTrigger>
+                                      </div>
+                                      <CollapsibleContent>
+                                        <div className="space-y-2 pl-5">
+                                          {panchayath.supervisors?.map((supervisor: any) => {
+                                            const groupLeadersUnderSupervisor = panchayath.group_leaders?.filter(
+                                              (groupLeader: any) => groupLeader.supervisor_id === supervisor.id
+                                            ) || [];
+                                            
+                                            if (groupLeadersUnderSupervisor.length === 0) return null;
+                                            
+                                            return (
+                                              <div key={supervisor.id} className="space-y-1">
+                                                <div className="flex items-center gap-2 text-xs font-medium text-supervisor">
+                                                  <UserCheck className="h-3 w-3" />
+                                                  <span>Under {showAgentNames.supervisor ? supervisor.name : 'Supervisor ***'}</span>
+                                                  <Badge variant="outline" className="h-4 text-xs">
+                                                    {groupLeadersUnderSupervisor.length}
+                                                  </Badge>
+                                                </div>
+                                                <div className="pl-5 space-y-1">
+                                                  {groupLeadersUnderSupervisor.map((groupLeader: any) => (
+                                                    <div key={groupLeader.id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                      <User className="h-3 w-3" />
+                                                      <span>{showAgentNames.group_leader ? groupLeader.name : '***'}</span>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                          {panchayath.group_leaders?.length === 0 && (
+                                            <p className="text-xs text-muted-foreground pl-5">No group leaders assigned</p>
+                                          )}
+                                        </div>
+                                      </CollapsibleContent>
+                                    </CardContent>
+                                  </Card>
+                                </Collapsible>
 
-                                <div className="flex items-center gap-2 p-2 rounded-lg bg-pro/10 border border-pro/20">
-                                  <div className="h-3 w-3 rounded-full bg-pro"></div>
-                                  <div>
-                                    <p className="text-xs text-muted-foreground">
-                                      PROs {showAgentNames.pro ? '(Names Shown)' : '(Names Hidden)'}
-                                    </p>
-                                    <p className="font-semibold">{panchayath.pro_count}</p>
-                                  </div>
-                                </div>
+                                {/* PROs Card */}
+                                <Collapsible open={expandedRoleCards[`${panchayath.id}-pro`] ?? false}>
+                                  <Card className="border border-pro/20 bg-pro/5">
+                                    <CardContent className="p-3">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                          <div className="h-3 w-3 rounded-full bg-pro"></div>
+                                          <span className="text-sm font-medium">PROs</span>
+                                          <Badge variant="secondary" className="h-5 text-xs">
+                                            {panchayath.pro_count}
+                                          </Badge>
+                                        </div>
+                                        <CollapsibleTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => toggleRoleCardExpansion(`${panchayath.id}-pro`)}
+                                            className="h-6 w-6 p-0"
+                                          >
+                                            {expandedRoleCards[`${panchayath.id}-pro`] ? (
+                                              <ChevronDown className="h-3 w-3" />
+                                            ) : (
+                                              <ChevronRight className="h-3 w-3" />
+                                            )}
+                                          </Button>
+                                        </CollapsibleTrigger>
+                                      </div>
+                                      <CollapsibleContent>
+                                        <div className="space-y-2 pl-5">
+                                          {panchayath.group_leaders?.map((groupLeader: any) => {
+                                            const prosUnderGroupLeader = panchayath.pros?.filter(
+                                              (pro: any) => pro.group_leader_id === groupLeader.id
+                                            ) || [];
+                                            
+                                            if (prosUnderGroupLeader.length === 0) return null;
+                                            
+                                            return (
+                                              <div key={groupLeader.id} className="space-y-1">
+                                                <div className="flex items-center gap-2 text-xs font-medium text-group-leader">
+                                                  <UserCheck className="h-3 w-3" />
+                                                  <span>Under {showAgentNames.group_leader ? groupLeader.name : 'Group Leader ***'}</span>
+                                                  <Badge variant="outline" className="h-4 text-xs">
+                                                    {prosUnderGroupLeader.length}
+                                                  </Badge>
+                                                </div>
+                                                <div className="pl-5 space-y-1">
+                                                  {prosUnderGroupLeader.map((pro: any) => (
+                                                    <div key={pro.id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                      <User className="h-3 w-3" />
+                                                      <span>{showAgentNames.pro ? pro.name : '***'}</span>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                          {panchayath.pros?.length === 0 && (
+                                            <p className="text-xs text-muted-foreground pl-5">No PROs assigned</p>
+                                          )}
+                                        </div>
+                                      </CollapsibleContent>
+                                    </CardContent>
+                                  </Card>
+                                </Collapsible>
                               </div>
                             </CollapsibleContent>
                           </CardContent>
